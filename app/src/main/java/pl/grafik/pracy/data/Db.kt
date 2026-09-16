@@ -84,6 +84,9 @@ interface PresenceDao {
 
     @Query("DELETE FROM presence WHERE id = :id")
     suspend fun delete(id: Long)
+
+    @Query("DELETE FROM presence")
+    suspend fun clearAll()
 }
 
 @Dao
@@ -105,6 +108,9 @@ interface DayDao {
 
     @Query("DELETE FROM days WHERE date >= :from AND date <= :to")
     suspend fun clearRange(from: String, to: String)
+
+    @Query("DELETE FROM days")
+    suspend fun clearAll()
 }
 
 @Database(entities = [DayRow::class, PresenceRow::class], version = 2, exportSchema = false)

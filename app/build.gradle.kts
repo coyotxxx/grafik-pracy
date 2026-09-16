@@ -13,9 +13,9 @@ android {
         applicationId = "pl.grafik.pracy"
         minSdk = 26
         targetSdk = 35
-        versionCode = 6
+        versionCode = 7
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        versionName = "1.3.0"
+        versionName = "1.4.0"
     }
 
     buildTypes {

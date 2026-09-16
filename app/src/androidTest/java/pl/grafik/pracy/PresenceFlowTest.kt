@@ -130,6 +130,25 @@ class PresenceFlowTest {
         assertEquals(4, saved.workedHours)             // …a przepracowane to same nadgodziny
     }
 
+    /**
+     * Pusty grafik (cykl wyłączony, dzień niepomalowany): apka nie może uznać dnia
+     * za wolny i wrzucić całej obecności w nadgodziny 100 %.
+     */
+    @Test
+    fun praca_przy_pustym_grafiku_liczy_osiem_godzin_normy() = runBlocking {
+        db.dayDao().clearRange("2026-10-01", "2026-10-31")      // żadnego wpisu na ten dzień
+        PresenceRepo.onEnter(ctx, day.atTime(6, 0))
+        val id = PresenceRepo.onExit(ctx, day.atTime(15, 15))!!
+        val row = db.presenceDao().byId(id)!!
+        assertEquals("tylko nadwyżka ponad 8 h", 1, row.otHours)
+        assertEquals("dzień roboczy, nie wolny", 50, row.otRate)
+
+        PresenceRepo.accept(ctx, id)
+        val saved = db.dayDao().get(day.toString())!!.toEntry()
+        assertEquals("zmiana odczytana z godziny wejścia", Shift.I, saved.shift)
+        assertEquals(9, saved.workedHours)
+    }
+
     @Test
     fun przejazd_obok_zakladu_nie_tworzy_wpisu() = runBlocking {
         planShift(day, Shift.I)

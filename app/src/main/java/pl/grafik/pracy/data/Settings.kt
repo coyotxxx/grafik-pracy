@@ -19,6 +19,7 @@ class SettingsStore(private val ctx: Context) {
     private val kAnchor = stringPreferencesKey("anchor")
     private val kIndex = intPreferencesKey("anchorIndex")
     private val kBrigade = stringPreferencesKey("brigade")
+    private val kGenerate = booleanPreferencesKey("generate")
     private val kColors = stringPreferencesKey("colors")
     private val kWpOn = booleanPreferencesKey("wp_enabled")
     private val kWpLat = doublePreferencesKey("wp_lat")
@@ -33,7 +34,8 @@ class SettingsStore(private val ctx: Context) {
             pattern = runCatching { CyclePattern.valueOf(p[kPattern] ?: "") }.getOrDefault(CyclePattern.B4_16D),
             anchorDate = runCatching { LocalDate.parse(p[kAnchor]) }.getOrDefault(LocalDate.of(2024, 3, 1)),
             anchorIndex = p[kIndex] ?: 0,
-            brigade = p[kBrigade] ?: "A"
+            brigade = p[kBrigade] ?: "A",
+            generate = p[kGenerate] ?: false
         )
     }
 
@@ -50,6 +52,7 @@ class SettingsStore(private val ctx: Context) {
             p[kAnchor] = c.anchorDate.toString()
             p[kIndex] = c.anchorIndex
             p[kBrigade] = c.brigade
+            p[kGenerate] = c.generate
         }
     }
 
@@ -76,6 +79,11 @@ class SettingsStore(private val ctx: Context) {
             p[kWpStay] = w.minStayMin
             p[kWpGap] = w.mergeGapMin
         }
+    }
+
+    /** Kasuje WSZYSTKIE ustawienia — cykl, kolory, miejsce pracy. */
+    suspend fun clearAll() {
+        ctx.ds.edit { it.clear() }
     }
 
     suspend fun saveColors(m: Map<String, String>) {

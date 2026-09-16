@@ -120,12 +120,13 @@ object PresenceRepo {
         val cfg = SettingsStore(ctx).config.first()
         // Zmiany wyliczamy z góry — assignDate nie jest funkcją zawieszającą.
         val dEnter = span.enter.toLocalDate()
+        val hour = PresenceEngine.roundUp(span.enter).hour
         val known = mapOf(
-            dEnter.minusDays(1) to effectiveShift(ctx, cfg, dEnter.minusDays(1)),
-            dEnter to effectiveShift(ctx, cfg, dEnter)
+            dEnter.minusDays(1) to effectiveShift(ctx, cfg, dEnter.minusDays(1), hour),
+            dEnter to effectiveShift(ctx, cfg, dEnter, hour)
         )
         val date = PresenceEngine.assignDate(span) { d -> known[d] }
-        val shift = known[date] ?: effectiveShift(ctx, cfg, date)
+        val shift = known[date] ?: effectiveShift(ctx, cfg, date, hour)
         val result = PresenceEngine.analyze(date, span, shift, Holidays.kindOf(date))
 
         val id = db.presenceDao().insert(
@@ -147,10 +148,25 @@ object PresenceRepo {
         return id
     }
 
-    /** Zmiana obowiązująca w danym dniu: ręczna poprawka ma pierwszeństwo przed cyklem. */
-    private suspend fun effectiveShift(ctx: Context, cfg: CycleConfig, d: LocalDate): Shift? {
-        val saved = AppDb.get(ctx).dayDao().get(d.toString())?.toEntry()?.shift
-        return saved ?: CycleGenerator.shiftFor(cfg, d)
+    /**
+     * Zmiana obowiązująca w danym dniu.
+     * Kolejność: to co wpisane ręcznie → cykl (jeśli włączony) → odczyt z godziny wejścia.
+     * Ostatni wariant jest dla pustego grafiku: bez niego cała obecność poszłaby
+     * jako nadgodziny 100 %, bo apka uznałaby dzień za wolny.
+     */
+    private suspend fun effectiveShift(
+        ctx: Context, cfg: CycleConfig, d: LocalDate, entryHour: Int? = null
+    ): Shift? {
+        AppDb.get(ctx).dayDao().get(d.toString())?.toEntry()?.shift?.let { return it }
+        if (cfg.generate) return CycleGenerator.shiftFor(cfg, d)
+        return entryHour?.let { shiftFromHour(it) }
+    }
+
+    /** Przybliżenie zmiany po godzinie wejścia — używane tylko, gdy grafik jest pusty. */
+    fun shiftFromHour(h: Int): Shift = when (h) {
+        in 5..11 -> Shift.I
+        in 12..19 -> Shift.II
+        else -> Shift.III
     }
 
     /** Zatwierdzenie propozycji — dopiero tu wpis trafia do grafiku. */
@@ -161,8 +177,13 @@ object PresenceRepo {
 
         val date = LocalDate.parse(row.date)
         val cfg = SettingsStore(ctx).config.first()
+        val hour = runCatching { LocalDateTime.parse(row.countedFrom).hour }.getOrNull()
         val cur = db.dayDao().get(row.date)?.toEntry()
-            ?: DayEntry(date = date, shift = CycleGenerator.shiftFor(cfg, date))
+            ?: DayEntry(
+                date = date,
+                shift = if (cfg.generate) CycleGenerator.shiftFor(cfg, date)
+                        else hour?.let { shiftFromHour(it) }
+            )
 
         // W dniu wolnym zostawiamy oznaczenie dnia (w5/wś) i całą obecność zapisujemy
         // jako nadgodziny — inaczej doliczylibyśmy 8 h normy, której tego dnia nie było.

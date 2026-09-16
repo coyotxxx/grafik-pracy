@@ -7,6 +7,9 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import pl.grafik.pracy.data.*
 import pl.grafik.pracy.domain.*
+import pl.grafik.pracy.location.GeofenceManager
+import pl.grafik.pracy.location.PresenceState
+import pl.grafik.pracy.location.PresenceWatchdog
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -52,10 +55,11 @@ class Vm(app: Application) : AndroidViewModel(app) {
         val rows = arr[6] as List<DayRow>
 
         val saved = rows.associate { LocalDate.parse(it.date) to it.toEntry() }
-        val gen = CycleGenerator.month(cfg, ym.year, ym.monthValue)
+        // Pusta aplikacja pokazuje tylko to, co użytkownik sam wpisał.
+        val gen = if (cfg.generate) CycleGenerator.month(cfg, ym.year, ym.monthValue) else emptyMap()
         val merged = LinkedHashMap<LocalDate, DayEntry>()
         gen.forEach { (d, s) -> merged[d] = saved[d] ?: DayEntry(date = d, shift = s) }
-        saved.forEach { (d, e) -> if (merged.containsKey(d)) merged[d] = e }
+        saved.forEach { (d, e) -> merged[d] = e }
 
         UiState(ym, merged, cfg, cols, tool, otH, otR, calc(merged, ym))
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState())
@@ -126,6 +130,22 @@ class Vm(app: Application) : AndroidViewModel(app) {
     fun resetMonth() = viewModelScope.launch {
         val ym = _ym.value
         dao.clearRange(ym.atDay(1).toString(), ym.atEndOfMonth().toString())
+    }
+
+    /**
+     * Czyści aplikację do stanu jak po instalacji: grafik, historię wykryć i wszystkie
+     * ustawienia. Strefa wokół pracy jest zdejmowana, żeby nie zbierała danych po cichu.
+     */
+    fun clearEverything() = viewModelScope.launch {
+        val app = getApplication<Application>()
+        GeofenceManager.unregister(app)
+        PresenceWatchdog.cancel(app)
+        PresenceState.clear(app)
+        val db = AppDb.get(app)
+        db.presenceDao().clearAll()
+        db.dayDao().clearAll()
+        settings.clearAll()
+        undoStack.clear()
     }
 
     fun saveConfig(c: CycleConfig) = viewModelScope.launch { settings.saveConfig(c) }

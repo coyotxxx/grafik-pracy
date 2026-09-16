@@ -48,7 +48,13 @@ private fun Header(vm: Vm, s: UiState) {
                 s.ym.month.getDisplayName(TextStyle.FULL_STANDALONE, PL).replaceFirstChar { it.uppercase() } + " " + s.ym.year,
                 fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = OnBg
             )
-            Text("Brygada ${s.cfg.brigade} · ${s.cfg.pattern.label}", fontSize = 11.sp, color = OnMuted, maxLines = 1)
+            Text(
+            if (s.cfg.generate) "Brygada ${s.cfg.brigade} · ${s.cfg.pattern.label}"
+            else "Grafik pusty — ustaw swój cykl w zakładce Cykl albo maluj dni ręcznie",
+            fontSize = 11.sp,
+            color = if (s.cfg.generate) OnMuted else Accent,
+            maxLines = 2
+        )
         }
         IconButton(onClick = { vm.prevMonth() }, modifier = Modifier.size(36.dp)) { Icon(Icons.Default.ChevronLeft, "poprzedni", tint = OnBg) }
         IconButton(onClick = { vm.nextMonth() }, modifier = Modifier.size(36.dp)) { Icon(Icons.Default.ChevronRight, "następny", tint = OnBg) }

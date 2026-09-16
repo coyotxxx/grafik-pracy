@@ -1,6 +1,7 @@
 package pl.grafik.pracy.ui.screens
 
 import androidx.compose.foundation.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -119,6 +120,34 @@ fun SetupScreen(vm: Vm, uvm: pl.grafik.pracy.ui.UpdateVm) {
         Text("Mój cykl", fontSize = 21.sp, fontWeight = FontWeight.SemiBold, color = OnBg)
         Text("Ustaw raz — grafik wyliczy się sam na każdy miesiąc.", fontSize = 12.sp, color = OnMuted)
 
+        // Domyślnie WYŁĄCZONE — świeża aplikacja ma pusty kalendarz.
+        Column(
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
+                .background(if (s.cfg.generate) Surface2 else Surface1).padding(14.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Wypełnij grafik z cyklu", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = OnBg)
+                    Text(
+                        if (s.cfg.generate) "Włączone — kalendarz liczy zmiany sam"
+                        else "Wyłączone — kalendarz jest pusty, malujesz sam",
+                        fontSize = 11.sp, color = if (s.cfg.generate) Accent else OnFaint
+                    )
+                }
+                Switch(
+                    checked = s.cfg.generate,
+                    onCheckedChange = { vm.saveConfig(s.cfg.copy(generate = it)) },
+                    colors = SwitchDefaults.colors(checkedThumbColor = AccentOn, checkedTrackColor = Accent)
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(
+                "Włącz dopiero, gdy poniżej ustawisz swój system pracy i brygadę. " +
+                    "Dni, które wpiszesz ręcznie, zawsze mają pierwszeństwo przed cyklem.",
+                fontSize = 10.sp, color = OnFaint, lineHeight = 14.sp
+            )
+        }
+
         Text("SYSTEM PRACY", fontSize = 10.sp, color = OnFaint, fontWeight = FontWeight.Medium)
         CyclePattern.entries.forEach { p ->
             val on = s.cfg.pattern == p
@@ -180,6 +209,57 @@ fun SetupScreen(vm: Vm, uvm: pl.grafik.pracy.ui.UpdateVm) {
         Button(onClick = { vm.resetMonth() }, modifier = Modifier.fillMaxWidth().height(48.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Surface2), shape = RoundedCornerShape(14.dp)) {
             Text("Przywróć ten miesiąc do cyklu", color = OnBg, fontSize = 13.sp)
+        }
+
+        // --- czyszczenie danych ---
+        var pytanie by remember { mutableStateOf(false) }
+        Text("DANE", fontSize = 10.sp, color = OnFaint, fontWeight = FontWeight.Medium)
+        Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Surface1).padding(14.dp)) {
+            Text(
+                "Grafik w kalendarzu jest wyliczany z cyklu — w pamięci zapisane są tylko dni, " +
+                    "które sam zmieniłeś. Tu skasujesz je razem z resztą ustawień.",
+                fontSize = 11.sp, color = OnMuted, lineHeight = 15.sp
+            )
+            Spacer(Modifier.height(12.dp))
+            OutlinedButton(
+                onClick = { pytanie = true },
+                modifier = Modifier.fillMaxWidth().height(46.dp),
+                shape = RoundedCornerShape(12.dp),
+                border = BorderStroke(1.5.dp, Danger),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = Danger)
+            ) { Text("Wyczyść wszystkie dane", fontSize = 13.sp, fontWeight = FontWeight.Medium) }
+        }
+
+        if (pytanie) {
+            AlertDialog(
+                onDismissRequest = { pytanie = false },
+                containerColor = Surface2,
+                titleContentColor = OnBg,
+                textContentColor = OnMuted,
+                title = { Text("Wyczyścić wszystko?", fontWeight = FontWeight.SemiBold) },
+                text = {
+                    Column {
+                        Text("Aplikacja wróci do stanu jak po instalacji. Zniknie:", fontSize = 13.sp)
+                        Spacer(Modifier.height(8.dp))
+                        listOf(
+                            "wszystkie ręcznie wpisane dni i nadgodziny",
+                            "historia wykryć pracy",
+                            "zapisane miejsce pracy i sieć Wi-Fi",
+                            "ustawienia cyklu, brygady i kolorów"
+                        ).forEach { Text("•  $it", fontSize = 13.sp, lineHeight = 20.sp) }
+                        Spacer(Modifier.height(10.dp))
+                        Text("Tego nie da się cofnąć.", fontSize = 12.sp, color = Danger, fontWeight = FontWeight.Medium)
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { vm.clearEverything(); pytanie = false }) {
+                        Text("Wyczyść", color = Danger, fontWeight = FontWeight.SemiBold)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { pytanie = false }) { Text("Anuluj", color = OnMuted) }
+                }
+            )
         }
 
         // --- aktualizacja aplikacji ---

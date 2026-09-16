@@ -42,7 +42,12 @@ data class CycleConfig(
     val anchorDate: LocalDate = LocalDate.of(2024, 3, 1),
     /** Pozycja w cyklu, na której użytkownik był w dniu odniesienia (0-based). */
     val anchorIndex: Int = 0,
-    val brigade: String = "A"
+    val brigade: String = "A",
+    /**
+     * Czy kalendarz ma być wypełniany z cyklu. Domyślnie NIE — po instalacji aplikacja
+     * jest pusta i pokazuje wyłącznie to, co użytkownik sam wpisze.
+     */
+    val generate: Boolean = false
 )
 
 object CycleGenerator {
