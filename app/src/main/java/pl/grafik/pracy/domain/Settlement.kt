@@ -22,8 +22,11 @@ data class SettlementCfg(
      * Brak wpisu = zostaje norma ustawowa.
      */
     val companyNorms: Map<String, Int> = emptyMap(),
-    /** Art. 151 § 3 KP — 150 h rocznie, chyba że regulamin zakładu daje więcej. */
-    val otLimitYear: Int = 150
+    /**
+     * Roczny limit nadgodzin ustalony przez zakład — ten, którego nie wolno przekroczyć.
+     * 0 = nie podany, obowiązuje ustawowy z art. 151 § 3 KP.
+     */
+    val otLimitYearCompany: Int = 0
 )
 
 /** Okres rozliczeniowy — od pierwszego do ostatniego miesiąca włącznie. */
@@ -32,8 +35,14 @@ data class Period(val from: YearMonth, val to: YearMonth) {
         get() = generateSequence(from) { it.plusMonths(1) }.takeWhile { !it.isAfter(to) }.toList()
     val start: LocalDate get() = from.atDay(1)
     val end: LocalDate get() = to.atEndOfMonth()
-    /** Tygodnie okresu — do limitu z art. 131, liczonego „przeciętnie w tygodniu". */
-    val weeks: Int get() = Math.round(ChronoUnit.DAYS.between(start, end.plusDays(1)) / 7.0).toInt()
+    val days: Long get() = ChronoUnit.DAYS.between(start, end.plusDays(1))
+
+    /**
+     * PEŁNE tygodnie okresu — tak liczy się czas pracy w KP i tylko tak wychodzą
+     * prawdziwe liczby: I kwartał ma 90 dni, czyli 12 pełnych tygodni, a nie 13.
+     * Zaokrąglanie zawyżało limit nadgodzin I kwartału o 8 h.
+     */
+    val weeks: Int get() = (days / 7).toInt()
 
     operator fun contains(d: LocalDate): Boolean = !d.isBefore(start) && !d.isAfter(end)
 }
@@ -45,6 +54,9 @@ object Settlement {
 
     /** Art. 131 § 1 KP — z nadgodzinami przeciętnie najwyżej tyle godzin tygodniowo. */
     const val MAX_WEEK_WITH_OT = 48
+
+    /** Art. 151 § 3 KP — roczny limit nadgodzin, gdy zakład nie ustalił własnego. */
+    const val OT_LIMIT_YEAR = 150
 
     /** Dopuszczalne długości okresu rozliczeniowego (art. 129 KP dopuszcza do 12 miesięcy). */
     val DLUGOSCI = listOf(1, 3, 4, 6, 12)
@@ -89,10 +101,17 @@ object Settlement {
     }
 
     /**
-     * Ile nadgodzin wolno w okresie. Art. 131: łącznie z nadgodzinami przeciętnie 48 h
-     * tygodniowo, czyli 8 h nadgodzin na tydzień okresu.
+     * Techniczny limit nadgodzin okresu. Art. 131: łącznie z nadgodzinami przeciętnie
+     * 48 h tygodniowo, czyli 8 h nadgodzin na każdy pełny tydzień okresu.
+     * Dla kwartałów wychodzi 96 h (I) albo 104 h (pozostałe).
+     *
+     * To sufit czysto techniczny — realnie może go wcześniej zablokować limit roczny.
      */
     fun otLimit(p: Period): Int = (MAX_WEEK_WITH_OT - NORM_WEEK) * p.weeks
+
+    /** Obowiązujący limit roczny: zakładowy, gdy podany, inaczej ustawowy. */
+    fun otLimitYear(cfg: SettlementCfg): Int =
+        cfg.otLimitYearCompany.takeIf { it > 0 } ?: OT_LIMIT_YEAR
 }
 
 /** Rozliczenie całego okresu — to, co widać w podsumowaniu nad kartą miesiąca. */
@@ -105,14 +124,28 @@ data class PeriodStats(
     val norm: Int = 0,
     val normUstawowa: Int = 0,
     val ot: Int = 0,
+    /** Sufit techniczny okresu z art. 131 — bez oglądania się na limit roczny. */
     val otLimit: Int = 0,
     val otRok: Int = 0,
-    val otLimitRok: Int = 150,
+    /** Limit roczny, który naprawdę obowiązuje: zakładowy albo ustawowy. */
+    val otLimitRok: Int = Settlement.OT_LIMIT_YEAR,
+    /** Czy roczny pochodzi z ustaleń zakładu — wtedy pokazujemy oba. */
+    val otLimitRokZakladowy: Boolean = false,
     val biezacy: Boolean = false
 ) {
     val diff: Int get() = rozliczone - norm
     /** Czy norma zakładowa różni się od ustawowej — wtedy pokazujemy obie. */
     val normaInna: Boolean get() = norm != normUstawowa
-    val zostaloNadgodzin: Int get() = (otLimit - ot).coerceAtLeast(0)
     val zostaloNadgodzinRok: Int get() = (otLimitRok - otRok).coerceAtLeast(0)
+
+    /**
+     * Ile nadgodzin można mieć w tym okresie NAPRAWDĘ. Sufit techniczny obowiązuje
+     * tylko wtedy, gdy wcześniej nie wyczerpie się limit roczny.
+     */
+    val otLimitEff: Int get() = minOf(otLimit, ot + zostaloNadgodzinRok)
+
+    /** Czy to limit roczny, a nie art. 131, wyznacza granicę w tym okresie. */
+    val blokujeRoczny: Boolean get() = otLimitEff < otLimit
+
+    val zostaloNadgodzin: Int get() = (otLimitEff - ot).coerceAtLeast(0)
 }

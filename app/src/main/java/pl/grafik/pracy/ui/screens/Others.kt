@@ -123,9 +123,22 @@ fun SummaryScreen(vm: Vm) {
                 Spacer(Modifier.height(10.dp))
             }
 
-            LimitNadgodzin("nadgodziny w okresie", okr.ot, okr.otLimit)
+            // Pokazujemy limit, który NAPRAWDĘ obowiązuje — sufit techniczny okresu
+            // albo to, co zostało z rocznego, jeśli roczny kończy się wcześniej.
+            LimitNadgodzin("nadgodziny w okresie", okr.ot, okr.otLimitEff)
+            if (okr.blokujeRoczny) {
+                Text(
+                    "Technicznie wolno tu ${okr.otLimit} h, ale limit roczny zostawia ${okr.otLimitEff} h.",
+                    fontSize = 10.sp, color = DevColor, lineHeight = 14.sp,
+                    modifier = Modifier.padding(top = 3.dp)
+                )
+            }
             Spacer(Modifier.height(8.dp))
-            LimitNadgodzin("nadgodziny w ${okr.period.from.year}", okr.otRok, okr.otLimitRok)
+            LimitNadgodzin(
+                "nadgodziny w ${okr.period.from.year}" +
+                    if (okr.otLimitRokZakladowy) " · limit zakładu" else "",
+                okr.otRok, okr.otLimitRok
+            )
         }
 
         Card(Surface1) {
@@ -783,38 +796,72 @@ fun SetupScreen(vm: Vm, uvm: pl.grafik.pracy.ui.UpdateVm) {
 
             Text("Limit nadgodzin", fontSize = 13.sp, color = OnBg)
             Spacer(Modifier.height(8.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text("W okresie", fontSize = 12.sp, color = OnBg)
+
+            Text("W okresie — sufit techniczny", fontSize = 12.sp, color = OnBg)
+            Text(
+                "Art. 131 KP: z nadgodzinami przeciętnie ${Settlement.MAX_WEEK_WITH_OT} h tygodniowo, " +
+                    "czyli 8 h na każdy pełny tydzień okresu. Obowiązuje tylko wtedy, " +
+                    "gdy wcześniej nie wyczerpie się limit roczny.",
+                fontSize = 10.sp, color = OnFaint, lineHeight = 14.sp
+            )
+            Spacer(Modifier.height(8.dp))
+            Settlement.periodsOfYear(s.ym.year, s.okres).forEach { okr ->
+                val teraz = okr.from == okresTeraz.from
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(vertical = 2.dp)
+                ) {
                     Text(
-                        "Art. 131 KP — z nadgodzinami przeciętnie ${Settlement.MAX_WEEK_WITH_OT} h tygodniowo.",
-                        fontSize = 10.sp, color = OnFaint, lineHeight = 14.sp
+                        okresLabel(okr), fontSize = 12.sp,
+                        color = if (teraz) Accent else OnMuted,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text("${okr.weeks} tyg.", fontSize = 10.sp, color = OnFaint)
+                    Text(
+                        "${Settlement.otLimit(okr)} h", fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (teraz) Accent else OnMuted,
+                        modifier = Modifier.width(56.dp), textAlign = TextAlign.End
                     )
                 }
+            }
+
+            Spacer(Modifier.height(12.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("W roku — ustawowo", fontSize = 12.sp, color = OnBg)
+                    Text("Art. 151 § 3 KP.", fontSize = 10.sp, color = OnFaint)
+                }
                 Text(
-                    "${Settlement.otLimit(okresTeraz)} h",
+                    "${Settlement.OT_LIMIT_YEAR} h",
                     fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = OnMuted,
                     modifier = Modifier.padding(start = 8.dp)
                 )
             }
+
             Spacer(Modifier.height(10.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text("W roku", fontSize = 12.sp, color = OnBg)
+                    Text("W roku — limit zakładowy", fontSize = 12.sp, color = OnBg)
                     Text(
-                        "Ustawowo 150 h (art. 151 § 3). Zmień, jeśli regulamin zakładu daje więcej.",
+                        "Ile dopuszcza Twój zakład. Tego nie wolno przekroczyć — " +
+                            "gdy jest podany, to on obowiązuje zamiast ustawowego.",
                         fontSize = 10.sp, color = OnFaint, lineHeight = 14.sp
                     )
                 }
-                var limit by remember { mutableStateOf(s.okres.otLimitYear.toString()) }
+                // Klucz remembera nie może zależeć od zapisywanej wartości — inaczej
+                // opóźniona emisja z DataStore przestawia cyfry w trakcie pisania.
+                var limit by remember {
+                    mutableStateOf(s.okres.otLimitYearCompany.takeIf { it > 0 }?.toString() ?: "")
+                }
                 OutlinedTextField(
                     value = limit,
                     onValueChange = { v ->
                         val czyste = v.filter(Char::isDigit).take(3)
                         limit = czyste
-                        czyste.toIntOrNull()?.let { vm.saveSettlement(s.okres.copy(otLimitYear = it)) }
+                        vm.saveSettlement(s.okres.copy(otLimitYearCompany = czyste.toIntOrNull() ?: 0))
                     },
-                    placeholder = { Text("150", fontSize = 13.sp, color = OnFaint) },
+                    placeholder = { Text("—", fontSize = 13.sp, color = OnFaint) },
                     suffix = { Text("h", fontSize = 12.sp, color = OnMuted) },
                     singleLine = true,
                     modifier = Modifier.width(112.dp),

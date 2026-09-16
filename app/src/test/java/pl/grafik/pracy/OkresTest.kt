@@ -80,10 +80,45 @@ class OkresTest {
     }
 
     @Test fun limit_nadgodzin_w_kwartale_wynika_z_art_131() {
-        val p = Settlement.periodOf(ym("2026-09"), kwartalny)
-        assertEquals(92, java.time.temporal.ChronoUnit.DAYS.between(p.start, p.end.plusDays(1)))
-        assertEquals(13, p.weeks)                       // 92 dni to 13 tygodni
-        assertEquals(8 * 13, Settlement.otLimit(p))     // 48 h - 40 h = 8 h nadgodzin na tydzień
+        // Pełne tygodnie, nie zaokrąglone: I kwartał ma 90 dni = 12 tygodni, nie 13.
+        val limity = Settlement.periodsOfYear(2026, kwartalny).map { Settlement.otLimit(it) }
+        assertEquals(listOf(96, 104, 104, 104), limity)
+
+        val q1 = Settlement.periodOf(ym("2026-02"), kwartalny)
+        assertEquals(90L, q1.days)
+        assertEquals(12, q1.weeks)
+    }
+
+    @Test fun ten_sam_zakres_limitow_w_kazdym_roku() {
+        listOf(2025, 2026, 2027, 2028).forEach { rok ->
+            val limity = Settlement.periodsOfYear(rok, kwartalny).map { Settlement.otLimit(it) }
+            assertTrue("rok $rok: $limity", limity.all { it in 96..104 })
+        }
+    }
+
+    @Test fun limit_roczny_zakladowy_ma_pierwszenstwo_przed_ustawowym() {
+        assertEquals(150, Settlement.otLimitYear(SettlementCfg()))
+        assertEquals(150, Settlement.otLimitYear(SettlementCfg(otLimitYearCompany = 0)))
+        assertEquals(416, Settlement.otLimitYear(SettlementCfg(otLimitYearCompany = 416)))
+        // zakład może też ustawić NIŻSZY limit niż ustawowy
+        assertEquals(100, Settlement.otLimitYear(SettlementCfg(otLimitYearCompany = 100)))
+    }
+
+    @Test fun limit_roczny_potrafi_zablokowac_sufit_techniczny() {
+        // 130 h nadgodzin w roku przy limicie 150 — w okresie zostaje tylko 20 h,
+        // mimo że technicznie wolno 104 h.
+        val st = PeriodStats(ot = 10, otLimit = 104, otRok = 130, otLimitRok = 150)
+        assertEquals(20, st.zostaloNadgodzinRok)
+        assertEquals(30, st.otLimitEff)
+        assertEquals(20, st.zostaloNadgodzin)
+        assertTrue(st.blokujeRoczny)
+    }
+
+    @Test fun gdy_rok_nie_blokuje_obowiazuje_sufit_techniczny() {
+        val st = PeriodStats(ot = 10, otLimit = 104, otRok = 10, otLimitRok = 150)
+        assertEquals(104, st.otLimitEff)
+        assertEquals(94, st.zostaloNadgodzin)
+        assertFalse(st.blokujeRoczny)
     }
 
     @Test fun okres_zawiera_swoje_dni() {

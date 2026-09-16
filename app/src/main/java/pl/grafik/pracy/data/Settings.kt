@@ -147,7 +147,7 @@ class SettingsStore(private val ctx: Context) {
                 val h = kv.getOrNull(1)?.trim()?.toIntOrNull()
                 if (kv.size == 2 && h != null) kv[0].trim() to h else null
             }.toMap(),
-            otLimitYear = p[kOkrLimitRok] ?: 150
+            otLimitYearCompany = p[kOkrLimitRok] ?: 0
         )
     }
 
@@ -158,7 +158,7 @@ class SettingsStore(private val ctx: Context) {
             p[kOkrNormy] = c.companyNorms.entries
                 .filter { it.value > 0 }
                 .joinToString(",") { "${it.key}:${it.value}" }
-            p[kOkrLimitRok] = c.otLimitYear.coerceIn(0, 999)
+            p[kOkrLimitRok] = c.otLimitYearCompany.coerceIn(0, 999)
         }
     }
 
