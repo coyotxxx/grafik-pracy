@@ -265,4 +265,36 @@ class PresenceFlowTest {
         assertEquals(day.toString(), row.date)      // nie następny dzień
         assertEquals(1, row.otHours)                // 21:40->22:00, 7:20->7:00 = 9 h
     }
+
+    @Test
+    fun zamiana_zmian_wpisuje_do_grafiku_te_zmiane_na_ktora_przyszedlem() = runBlocking {
+        planShift(day, Shift.I)                                   // grafik mówi: zmiana I 6–14
+
+        PresenceRepo.onEnter(ctx, day.atTime(21, 30))             // a ja przyjechałem na nockę
+        val id = PresenceRepo.onExit(ctx, day.plusDays(1).atTime(6, 15))
+        assertNotNull("brak propozycji", id)
+
+        val row = db.presenceDao().byId(id!!)!!
+        assertEquals("III", row.shiftCode)
+        assertEquals(0, row.otHours)                              // zamiana zmian to nie nadgodziny
+
+        PresenceRepo.accept(ctx, id)
+        val wpis = db.dayDao().get(day.toString())!!.toEntry()
+        assertEquals(Shift.III, wpis.shift)                       // grafik poprawiony
+        assertEquals(0, wpis.otHours)
+    }
+
+    @Test
+    fun w_dniu_wolnym_zostaje_oznaczenie_dnia_a_godziny_ida_w_nadgodziny() = runBlocking {
+        planShift(day, Shift.W5)
+
+        PresenceRepo.onEnter(ctx, day.atTime(21, 30))
+        val id = PresenceRepo.onExit(ctx, day.plusDays(1).atTime(6, 15))!!
+
+        PresenceRepo.accept(ctx, id)
+        val wpis = db.dayDao().get(day.toString())!!.toEntry()
+        assertEquals(Shift.W5, wpis.shift)                        // dzień wolny zostaje wolny
+        assertEquals(8, wpis.otHours)
+        assertEquals(OtRate.P100, wpis.otRate)
+    }
 }

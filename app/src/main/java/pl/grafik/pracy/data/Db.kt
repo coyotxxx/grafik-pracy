@@ -56,8 +56,12 @@ data class PresenceRow(
     val otRate: Int = 100,
     val countedFrom: String = "",
     val countedTo: String = "",
-    val createdAt: String = ""
-)
+    val createdAt: String = "",
+    /** Kod zmiany rozpoznanej przy analizie pobytu; pusty = nie wiadomo (stare wpisy). */
+    val shiftCode: String = ""
+) {
+    val shift: Shift? get() = Shift.entries.firstOrNull { it.code == shiftCode }
+}
 
 @Dao
 interface PresenceDao {
@@ -153,7 +157,7 @@ interface DayDao {
     suspend fun clearAll()
 }
 
-@Database(entities = [DayRow::class, PresenceRow::class, EventRow::class], version = 3, exportSchema = false)
+@Database(entities = [DayRow::class, PresenceRow::class, EventRow::class], version = 4, exportSchema = false)
 abstract class AppDb : RoomDatabase() {
     abstract fun dayDao(): DayDao
     abstract fun presenceDao(): PresenceDao
@@ -204,10 +208,20 @@ abstract class AppDb : RoomDatabase() {
             }
         }
 
+        /**
+         * v3 -> v4: zapamiętujemy zmianę rozpoznaną przy analizie pobytu.
+         * Bez tego zamiana zmian gubiła się przy zapisie — dzień zostawał z etykietą z grafiku.
+         */
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `presence` ADD COLUMN `shiftCode` TEXT NOT NULL DEFAULT ''")
+            }
+        }
+
         @Volatile private var inst: AppDb? = null
         fun get(ctx: Context): AppDb = inst ?: synchronized(this) {
             inst ?: Room.databaseBuilder(ctx.applicationContext, AppDb::class.java, "grafik.db")
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                 .build().also { inst = it }
         }
     }

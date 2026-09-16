@@ -255,6 +255,14 @@ fun WorkPlaceScreen(vm: PresenceVm) {
                                 "${java.time.LocalDateTime.parse(r.enterAt).format(hm)}–${java.time.LocalDateTime.parse(r.exitAt).format(hm)}",
                                 fontSize = 12.sp, color = OnMuted, modifier = Modifier.weight(1f)
                             )
+                            // Rozpoznana zmiana — przy zamianie zmian to ona ląduje w grafiku.
+                            r.shift?.takeIf { it.isWork }?.let { z ->
+                                Text(
+                                    z.code, fontSize = 12.sp, color = OnMuted,
+                                    fontWeight = FontWeight.SemiBold,
+                                    modifier = Modifier.padding(end = 8.dp)
+                                )
+                            }
                             Text(
                                 if (r.otHours > 0) "+${r.otHours} h ${r.otRate}%" else "bez NG",
                                 fontSize = 12.sp,

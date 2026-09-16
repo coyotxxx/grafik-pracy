@@ -159,7 +159,8 @@ object PresenceRepo {
                 otRate = result.otRate.percent,
                 countedFrom = result.countedFrom.toString(),
                 countedTo = result.countedTo.toString(),
-                createdAt = LocalDateTime.now().toString()
+                createdAt = LocalDateTime.now().toString(),
+                shiftCode = result.shift?.code ?: ""
             )
         )
         Log.i(TAG, "zapisano propozycję #$id: ${result.date} ${result.otHours}h ${result.otRate.percent}% (${'$'}source)")
@@ -201,9 +202,12 @@ object PresenceRepo {
                         else hour?.let { shiftFromHour(it) }
             )
 
-        // W dniu wolnym zostawiamy oznaczenie dnia (w5/wś) i całą obecność zapisujemy
-        // jako nadgodziny — inaczej doliczylibyśmy 8 h normy, której tego dnia nie było.
+        // Zapisujemy dokładnie to, co pokazało powiadomienie: rozpoznaną zmianę i nadgodziny.
+        // W dniu wolnym rozpoznana zmiana to samo oznaczenie dnia (w5/wś), więc etykieta
+        // zostaje, a cała obecność idzie jako nadgodziny — normy tego dnia nie było.
+        // Stare wpisy nie mają zapisanej zmiany (pusty kod) — wtedy nie ruszamy tego, co jest.
         val next = cur.copy(
+            shift = row.shift ?: cur.shift,
             otHours = row.otHours,
             otRate = if (row.otRate == 50) OtRate.P50 else OtRate.P100
         )
