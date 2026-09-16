@@ -113,6 +113,40 @@ class OkresTest {
         assertEquals(0, st.zostalo)
     }
 
+    @Test fun limit_roczny_to_suma_kwartalow() {
+        // Bez wpisów zakładu: 96 + 104 + 104 + 104
+        assertEquals(408, Settlement.yearLimit(2026, kwartalny))
+
+        // Zakład obniża II i III kwartał o 10 h
+        val zZakladem = kwartalny.copy(otLimitPeriods = mapOf("2026-04" to 94, "2026-07" to 94))
+        assertEquals(96 + 94 + 94 + 104, Settlement.yearLimit(2026, zZakladem))
+    }
+
+    @Test fun suma_kwartalow_miesci_sie_w_rocznej_granicy_z_art_131() {
+        listOf(2025, 2026, 2027, 2028).forEach { rok ->
+            val sufit = Settlement.yearCeiling(rok)
+            assertEquals("rok $rok", 416, sufit)
+            assertTrue(
+                "rok $rok: ${Settlement.yearLimit(rok, kwartalny)} > $sufit",
+                Settlement.yearLimit(rok, kwartalny) <= sufit
+            )
+        }
+    }
+
+    @Test fun zawyzone_limity_zakladu_przekraczaja_granice_roczna() {
+        val zaDuzo = kwartalny.copy(
+            otLimitPeriods = mapOf("2026-01" to 120, "2026-04" to 120, "2026-07" to 120, "2026-10" to 120)
+        )
+        assertEquals(480, Settlement.yearLimit(2026, zaDuzo))
+        assertTrue(Settlement.yearLimit(2026, zaDuzo) > Settlement.yearCeiling(2026))
+    }
+
+    @Test fun limit_okresu_bierze_zakladowy_gdy_jest() {
+        val p = Settlement.periodOf(ym("2026-09"), kwartalny)
+        assertEquals(104, Settlement.periodLimit(p, kwartalny))
+        assertEquals(94, Settlement.periodLimit(p, kwartalny.copy(otLimitPeriods = mapOf("2026-07" to 94))))
+    }
+
     @Test fun okres_zawiera_swoje_dni() {
         val p = Settlement.periodOf(ym("2026-09"), kwartalny)
         assertTrue(LocalDate.parse("2026-07-01") in p)

@@ -41,9 +41,9 @@ data class UiState(
     val okres: SettlementCfg = SettlementCfg(),
     /** Nadgodziny każdego okresu roku — po jednym pasku na kwartał. */
     val okresy: List<PeriodStats> = emptyList(),
-    /** Nadgodziny w całym roku i limit z art. 151 § 3 KP. */
+    /** Nadgodziny w całym roku i limit roczny, czyli suma limitów okresów. */
     val otRok: Int = 0,
-    val otLimitRok: Int = Settlement.OT_LIMIT_YEAR
+    val otLimitRok: Int = 0
 ) {
     /**
      * Bilans urlopu w roku wyświetlanego miesiąca.
@@ -167,7 +167,8 @@ class Vm(app: Application) : AndroidViewModel(app) {
         val wMiesiacu = merged.filterKeys { YearMonth.from(it) == ym }
 
         UiState(ym, merged, ev, cfg, cols, tool, otH, otR, calc(wMiesiacu, ym), rem.first, rem.second,
-            maluj, url, urlRok, urlPrev, motyw, okres, okresy.first, okresy.second)
+            maluj, url, urlRok, urlPrev, motyw, okres, okresy.first, okresy.second,
+            Settlement.yearLimit(ym.year, okres))
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState())
 
     private fun calc(m: Map<LocalDate, DayEntry>, ym: YearMonth): MonthStats {

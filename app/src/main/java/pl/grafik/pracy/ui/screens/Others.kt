@@ -84,16 +84,18 @@ fun SummaryScreen(vm: Vm) {
                     LimitNadgodzin(okresLabel(okr.period), okr.ot, okr.limit, okr.biezacy)
                 }
 
-                // Limit roczny potrafi domknąć kwartał wcześniej — mówimy o tym tylko wtedy,
-                // gdy naprawdę zostaje go mniej niż w bieżącym okresie.
-                val teraz = s.okresy.firstOrNull { it.biezacy }
-                val zostaloWRoku = (s.otLimitRok - s.otRok).coerceAtLeast(0)
-                if (teraz != null && zostaloWRoku < teraz.zostalo) {
-                    Spacer(Modifier.height(8.dp))
+                // Rok to suma kwartałów — jedna linijka, bez osobnego paska.
+                Spacer(Modifier.height(12.dp))
+                HorizontalDivider(color = Surface3)
+                Spacer(Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        "W ${s.ym.year} wykorzystane ${s.otRok} z ${s.otLimitRok} h — " +
-                            "w tym okresie zostaje już tylko $zostaloWRoku h.",
-                        fontSize = 10.sp, color = DevColor, lineHeight = 14.sp
+                        "razem w ${s.ym.year}", fontSize = 11.sp, color = OnFaint,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        "${s.otRok} / ${s.otLimitRok} h", fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium, color = OnMuted
                     )
                 }
             }
@@ -758,18 +760,32 @@ fun SetupScreen(vm: Vm, uvm: pl.grafik.pracy.ui.UpdateVm) {
             )
 
             Spacer(Modifier.height(12.dp))
+            HorizontalDivider(color = Surface3)
+            Spacer(Modifier.height(10.dp))
+
+            // Rok to suma kwartałów — tak liczy to zakład Macieja.
+            val rokRazem = Settlement.yearLimit(s.ym.year, s.okres)
+            val rokSufit = Settlement.yearCeiling(s.ym.year)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text("W roku — ustawowo", fontSize = 12.sp, color = OnBg)
+                    Text("W roku — razem", fontSize = 12.sp, color = OnBg)
                     Text(
-                        "Art. 151 § 3 KP. Zamyka limity okresowe, jeśli wyczerpie się wcześniej.",
+                        "Suma limitów kwartalnych. Art. 131 KP dopuszcza w ${s.ym.year} najwyżej $rokSufit h.",
                         fontSize = 10.sp, color = OnFaint, lineHeight = 14.sp
                     )
                 }
                 Text(
-                    "${Settlement.OT_LIMIT_YEAR} h",
-                    fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = OnMuted,
+                    "$rokRazem h",
+                    fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
+                    color = if (rokRazem > rokSufit) Danger else OnMuted,
                     modifier = Modifier.padding(start = 8.dp)
+                )
+            }
+            if (rokRazem > rokSufit) {
+                Text(
+                    "Suma kwartałów przekracza roczną granicę z art. 131 o ${rokRazem - rokSufit} h.",
+                    fontSize = 10.sp, color = Danger, lineHeight = 14.sp,
+                    modifier = Modifier.padding(top = 4.dp)
                 )
             }
         }

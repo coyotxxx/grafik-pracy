@@ -48,8 +48,6 @@ object Settlement {
     /** Art. 131 § 1 KP — z nadgodzinami przeciętnie najwyżej tyle godzin tygodniowo. */
     const val MAX_WEEK_WITH_OT = 48
 
-    /** Art. 151 § 3 KP — roczny limit nadgodzin, gdy zakład nie ustalił własnego. */
-    const val OT_LIMIT_YEAR = 150
 
     /** Dopuszczalne długości okresu rozliczeniowego (art. 129 KP dopuszcza do 12 miesięcy). */
     val DLUGOSCI = listOf(1, 3, 4, 6, 12)
@@ -93,6 +91,26 @@ object Settlement {
     /** Limit okresu podany przez zakład; null = zakład nic nie narzucił. */
     fun otLimitCompany(p: Period, cfg: SettlementCfg): Int? =
         cfg.otLimitPeriods[key(p)]?.takeIf { it > 0 }
+
+    /** Limit okresu, który obowiązuje: zakładowy, gdy wpisany, inaczej ustawowy. */
+    fun periodLimit(p: Period, cfg: SettlementCfg): Int =
+        otLimitCompany(p, cfg) ?: otLimit(p)
+
+    /**
+     * Roczny limit nadgodzin = SUMA limitów okresów.
+     * Zakład Macieja tak to ustala: rok to tyle, ile dają poszczególne kwartały.
+     */
+    fun yearLimit(year: Int, cfg: SettlementCfg): Int =
+        periodsOfYear(year, cfg).sumOf { periodLimit(it, cfg) }
+
+    /**
+     * Górna granica roku z art. 131 KP — 8 h nadgodzin na każdy pełny tydzień roku,
+     * czyli 416 h. Suma limitów kwartalnych nie powinna jej przekraczać.
+     */
+    fun yearCeiling(year: Int): Int {
+        val dni = ChronoUnit.DAYS.between(LocalDate.of(year, 1, 1), LocalDate.of(year + 1, 1, 1))
+        return (MAX_WEEK_WITH_OT - NORM_WEEK) * (dni / 7).toInt()
+    }
 }
 
 /** Nadgodziny jednego okresu względem limitu — jeden pasek w podsumowaniu. */
