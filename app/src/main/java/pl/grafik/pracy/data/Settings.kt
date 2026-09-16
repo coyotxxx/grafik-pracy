@@ -43,8 +43,6 @@ class SettingsStore(private val ctx: Context) {
     private val kWpStay = intPreferencesKey("wp_min_stay")
     private val kWpGap = intPreferencesKey("wp_merge_gap")
     private val kOkrDl = intPreferencesKey("okres_dlugosc")
-    private val kOkrZakl = booleanPreferencesKey("okres_norma_zakl")
-    private val kOkrNormy = stringPreferencesKey("okres_normy")
     private val kOkrLimity = stringPreferencesKey("okres_limity")
 
     val config: Flow<CycleConfig> = ctx.ds.data.map { p ->
@@ -135,18 +133,12 @@ class SettingsStore(private val ctx: Context) {
     }
 
     /**
-     * Rozliczenie czasu pracy: długość okresu i normy.
-     * Normy zakładowe trzymamy jako „2026-01:168,2026-02:160" — jedna linia zamiast tabeli.
+     * Rozliczenie czasu pracy: długość okresu i limity nadgodzin zakładu.
+     * Limity trzymamy jako „2026-01:94,2026-04:94" — jedna linia zamiast tabeli.
      */
     val settlement: Flow<SettlementCfg> = ctx.ds.data.map { p ->
         SettlementCfg(
             months = p[kOkrDl] ?: 3,
-            useCompanyNorm = p[kOkrZakl] ?: false,
-            companyNorms = (p[kOkrNormy] ?: "").split(",").mapNotNull {
-                val kv = it.split(":")
-                val h = kv.getOrNull(1)?.trim()?.toIntOrNull()
-                if (kv.size == 2 && h != null) kv[0].trim() to h else null
-            }.toMap(),
             otLimitPeriods = (p[kOkrLimity] ?: "").split(",").mapNotNull {
                 val kv = it.split(":")
                 val h = kv.getOrNull(1)?.trim()?.toIntOrNull()
@@ -158,10 +150,6 @@ class SettingsStore(private val ctx: Context) {
     suspend fun saveSettlement(c: SettlementCfg) {
         ctx.ds.edit { p ->
             p[kOkrDl] = c.months.coerceIn(1, 12)
-            p[kOkrZakl] = c.useCompanyNorm
-            p[kOkrNormy] = c.companyNorms.entries
-                .filter { it.value > 0 }
-                .joinToString(",") { "${it.key}:${it.value}" }
             p[kOkrLimity] = c.otLimitPeriods.entries
                 .filter { it.value > 0 }
                 .joinToString(",") { "${it.key}:${it.value}" }

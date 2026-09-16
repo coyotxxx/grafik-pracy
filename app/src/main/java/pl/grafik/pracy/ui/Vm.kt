@@ -39,8 +39,11 @@ data class UiState(
     val motyw: pl.grafik.pracy.ui.theme.PaletteTheme = pl.grafik.pracy.ui.theme.PaletteTheme.OBECNA,
     /** Jak zakład rozlicza czas pracy: długość okresu i normy. */
     val okres: SettlementCfg = SettlementCfg(),
-    /** Rozliczenie całego okresu, w którym leży wyświetlany miesiąc. */
-    val okresStats: PeriodStats = PeriodStats()
+    /** Nadgodziny każdego okresu roku — po jednym pasku na kwartał. */
+    val okresy: List<PeriodStats> = emptyList(),
+    /** Nadgodziny w całym roku i limit z art. 151 § 3 KP. */
+    val otRok: Int = 0,
+    val otLimitRok: Int = Settlement.OT_LIMIT_YEAR
 ) {
     /**
      * Bilans urlopu w roku wyświetlanego miesiąca.
@@ -149,6 +152,8 @@ class Vm(app: Application) : AndroidViewModel(app) {
         @Suppress("UNCHECKED_CAST")
         val rokRows = arr[15] as List<DayRow>
 
+        val okresy = calcOkresy(rokRows, ym, cfg, okres)
+
         val (gStart, gEnd) = gridRange(ym)
         val saved = rows.associate { LocalDate.parse(it.date) to it.toEntry() }
         // Pusta aplikacja pokazuje tylko to, co użytkownik sam wpisał.
@@ -162,7 +167,7 @@ class Vm(app: Application) : AndroidViewModel(app) {
         val wMiesiacu = merged.filterKeys { YearMonth.from(it) == ym }
 
         UiState(ym, merged, ev, cfg, cols, tool, otH, otR, calc(wMiesiacu, ym), rem.first, rem.second,
-            maluj, url, urlRok, urlPrev, motyw, okres, calcPeriod(rokRows, ym, cfg, okres))
+            maluj, url, urlRok, urlPrev, motyw, okres, okresy.first, okresy.second)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState())
 
     private fun calc(m: Map<LocalDate, DayEntry>, ym: YearMonth): MonthStats {
@@ -204,13 +209,12 @@ class Vm(app: Application) : AndroidViewModel(app) {
     }
 
     /**
-     * Rozliczenie okresu. Bierzemy cały rok, bo z tych samych dni liczymy limit roczny
-     * nadgodzin, a okres i tak nigdy nie przechodzi przez granicę roku.
+     * Nadgodziny w rozbiciu na okresy roku plus suma roczna.
+     * Cały rok bierzemy jednym zapytaniem — okres i tak nigdy nie przechodzi przez granicę roku.
      */
-    private fun calcPeriod(
+    private fun calcOkresy(
         rokRows: List<DayRow>, ym: YearMonth, cfg: CycleConfig, okres: SettlementCfg
-    ): PeriodStats {
-        val p = Settlement.periodOf(ym, okres)
+    ): Pair<List<PeriodStats>, Int> {
         val rokOd = LocalDate.of(ym.year, 1, 1)
         val rokDo = LocalDate.of(ym.year, 12, 31)
 
@@ -220,29 +224,28 @@ class Vm(app: Application) : AndroidViewModel(app) {
         CycleGenerator.range(cfg, rokOd, rokDo).forEach { (d, sh) -> dni[d] = zapisane[d] ?: DayEntry(date = d, shift = sh) }
         zapisane.forEach { (d, e) -> dni[d] = e }
 
-        val dzis = LocalDate.now()
-        var rozliczone = 0; var doDzis = 0; var ot = 0; var otRok = 0
+        val okresyRoku = Settlement.periodsOfYear(ym.year, okres)
+        val biezacy = Settlement.periodOf(ym, okres)
+        val nadgodziny = HashMap<YearMonth, Int>()
+        var otRok = 0
         dni.forEach { (d, e) ->
+            if (e.otHours == 0) return@forEach
             otRok += e.otHours
-            if (d in p) {
-                val godz = e.workedHours + (if (e.shift == Shift.URLOP) 8 else 0)
-                rozliczone += godz
-                ot += e.otHours
-                if (!d.isAfter(dzis)) doDzis += godz
+            okresyRoku.firstOrNull { d in it }?.let { p ->
+                nadgodziny[p.from] = (nadgodziny[p.from] ?: 0) + e.otHours
             }
         }
-        return PeriodStats(
-            period = p,
-            rozliczone = rozliczone,
-            doDzis = doDzis,
-            norm = Settlement.norm(p, okres),
-            normUstawowa = Settlement.statutoryNorm(p),
-            ot = ot,
-            otLimit = Settlement.otLimit(p),
-            otRok = otRok,
-            otLimitZakl = Settlement.otLimitCompany(p, okres),
-            biezacy = dzis in p
-        )
+
+        val lista = okresyRoku.map { p ->
+            PeriodStats(
+                period = p,
+                ot = nadgodziny[p.from] ?: 0,
+                otLimit = Settlement.otLimit(p),
+                otLimitZakl = Settlement.otLimitCompany(p, okres),
+                biezacy = p.from == biezacy.from
+            )
+        }
+        return lista to otRok
     }
 
     fun saveSettlement(c: SettlementCfg) = viewModelScope.launch { settings.saveSettlement(c) }

@@ -14,14 +14,6 @@ import java.time.temporal.ChronoUnit
 data class SettlementCfg(
     /** Długość okresu w miesiącach. Kwartał = 3. */
     val months: Int = 3,
-    /** Czy rozliczamy się normą zakładową zamiast ustawowej. */
-    val useCompanyNorm: Boolean = false,
-    /**
-     * Godziny podane przez zakład na CAŁY okres (Maciej dostaje liczbę na kwartał,
-     * nie na pojedynczy miesiąc). Klucz to pierwszy miesiąc okresu, „yyyy-MM".
-     * Brak wpisu = zostaje norma ustawowa.
-     */
-    val companyNorms: Map<String, Int> = emptyMap(),
     /**
      * Limit nadgodzin podany przez zakład na CAŁY okres — ten, którego nie wolno przekroczyć.
      * Klucz jak przy godzinach: pierwszy miesiąc okresu. Brak wpisu = obowiązuje
@@ -92,16 +84,6 @@ object Settlement {
     fun statutoryNorm(p: Period): Int = p.months.sumOf { statutoryNorm(it) }
 
     /**
-     * Norma obowiązująca w okresie. Zakładowa wchodzi tylko wtedy, gdy jest włączona
-     * i faktycznie wpisana — pusty wpis nie może wyzerować normy.
-     */
-    fun norm(p: Period, cfg: SettlementCfg): Int {
-        val ust = statutoryNorm(p)
-        if (!cfg.useCompanyNorm) return ust
-        return cfg.companyNorms[key(p)]?.takeIf { it > 0 } ?: ust
-    }
-
-    /**
      * Ustawowy limit nadgodzin okresu. Art. 131: łącznie z nadgodzinami przeciętnie
      * 48 h tygodniowo, czyli 8 h nadgodzin na każdy pełny tydzień okresu.
      * Dla kwartałów wychodzi 96 h (I) albo 104 h (pozostałe).
@@ -113,48 +95,25 @@ object Settlement {
         cfg.otLimitPeriods[key(p)]?.takeIf { it > 0 }
 }
 
-/** Rozliczenie całego okresu — to, co widać w podsumowaniu nad kartą miesiąca. */
+/** Nadgodziny jednego okresu względem limitu — jeden pasek w podsumowaniu. */
 data class PeriodStats(
     val period: Period = Period(YearMonth.now(), YearMonth.now()),
-    /** Przepracowane + pokryte urlopem w całym okresie. */
-    val rozliczone: Int = 0,
-    /** To samo, ale tylko do dzisiaj — w trwającym okresie reszta jest dopiero planem. */
-    val doDzis: Int = 0,
-    val norm: Int = 0,
-    val normUstawowa: Int = 0,
+    /** Nadgodziny zrobione w tym okresie. */
     val ot: Int = 0,
-    /** Sufit techniczny okresu z art. 131 — bez oglądania się na limit roczny. */
+    /** Limit ustawowy z art. 131 KP. */
     val otLimit: Int = 0,
-    /** Limit okresu narzucony przez zakład; null = tylko sufit techniczny. */
+    /** Limit podany przez zakład; null = zakład nic nie narzucił. */
     val otLimitZakl: Int? = null,
-    val otRok: Int = 0,
-    /** Art. 151 § 3 KP. */
-    val otLimitRok: Int = Settlement.OT_LIMIT_YEAR,
     val biezacy: Boolean = false
 ) {
-    val diff: Int get() = rozliczone - norm
-    /** Czy norma zakładowa różni się od ustawowej — wtedy pokazujemy obie. */
-    val normaInna: Boolean get() = norm != normUstawowa
-    val zostaloNadgodzinRok: Int get() = (otLimitRok - otRok).coerceAtLeast(0)
-
     /**
-     * Limit okresu, który obowiązuje: zakładowy, gdy wpisany, inaczej ustawowy.
-     * Zakład zwykle obniża ustawowy o kilka godzin, więc to jego liczba jest wiążąca —
-     * nie bierzemy tu minimum, tylko wprost zastępujemy.
+     * Limit, który obowiązuje: zakładowy, gdy wpisany, inaczej ustawowy.
+     * Zakład zwykle obniża ustawowy o kilka godzin, więc jego liczba zastępuje ustawową,
+     * a nie jest z nią porównywana.
      */
-    val otLimitOkresu: Int get() = otLimitZakl ?: otLimit
+    val limit: Int get() = otLimitZakl ?: otLimit
 
-    /** Czy obowiązuje liczba podana przez zakład. */
     val zakladowyObowiazuje: Boolean get() = otLimitZakl != null
-
-    /**
-     * Ile nadgodzin można mieć w tym okresie NAPRAWDĘ. Limit okresu obowiązuje
-     * tylko wtedy, gdy wcześniej nie wyczerpie się limit roczny.
-     */
-    val otLimitEff: Int get() = minOf(otLimitOkresu, ot + zostaloNadgodzinRok)
-
-    /** Czy to limit roczny wyznacza granicę w tym okresie. */
-    val blokujeRoczny: Boolean get() = otLimitEff < otLimitOkresu
-
-    val zostaloNadgodzin: Int get() = (otLimitEff - ot).coerceAtLeast(0)
+    val zostalo: Int get() = (limit - ot).coerceAtLeast(0)
+    val wyczerpany: Boolean get() = limit > 0 && ot >= limit
 }

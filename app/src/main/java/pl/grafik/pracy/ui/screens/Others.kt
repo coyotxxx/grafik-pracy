@@ -71,79 +71,32 @@ fun SummaryScreen(vm: Vm) {
         }
         Text("Brygada ${s.cfg.brigade}", fontSize = 12.sp, color = OnMuted)
 
-        // --- okres rozliczeniowy: to z niego rozlicza się zakład, miesiąc jest tylko kawałkiem ---
-        val okr = s.okresStats
-        Card(Surface1) {
-            Text(
-                "OKRES ROZLICZENIOWY · ${okresLabel(okr.period).uppercase()}",
-                fontSize = 10.sp, color = OnFaint, fontWeight = FontWeight.Medium
-            )
-            Spacer(Modifier.height(8.dp))
-
-            // Przy okresie miesięcznym godziny są te same co w karcie niżej — nie dublujemy ich.
-            if (okr.period.months.size > 1) {
-                Row(verticalAlignment = Alignment.Bottom) {
-                    Column(Modifier.weight(1f)) {
-                        Row(verticalAlignment = Alignment.Bottom) {
-                            Text(
-                                "${if (okr.biezacy) okr.doDzis else okr.rozliczone}",
-                                fontSize = 28.sp, fontWeight = FontWeight.Bold, color = OnBg
-                            )
-                            Text(
-                                " / ${okr.norm} h", fontSize = 14.sp, color = OnMuted,
-                                modifier = Modifier.padding(bottom = 4.dp)
-                            )
-                            if (okr.biezacy) {
-                                Text(
-                                    "  do dziś", fontSize = 11.sp, color = OnFaint,
-                                    modifier = Modifier.padding(bottom = 5.dp)
-                                )
-                            }
-                        }
-                        if (okr.biezacy) {
-                            Text(
-                                "cały okres wyjdzie ${okr.rozliczone} h " +
-                                    (if (okr.diff >= 0) "(+${okr.diff} h)" else "(${okr.diff} h)"),
-                                fontSize = 10.sp, color = OnFaint
-                            )
-                        }
-                    }
+        // --- nadgodziny w okresach rozliczeniowych: zrobione / limit, jeden pasek na okres ---
+        if (s.okresy.isNotEmpty()) {
+            Card(Surface1) {
+                Text(
+                    "NADGODZINY W OKRESACH · ${s.ym.year}",
+                    fontSize = 10.sp, color = OnFaint, fontWeight = FontWeight.Medium
+                )
+                Spacer(Modifier.height(10.dp))
+                s.okresy.forEachIndexed { i, okr ->
+                    if (i > 0) Spacer(Modifier.height(10.dp))
+                    LimitNadgodzin(okresLabel(okr.period), okr.ot, okr.limit, okr.biezacy)
                 }
-                Spacer(Modifier.height(8.dp))
-                Pasek(okr.doDzis.coerceAtLeast(0), okr.norm, Accent)
-                Spacer(Modifier.height(10.dp))
-            }
 
-            // Obie normy obok siebie — zakładowa rządzi, ustawowa jest punktem odniesienia.
-            if (okr.normaInna) {
-                Text(
-                    "norma zakładowa ${okr.norm} h · ustawowa ${okr.normUstawowa} h",
-                    fontSize = 10.sp, color = DevColor
-                )
-                Spacer(Modifier.height(10.dp))
+                // Limit roczny potrafi domknąć kwartał wcześniej — mówimy o tym tylko wtedy,
+                // gdy naprawdę zostaje go mniej niż w bieżącym okresie.
+                val teraz = s.okresy.firstOrNull { it.biezacy }
+                val zostaloWRoku = (s.otLimitRok - s.otRok).coerceAtLeast(0)
+                if (teraz != null && zostaloWRoku < teraz.zostalo) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        "W ${s.ym.year} wykorzystane ${s.otRok} z ${s.otLimitRok} h — " +
+                            "w tym okresie zostaje już tylko $zostaloWRoku h.",
+                        fontSize = 10.sp, color = DevColor, lineHeight = 14.sp
+                    )
+                }
             }
-
-            // Pokazujemy limit, który NAPRAWDĘ obowiązuje — sufit techniczny okresu
-            // albo to, co zostało z rocznego, jeśli roczny kończy się wcześniej.
-            LimitNadgodzin("nadgodziny w okresie", okr.ot, okr.otLimitEff)
-            // Mówimy wprost, która reguła wyznaczyła tę liczbę.
-            val powod = when {
-                okr.blokujeRoczny ->
-                    "Limit roczny zostawia tu ${okr.otLimitEff} h " +
-                        "(sufit okresu to ${okr.otLimitOkresu} h)."
-                okr.zakladowyObowiazuje ->
-                    "Limit zakładu na ten okres: ${okr.otLimitZakl} h " +
-                        "(ustawowo ${okr.otLimit} h)."
-                else -> null
-            }
-            powod?.let {
-                Text(
-                    it, fontSize = 10.sp, color = DevColor, lineHeight = 14.sp,
-                    modifier = Modifier.padding(top = 3.dp)
-                )
-            }
-            Spacer(Modifier.height(8.dp))
-            LimitNadgodzin("nadgodziny w ${okr.period.from.year}", okr.otRok, okr.otLimitRok)
         }
 
         Card(Surface1) {
@@ -387,7 +340,7 @@ private fun Pasek(ile: Int, z: Int, kolor: Color) {
 
 /** Wykorzystanie limitu nadgodzin. Na wyczerpaniu robi się czerwono, żeby rzucało się w oczy. */
 @Composable
-private fun LimitNadgodzin(nazwa: String, ile: Int, limit: Int) {
+private fun LimitNadgodzin(nazwa: String, ile: Int, limit: Int, biezacy: Boolean = false) {
     val pelny = limit > 0 && ile >= limit
     val blisko = limit > 0 && ile >= limit * 0.9
     val kolor = when {
@@ -396,8 +349,13 @@ private fun LimitNadgodzin(nazwa: String, ile: Int, limit: Int) {
         else -> OtColor100
     }
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(nazwa, fontSize = 11.sp, color = OnMuted, modifier = Modifier.weight(1f))
-        Text("$ile / $limit h", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = kolor)
+        Text(
+            nazwa, fontSize = 12.sp,
+            color = if (biezacy) Accent else OnMuted,
+            fontWeight = if (biezacy) FontWeight.SemiBold else FontWeight.Normal,
+            modifier = Modifier.weight(1f)
+        )
+        Text("$ile / $limit h", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = kolor)
     }
     Spacer(Modifier.height(4.dp))
     Pasek(ile, limit, kolor)
@@ -720,80 +678,9 @@ fun SetupScreen(vm: Vm, uvm: pl.grafik.pracy.ui.UpdateVm) {
                 }
             }
             Text(
-                "Bieżący okres: ${okresLabel(okresTeraz)} · norma ustawowa ${Settlement.statutoryNorm(okresTeraz)} h",
-                fontSize = 11.sp, color = Accent, lineHeight = 15.sp
+                "Bieżący okres: ${okresLabel(okresTeraz)}",
+                fontSize = 11.sp, color = Accent
             )
-
-            Spacer(Modifier.height(14.dp))
-            HorizontalDivider(color = Surface3)
-            Spacer(Modifier.height(12.dp))
-
-            // Norma zakładowa — w ruchu ciągłym wychodzi inna liczba niż z art. 130 KP.
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text("Godziny z zakładu", fontSize = 13.sp, color = OnBg)
-                    Text(
-                        "Włącz, jeśli zakład podaje własną liczbę godzin na okres.",
-                        fontSize = 10.sp, color = OnFaint, lineHeight = 14.sp
-                    )
-                }
-                Switch(
-                    checked = s.okres.useCompanyNorm,
-                    onCheckedChange = { vm.saveSettlement(s.okres.copy(useCompanyNorm = it)) },
-                    colors = SwitchDefaults.colors(checkedThumbColor = AccentOn, checkedTrackColor = Accent)
-                )
-            }
-
-            if (s.okres.useCompanyNorm) {
-                Spacer(Modifier.height(10.dp))
-                Text(
-                    "Wpisz liczbę godzin, którą zakład podaje na cały okres. " +
-                        "Puste pole = zostaje norma ustawowa.",
-                    fontSize = 10.sp, color = OnFaint, lineHeight = 14.sp,
-                    modifier = Modifier.padding(bottom = 6.dp)
-                )
-                Settlement.periodsOfYear(s.ym.year, s.okres).forEach { okr ->
-                    val klucz = Settlement.key(okr)
-                    val ustawowa = Settlement.statutoryNorm(okr)
-                    val teraz = okr.from == Settlement.periodOf(s.ym, s.okres).from
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(vertical = 3.dp)
-                    ) {
-                        Column(Modifier.weight(1f)) {
-                            Text(
-                                okresLabel(okr), fontSize = 13.sp,
-                                color = if (teraz) Accent else OnBg,
-                                fontWeight = if (teraz) FontWeight.SemiBold else FontWeight.Normal
-                            )
-                            Text("ustawowo $ustawowa h", fontSize = 10.sp, color = OnFaint)
-                        }
-                        // Klucz remembera to sam okres, nigdy zapisywana wartość: emisja
-                        // z DataStore wracała w trakcie pisania i przestawiała cyfry („184" → „148").
-                        var wpis by remember(klucz) {
-                            mutableStateOf(s.okres.companyNorms[klucz]?.toString() ?: "")
-                        }
-                        OutlinedTextField(
-                            value = wpis,
-                            onValueChange = { v ->
-                                val czyste = v.filter(Char::isDigit).take(4)
-                                wpis = czyste
-                                val mapa = s.okres.companyNorms.toMutableMap()
-                                val h = czyste.toIntOrNull()
-                                if (h != null && h > 0) mapa[klucz] = h else mapa.remove(klucz)
-                                vm.saveSettlement(s.okres.copy(companyNorms = mapa))
-                            },
-                            placeholder = { Text("$ustawowa", fontSize = 13.sp, color = OnFaint) },
-                            suffix = { Text("h", fontSize = 12.sp, color = OnMuted) },
-                            singleLine = true,
-                            modifier = Modifier.width(118.dp),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            colors = poleLiczbowe(),
-                            textStyle = androidx.compose.ui.text.TextStyle(color = OnBg, fontSize = 14.sp)
-                        )
-                    }
-                }
-            }
 
             Spacer(Modifier.height(14.dp))
             HorizontalDivider(color = Surface3)

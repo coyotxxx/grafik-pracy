@@ -30,35 +30,13 @@ class OkresTest {
         }
     }
 
-    @Test fun norma_okresu_to_suma_miesiecy() {
+    @Test fun norma_ustawowa_okresu_to_suma_miesiecy() {
         val p = Settlement.periodOf(ym("2026-08"), kwartalny)
         val recznie = listOf(7, 8, 9).sumOf { Holidays.monthlyNorm(2026, it) }
         assertEquals(recznie, Settlement.statutoryNorm(p))
     }
 
-    @Test fun godziny_z_zakladu_dotycza_calego_okresu() {
-        val q3 = Settlement.periodOf(ym("2026-08"), kwartalny)
-        assertEquals("2026-07", Settlement.key(q3))             // klucz to pierwszy miesiąc okresu
-        val ustawowa = Settlement.statutoryNorm(q3)
-
-        // wpisane, ale przełącznik wyłączony — nie rusza niczego
-        val wylaczona = SettlementCfg(useCompanyNorm = false, companyNorms = mapOf("2026-07" to 540))
-        assertEquals(ustawowa, Settlement.norm(q3, wylaczona))
-
-        // włączone i wpisane
-        val wlaczona = wylaczona.copy(useCompanyNorm = true)
-        assertEquals(540, Settlement.norm(q3, wlaczona))
-
-        // inny kwartał bez wpisu — zostaje ustawowa
-        val q1 = Settlement.periodOf(ym("2026-02"), kwartalny)
-        assertEquals(Settlement.statutoryNorm(q1), Settlement.norm(q1, wlaczona))
-
-        // zero nie może wyzerować normy
-        val zero = SettlementCfg(useCompanyNorm = true, companyNorms = mapOf("2026-07" to 0))
-        assertEquals(ustawowa, Settlement.norm(q3, zero))
-    }
-
-    @Test fun rok_dzieli_sie_na_cztery_kwartaly_do_wpisania() {
+    @Test fun rok_dzieli_sie_na_cztery_kwartaly() {
         val okresy = Settlement.periodsOfYear(2026, kwartalny)
         assertEquals(4, okresy.size)
         assertEquals(listOf(1, 4, 7, 10), okresy.map { it.from.monthValue })
@@ -114,30 +92,25 @@ class OkresTest {
 
     @Test fun limit_zakladu_zastepuje_ustawowy() {
         // Zakład Macieja zwykle obniża ustawowy o kilka godzin.
-        val nizszy = PeriodStats(ot = 10, otLimit = 104, otLimitZakl = 94, otRok = 10)
-        assertEquals(94, nizszy.otLimitOkresu)
-        assertEquals(94, nizszy.otLimitEff)
-        assertEquals(84, nizszy.zostaloNadgodzin)
+        val nizszy = PeriodStats(ot = 10, otLimit = 104, otLimitZakl = 94)
+        assertEquals(94, nizszy.limit)
+        assertEquals(84, nizszy.zostalo)
         assertTrue(nizszy.zakladowyObowiazuje)
-        assertFalse(nizszy.blokujeRoczny)
+        assertFalse(nizszy.wyczerpany)
 
         // Zastępuje, a nie ogranicza — wpisana liczba obowiązuje także wtedy, gdy jest wyższa.
-        val wyzszy = PeriodStats(ot = 0, otLimit = 96, otLimitZakl = 120, otRok = 0)
-        assertEquals(120, wyzszy.otLimitOkresu)
+        assertEquals(120, PeriodStats(otLimit = 96, otLimitZakl = 120).limit)
 
         // Bez wpisu zostaje ustawowy.
-        val bezWpisu = PeriodStats(ot = 0, otLimit = 96, otLimitZakl = null, otRok = 0)
-        assertEquals(96, bezWpisu.otLimitOkresu)
+        val bezWpisu = PeriodStats(otLimit = 96)
+        assertEquals(96, bezWpisu.limit)
         assertFalse(bezWpisu.zakladowyObowiazuje)
     }
 
-    @Test fun limit_roczny_zamyka_okres_wczesniej_niz_zakladowy() {
-        // 145 h nadgodzin w roku przy ustawowych 150 — w okresie zostaje 5 h,
-        // choć zakład dopuszcza 60, a technicznie wolno 104.
-        val st = PeriodStats(ot = 10, otLimit = 104, otLimitZakl = 94, otRok = 145)
-        assertEquals(5, st.zostaloNadgodzinRok)
-        assertEquals(15, st.otLimitEff)
-        assertTrue(st.blokujeRoczny)
+    @Test fun wyczerpany_limit_nie_schodzi_ponizej_zera() {
+        val st = PeriodStats(ot = 120, otLimit = 104, otLimitZakl = 94)
+        assertTrue(st.wyczerpany)
+        assertEquals(0, st.zostalo)
     }
 
     @Test fun okres_zawiera_swoje_dni() {
@@ -148,16 +121,4 @@ class OkresTest {
         assertFalse(LocalDate.parse("2026-10-01") in p)
     }
 
-    @Test fun rozliczenie_pokazuje_obie_normy_gdy_sie_roznia() {
-        val p = Settlement.periodOf(ym("2026-09"), kwartalny)
-        val ust = Settlement.statutoryNorm(p)
-        assertFalse(PeriodStats(period = p, norm = ust, normUstawowa = ust).normaInna)
-        assertTrue(PeriodStats(period = p, norm = ust + 8, normUstawowa = ust).normaInna)
-    }
-
-    @Test fun zostalo_nadgodzin_nie_schodzi_ponizej_zera() {
-        val st = PeriodStats(ot = 120, otLimit = 104, otRok = 200, otLimitRok = 150)
-        assertEquals(0, st.zostaloNadgodzin)
-        assertEquals(0, st.zostaloNadgodzinRok)
-    }
 }
