@@ -51,7 +51,9 @@ data class CycleConfig(
     /** Od którego miesiąca cykl ma wypełniać kalendarz (null = bez ograniczenia). */
     val genFrom: java.time.YearMonth? = null,
     /** Do którego miesiąca włącznie (null = bez końca). */
-    val genTo: java.time.YearMonth? = null
+    val genTo: java.time.YearMonth? = null,
+    /** Odwrotny kierunek rotacji — III → II → I zamiast I → III → II. */
+    val reverse: Boolean = false
 ) {
     /** Czy cykl obejmuje wskazany dzień. */
     fun covers(d: LocalDate): Boolean {
@@ -65,12 +67,30 @@ data class CycleConfig(
 
 object CycleGenerator {
 
+    /**
+     * Dni cyklu w kolejności obowiązującej dla tej konfiguracji.
+     * Odwrócenie listy odwraca kierunek rotacji razem z rozkładem dni wolnych —
+     * czyli dokładnie to, co znaczy „chodzę cykl w drugą stronę".
+     */
+    fun days(cfg: CycleConfig): List<String> =
+        if (cfg.reverse) cfg.pattern.days.reversed() else cfg.pattern.days
+
+    /** Kolejność zmian, jaką daje ta konfiguracja — np. „III → II → I". */
+    fun rotationLabel(cfg: CycleConfig): String {
+        val kolejnosc = mutableListOf<String>()
+        days(cfg).forEach { c -> if (c != "w" && kolejnosc.lastOrNull() != c) kolejnosc.add(c) }
+        // pierwszy i ostatni blok mogą być tą samą zmianą rozciętą na styku cyklu
+        if (kolejnosc.size > 1 && kolejnosc.first() == kolejnosc.last()) kolejnosc.removeAt(kolejnosc.size - 1)
+        return kolejnosc.joinToString(" → ")
+    }
+
     fun shiftFor(cfg: CycleConfig, date: LocalDate): Shift {
         val delta = ChronoUnit.DAYS.between(cfg.anchorDate, date)
-        val len = cfg.pattern.length
+        val dni = days(cfg)
+        val len = dni.size
         var idx = ((delta + cfg.anchorIndex) % len).toInt()
         if (idx < 0) idx += len
-        return when (cfg.pattern.days[idx]) {
+        return when (dni[idx]) {
             "I" -> Shift.I
             "II" -> Shift.II
             "III" -> Shift.III

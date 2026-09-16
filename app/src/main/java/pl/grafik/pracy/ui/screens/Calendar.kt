@@ -243,32 +243,6 @@ private fun Palette(vm: Vm, s: UiState, otwarta: Boolean, przelacz: () -> Unit) 
                 if (!otwarta) Text("dotknij, by zmienić", fontSize = 8.sp, color = OnFaint)
             }
 
-            // Godziny i stawka zostają pod ręką także przy schowanej palecie.
-            if (s.tool == Tool.OT) {
-                Row(
-                    Modifier.clip(RoundedCornerShape(10.dp)).background(Surface2).padding(horizontal = 3.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(onClick = { vm.otMinus() }, modifier = Modifier.size(26.dp)) {
-                        Icon(Icons.Default.Remove, "mniej", tint = OnBg, modifier = Modifier.size(14.dp))
-                    }
-                    Text("${s.otHours}h", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = OnBg)
-                    IconButton(onClick = { vm.otPlus() }, modifier = Modifier.size(26.dp)) {
-                        Icon(Icons.Default.Add, "więcej", tint = OnBg, modifier = Modifier.size(14.dp))
-                    }
-                }
-                Spacer(Modifier.width(4.dp))
-                Box(
-                    Modifier.clip(RoundedCornerShape(10.dp))
-                        .background(if (s.otRate == OtRate.P100) Color(0xFF4A3410) else Surface2)
-                        .clickable { vm.toggleRate() }.padding(horizontal = 9.dp, vertical = 6.dp)
-                ) {
-                    Text("${s.otRate.percent}%", fontSize = 11.sp, fontWeight = FontWeight.Bold,
-                        color = if (s.otRate == OtRate.P100) OtColor100 else OnMuted)
-                }
-                Spacer(Modifier.width(4.dp))
-            }
-
             TextButton(onClick = { vm.undo() }, contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)) {
                 Icon(Icons.Default.Undo, null, tint = OnMuted, modifier = Modifier.size(14.dp))
                 Spacer(Modifier.width(3.dp)); Text("Cofnij", fontSize = 10.sp, color = OnMuted)
@@ -294,16 +268,38 @@ private fun Palette(vm: Vm, s: UiState, otwarta: Boolean, przelacz: () -> Unit) 
             Tool(s, Tool.DEV, "odb.", "od schem.", Modifier.weight(1f), wybierz)
             Tool(s, Tool.ERASE, "×", "wyczyść", Modifier.weight(1f), wybierz)
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+        // Nadgodziny w menu razem z godzinami i stawką. Ustawiasz je tutaj,
+        // a dopiero dotknięcie napisu NADGODZINY wybiera narzędzie i chowa paletę.
+        Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
             val on = s.tool == Tool.OT
             Column(
                 Modifier.weight(1f).clip(RoundedCornerShape(11.dp))
                     .background(if (on) Color(0xFF4A3410) else Surface2)
                     .border(if (on) 2.dp else 0.dp, if (on) OtColor100 else Color.Transparent, RoundedCornerShape(11.dp))
-                    .clickable { wybierz(Tool.OT) }.padding(horizontal = 9.dp, vertical = 6.dp)
+                    .clickable { wybierz(Tool.OT) }.padding(horizontal = 9.dp, vertical = 8.dp)
             ) {
                 Text("NADGODZINY", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = if (on) OtColor100 else OnMuted)
-                Text("godziny i stawkę ustawisz na pasku", fontSize = 8.sp, color = OnFaint, maxLines = 1)
+                Text("dotknij i maluj dni", fontSize = 8.sp, color = OnFaint, maxLines = 1)
+            }
+            Row(
+                Modifier.clip(RoundedCornerShape(11.dp)).background(Surface2).padding(horizontal = 3.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = { vm.otMinus() }, modifier = Modifier.size(30.dp)) {
+                    Icon(Icons.Default.Remove, "mniej", tint = OnBg, modifier = Modifier.size(16.dp))
+                }
+                Text("${s.otHours}h", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = OnBg)
+                IconButton(onClick = { vm.otPlus() }, modifier = Modifier.size(30.dp)) {
+                    Icon(Icons.Default.Add, "więcej", tint = OnBg, modifier = Modifier.size(16.dp))
+                }
+            }
+            Box(
+                Modifier.clip(RoundedCornerShape(11.dp))
+                    .background(if (s.otRate == OtRate.P100) Color(0xFF4A3410) else Surface2)
+                    .clickable { vm.toggleRate() }.padding(horizontal = 12.dp, vertical = 9.dp)
+            ) {
+                Text("${s.otRate.percent}%", fontSize = 13.sp, fontWeight = FontWeight.Bold,
+                    color = if (s.otRate == OtRate.P100) OtColor100 else OnMuted)
             }
         }
         Spacer(Modifier.height(2.dp))

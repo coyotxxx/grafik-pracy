@@ -104,12 +104,14 @@ class Vm(app: Application) : AndroidViewModel(app) {
         var worked = 0; var ot100 = 0; var ot50 = 0
         var dw = 0; var df = 0; var sun = 0; var hol = 0; var sat = 0
         val by = mutableMapOf<Shift, Int>()
+        val dni = mutableMapOf<Shift, Int>()
         m.values.forEach { e ->
             worked += e.workedHours
             if (e.otRate == OtRate.P100) ot100 += e.otHours else ot50 += e.otHours
             if (e.shift?.isWork == true) {
                 dw++
                 by[e.shift] = (by[e.shift] ?: 0) + 8
+                dni[e.shift] = (dni[e.shift] ?: 0) + 1
                 when (Holidays.kindOf(e.date)) {
                     DayKind.NIEDZIELA -> sun++
                     DayKind.SWIETO -> hol++
@@ -119,7 +121,7 @@ class Vm(app: Application) : AndroidViewModel(app) {
             } else df++
         }
         return MonthStats(worked, Holidays.monthlyNorm(ym.year, ym.monthValue),
-            ot100, ot50, dw, df, sun, hol, sat, by)
+            ot100, ot50, dw, df, sun, hol, sat, by, dni)
     }
 
     fun setMonth(ym: YearMonth) { _ym.value = ym }

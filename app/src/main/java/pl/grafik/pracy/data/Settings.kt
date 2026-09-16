@@ -22,6 +22,7 @@ class SettingsStore(private val ctx: Context) {
     private val kGenerate = booleanPreferencesKey("generate")
     private val kGenFrom = stringPreferencesKey("gen_from")
     private val kGenTo = stringPreferencesKey("gen_to")
+    private val kReverse = booleanPreferencesKey("reverse")
     private val kRemindOn = booleanPreferencesKey("remind_on")
     private val kRemindHour = intPreferencesKey("remind_hour")
     private val kColors = stringPreferencesKey("colors")
@@ -41,7 +42,8 @@ class SettingsStore(private val ctx: Context) {
             brigade = p[kBrigade] ?: "A",
             generate = p[kGenerate] ?: false,
             genFrom = p[kGenFrom]?.let { runCatching { java.time.YearMonth.parse(it) }.getOrNull() },
-            genTo = p[kGenTo]?.let { runCatching { java.time.YearMonth.parse(it) }.getOrNull() }
+            genTo = p[kGenTo]?.let { runCatching { java.time.YearMonth.parse(it) }.getOrNull() },
+            reverse = p[kReverse] ?: false
         )
     }
 
@@ -61,6 +63,7 @@ class SettingsStore(private val ctx: Context) {
             p[kGenerate] = c.generate
             if (c.genFrom != null) p[kGenFrom] = c.genFrom.toString() else p.remove(kGenFrom)
             if (c.genTo != null) p[kGenTo] = c.genTo.toString() else p.remove(kGenTo)
+            p[kReverse] = c.reverse
         }
     }
 

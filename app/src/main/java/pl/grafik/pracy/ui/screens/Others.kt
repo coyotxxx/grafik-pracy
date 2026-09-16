@@ -76,6 +76,7 @@ fun SummaryScreen(vm: Vm) {
             Spacer(Modifier.height(10.dp))
             listOf(Shift.I, Shift.II, Shift.III).forEach { sh ->
                 val h = st.byShift[sh] ?: 0
+                val d = st.daysByShift[sh] ?: 0
                 val max = (st.byShift.values.maxOrNull() ?: 1).coerceAtLeast(1)
                 val sw = Palette.byId(s.colors[sh.code])
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 5.dp)) {
@@ -83,8 +84,10 @@ fun SummaryScreen(vm: Vm) {
                     Box(Modifier.weight(1f).height(8.dp).clip(RoundedCornerShape(4.dp)).background(Surface3)) {
                         Box(Modifier.fillMaxWidth(h.toFloat() / max).fillMaxHeight().background(sw.text))
                     }
-                    Text("$h h", Modifier.width(46.dp), fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
-                        color = OnBg, textAlign = TextAlign.End)
+                    Column(Modifier.width(66.dp), horizontalAlignment = Alignment.End) {
+                        Text("$d ${dniSlowo(d)}", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = OnBg)
+                        Text("$h h", fontSize = 11.sp, color = OnMuted)
+                    }
                 }
             }
         }
@@ -282,6 +285,31 @@ fun SetupScreen(vm: Vm, uvm: pl.grafik.pracy.ui.UpdateVm) {
             }
         }
 
+        Text("KIERUNEK ROTACJI", fontSize = 10.sp, color = OnFaint, fontWeight = FontWeight.Medium)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf(false, true).forEach { odwrotnie ->
+                val on = s.cfg.reverse == odwrotnie
+                val podglad = CycleGenerator.rotationLabel(s.cfg.copy(reverse = odwrotnie))
+                Column(
+                    Modifier.weight(1f).clip(RoundedCornerShape(13.dp))
+                        .background(if (on) Color(0xFF4A3410) else Surface1)
+                        .border(if (on) 2.dp else 0.dp, if (on) Accent else Color.Transparent, RoundedCornerShape(13.dp))
+                        .clickable { vm.saveConfig(s.cfg.copy(reverse = odwrotnie)) }
+                        .padding(vertical = 12.dp, horizontal = 10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(podglad, fontSize = 15.sp, fontWeight = FontWeight.Bold,
+                        color = if (on) Accent else OnBg, maxLines = 1)
+                    Text(if (odwrotnie) "odwrotnie" else "normalnie", fontSize = 10.sp, color = OnFaint)
+                }
+            }
+        }
+        Text(
+            "Wybierz tę kolejność, w której naprawdę chodzisz. Na kafelkach widać, " +
+                "co da każdy wariant dla wybranego wyżej systemu pracy.",
+            fontSize = 10.sp, color = OnFaint, lineHeight = 14.sp
+        )
+
         Text("MOJA BRYGADA", fontSize = 10.sp, color = OnFaint, fontWeight = FontWeight.Medium)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("A","B","C","D").forEach { b ->
@@ -310,7 +338,7 @@ fun SetupScreen(vm: Vm, uvm: pl.grafik.pracy.ui.UpdateVm) {
         Text("PODGLĄD CYKLU", fontSize = 10.sp, color = OnFaint, fontWeight = FontWeight.Medium)
         Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Surface1).padding(10.dp),
             horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-            s.cfg.pattern.days.forEach { code ->
+            CycleGenerator.days(s.cfg).forEach { code ->
                 val sw = Palette.byId(s.colors[if (code == "w") "w5" else code])
                 Box(Modifier.weight(1f).height(30.dp).clip(RoundedCornerShape(5.dp)).background(sw.fill),
                     contentAlignment = Alignment.Center) {
@@ -405,6 +433,9 @@ fun SetupScreen(vm: Vm, uvm: pl.grafik.pracy.ui.UpdateVm) {
 }
 
 private val PL_LOC = java.util.Locale.forLanguageTag("pl-PL")
+
+/** 1 dzień, 2-4 dni, 5+ dni — żeby nie pisać „2 dzień". */
+private fun dniSlowo(n: Int): String = if (n == 1) "dzień" else "dni"
 
 /** Mianownik — „Wrzesień 2026". Do samodzielnego wyświetlenia. */
 private fun miesiacPl(ym: java.time.YearMonth): String =

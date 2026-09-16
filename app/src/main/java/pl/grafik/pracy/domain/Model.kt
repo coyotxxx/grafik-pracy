@@ -47,7 +47,9 @@ data class MonthStats(
     val sundayWork: Int = 0,
     val holidayWork: Int = 0,
     val saturdayWork: Int = 0,
-    val byShift: Map<Shift, Int> = emptyMap()
+    val byShift: Map<Shift, Int> = emptyMap(),
+    /** Ile dni na każdej zmianie — obok godzin. */
+    val daysByShift: Map<Shift, Int> = emptyMap()
 ) {
     val ot: Int get() = ot100 + ot50
     val diff: Int get() = worked - norm
