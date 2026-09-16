@@ -235,6 +235,9 @@ class Vm(app: Application) : AndroidViewModel(app) {
     fun saveVacation(v: VacationCfg) = viewModelScope.launch { settings.saveVacation(v) }
 
     /** Wejście na zakładkę Miesiąc: wracamy do dziś i blokujemy malowanie. */
+    /** Wejście w podsumowanie — zawsze startujemy od bieżącego miesiąca. */
+    fun onEnterSummary() { _ym.value = YearMonth.now() }
+
     fun onEnterCalendar() {
         _ym.value = YearMonth.now()
         _maluj.value = false

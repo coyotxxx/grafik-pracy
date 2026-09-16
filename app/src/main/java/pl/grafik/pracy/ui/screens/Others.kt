@@ -8,8 +8,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.BeachAccess
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -34,8 +37,37 @@ fun SummaryScreen(vm: Vm) {
     Column(Modifier.fillMaxSize().background(Bg).verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)) {
 
+        var wybierzMiesiac by remember { mutableStateOf(false) }
+        if (wybierzMiesiac) {
+            MonthPickerSheet(
+                biezacy = s.ym,
+                onPick = { vm.setMonth(it); wybierzMiesiac = false },
+                onClose = { wybierzMiesiac = false }
+            )
+        }
+
         Text("Podsumowanie", fontSize = 21.sp, fontWeight = FontWeight.SemiBold, color = OnBg)
-        Text("${s.ym.monthValue}/${s.ym.year} · Brygada ${s.cfg.brigade}", fontSize = 12.sp, color = OnMuted)
+
+        // Miesiąc do sprawdzenia. Po wejściu w zakładkę zawsze bieżący — reset robi onEnterSummary().
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = { vm.prevMonth() }, modifier = Modifier.size(36.dp)) {
+                Icon(Icons.Default.ChevronLeft, "poprzedni miesiąc", tint = OnBg)
+            }
+            Row(
+                Modifier.weight(1f).clip(RoundedCornerShape(11.dp)).background(Surface1)
+                    .clickable { wybierzMiesiac = true }
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(miesiacPl(s.ym), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = OnBg)
+                Icon(Icons.Default.ArrowDropDown, "wybierz miesiąc", tint = OnMuted, modifier = Modifier.size(20.dp))
+            }
+            IconButton(onClick = { vm.nextMonth() }, modifier = Modifier.size(36.dp)) {
+                Icon(Icons.Default.ChevronRight, "następny miesiąc", tint = OnBg)
+            }
+        }
+        Text("Brygada ${s.cfg.brigade}", fontSize = 12.sp, color = OnMuted)
 
         Card(Surface1) {
             Row(verticalAlignment = Alignment.Bottom) {
@@ -756,6 +788,77 @@ private fun miesiacPl(ym: java.time.YearMonth): String =
 /** Dopełniacz — „od września 2026 do sierpnia 2027". */
 private fun miesiacPlD(ym: java.time.YearMonth): String =
     ym.month.getDisplayName(java.time.format.TextStyle.FULL, PL_LOC) + " " + ym.year
+
+/** Skrót miesiąca do siatki wyboru — „sty", „lut". */
+private fun miesiacSkrot(ym: java.time.YearMonth): String =
+    ym.month.getDisplayName(java.time.format.TextStyle.SHORT_STANDALONE, PL_LOC)
+        .replaceFirstChar { it.uppercase() }.trimEnd('.')
+
+/** Wskazanie miesiąca wprost — rok strzałkami, miesiąc z siatki. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MonthPickerSheet(
+    biezacy: java.time.YearMonth,
+    onPick: (java.time.YearMonth) -> Unit,
+    onClose: () -> Unit
+) {
+    val stanKarty = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var rok by remember { mutableIntStateOf(biezacy.year) }
+    val teraz = java.time.YearMonth.now()
+
+    ModalBottomSheet(
+        onDismissRequest = onClose,
+        sheetState = stanKarty,
+        containerColor = Surface1,
+        dragHandle = { BottomSheetDefaults.DragHandle(color = Surface3) }
+    ) {
+        Column(
+            Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 28.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Text("Który miesiąc sprawdzamy", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = OnBg)
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = { rok-- }) { Icon(Icons.Default.ChevronLeft, "poprzedni rok", tint = OnBg) }
+                Text(
+                    "$rok", Modifier.weight(1f), fontSize = 19.sp, fontWeight = FontWeight.Bold,
+                    color = OnBg, textAlign = TextAlign.Center
+                )
+                IconButton(onClick = { rok++ }) { Icon(Icons.Default.ChevronRight, "następny rok", tint = OnBg) }
+            }
+
+            (0..3).forEach { wiersz ->
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    (1..3).forEach { kol ->
+                        val m = java.time.YearMonth.of(rok, wiersz * 3 + kol)
+                        val wybrany = m == biezacy
+                        Box(
+                            Modifier.weight(1f).clip(RoundedCornerShape(11.dp))
+                                .background(if (wybrany) Accent else Surface2)
+                                .border(
+                                    if (m == teraz && !wybrany) 1.dp else 0.dp,
+                                    if (m == teraz && !wybrany) Accent else Color.Transparent,
+                                    RoundedCornerShape(11.dp)
+                                )
+                                .clickable { onPick(m) }
+                                .padding(vertical = 12.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                miesiacSkrot(m), fontSize = 13.sp, fontWeight = FontWeight.Medium,
+                                color = if (wybrany) AccentOn else OnBg
+                            )
+                        }
+                    }
+                }
+            }
+
+            TextButton(onClick = { onPick(teraz) }) {
+                Text("Wróć do bieżącego miesiąca", fontSize = 13.sp, color = Accent)
+            }
+        }
+    }
+}
 
 @Composable
 fun ColorsScreen(vm: Vm) {

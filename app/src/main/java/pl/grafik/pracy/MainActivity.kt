@@ -39,8 +39,14 @@ private data class Tab(val label: String, val icon: ImageVector)
 fun App(vm: Vm, pvm: PresenceVm, uvm: UpdateVm) {
     var tab by remember { mutableIntStateOf(0) }
     var otwartyDzien by remember { mutableStateOf<java.time.LocalDate?>(null) }
-    // Po powrocie na kalendarz zawsze bieżący miesiąc i zablokowane malowanie.
-    LaunchedEffect(tab) { if (tab == 0) vm.onEnterCalendar() }
+    // Po wejściu na kalendarz i na podsumowanie zawsze bieżący miesiąc.
+    // Kalendarz dodatkowo blokuje malowanie.
+    LaunchedEffect(tab) {
+        when (tab) {
+            0 -> vm.onEnterCalendar()
+            1 -> vm.onEnterSummary()
+        }
+    }
     val stan by vm.state.collectAsState()
     val tabs = listOf(
         Tab("Miesiąc", Icons.Default.CalendarMonth),
