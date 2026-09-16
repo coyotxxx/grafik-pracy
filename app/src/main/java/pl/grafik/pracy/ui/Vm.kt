@@ -158,8 +158,12 @@ class Vm(app: Application) : AndroidViewModel(app) {
         val by = mutableMapOf<Shift, Int>()
         val dni = mutableMapOf<Shift, Int>()
         var urlopH = 0
+        val dzis = LocalDate.now()
+        var doDzis = 0
         m.values.forEach { e ->
             worked += e.workedHours
+            // Do dziś włącznie — żeby w trwającym miesiącu nie liczyć dni, których jeszcze nie było.
+            if (!e.date.isAfter(dzis)) doDzis += e.workedHours + (if (e.shift == Shift.URLOP) 8 else 0)
             if (e.otRate == OtRate.P100) ot100 += e.otHours else ot50 += e.otHours
             if (e.shift?.isWork == true) {
                 dw++
@@ -173,15 +177,15 @@ class Vm(app: Application) : AndroidViewModel(app) {
                 }
             } else {
                 df++
-                // Urlop pokrywa dzień roboczy — liczymy 8 h, chyba że wg cyklu i tak było wolne.
-                if (e.shift == Shift.URLOP) {
-                    val wgCyklu = if (cfg.covers(e.date)) CycleGenerator.shiftFor(cfg, e.date) else null
-                    if (wgCyklu == null || wgCyklu.isWork) urlopH += 8
-                }
+                // Dzień urlopu zabiera dzień z puli, więc musi też pokryć 8 h.
+                // Warunkowanie tego cyklem robiło niekonsekwencję: dzień znikał z puli,
+                // ale nie pokrywał godzin.
+                if (e.shift == Shift.URLOP) urlopH += 8
             }
         }
         return MonthStats(worked, Holidays.monthlyNorm(ym.year, ym.monthValue),
-            ot100, ot50, dw, df, sun, hol, sat, by, dni, urlopH)
+            ot100, ot50, dw, df, sun, hol, sat, by, dni, urlopH, doDzis,
+            biezacyMiesiac = YearMonth.from(dzis) == ym)
     }
 
     fun setMonth(ym: YearMonth) { _ym.value = ym }

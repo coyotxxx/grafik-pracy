@@ -94,7 +94,11 @@ data class MonthStats(
     /** Ile dni na każdej zmianie — obok godzin. */
     val daysByShift: Map<Shift, Int> = emptyMap(),
     /** Godziny pokryte urlopem — dzień urlopu pokrywa dzień roboczy, który wypadał wg grafiku. */
-    val urlopH: Int = 0
+    val urlopH: Int = 0,
+    /** Godziny rozliczone do dzisiaj włącznie — w trwającym miesiącu reszta jest dopiero planem. */
+    val doDzis: Int = 0,
+    /** Czy wyświetlany miesiąc to ten, w którym jesteśmy. */
+    val biezacyMiesiac: Boolean = false
 ) {
     /** Co idzie do rozliczenia miesiąca: przepracowane + pokryte urlopem. */
     val rozliczone: Int get() = worked + urlopH

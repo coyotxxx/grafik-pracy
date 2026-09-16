@@ -80,16 +80,23 @@ private fun Header(vm: Vm, s: UiState) {
         Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text("${s.stats.rozliczone}", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = OnBg)
+        // W trwającym miesiącu pokazujemy, ile już jest, a nie ile wyjdzie na koniec.
+        val biez = s.stats.biezacyMiesiac
+        Text(
+            "${if (biez) s.stats.doDzis else s.stats.rozliczone}",
+            fontSize = 17.sp, fontWeight = FontWeight.Bold, color = OnBg
+        )
         Text(" / ${s.stats.norm} h", fontSize = 12.sp, color = OnMuted)
-        if (s.stats.urlopH > 0) {
-            Spacer(Modifier.width(6.dp))
-            Text("(w tym ${s.stats.urlopH} h urlopu)", fontSize = 10.sp, color = OnFaint)
+        Spacer(Modifier.width(7.dp))
+        if (biez) {
+            Text("do dziś", fontSize = 10.sp, color = OnFaint)
+        } else {
+            val d = s.stats.diff
+            Text(
+                if (d >= 0) "+$d h" else "$d h", fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
+                color = if (d >= 0) OtColor100 else OnMuted
+            )
         }
-        Spacer(Modifier.width(10.dp))
-        val d = s.stats.diff
-        Text(if (d >= 0) "+$d h" else "$d h", fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
-            color = if (d >= 0) OtColor100 else OnMuted)
         Spacer(Modifier.weight(1f))
         if (s.stats.ot > 0) {
             Box(Modifier.clip(RoundedCornerShape(8.dp)).background(Color(0xFF3A2E14)).padding(horizontal = 8.dp, vertical = 3.dp)) {
@@ -101,6 +108,25 @@ private fun Header(vm: Vm, s: UiState) {
             Box(Modifier.clip(RoundedCornerShape(8.dp)).background(Color(0xFF1E3A29)).padding(horizontal = 8.dp, vertical = 3.dp)) {
                 Text("nd ${s.stats.sundayWork}", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = SunColor)
             }
+        }
+    }
+
+    if (s.stats.biezacyMiesiac || s.stats.urlopH > 0) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 1.dp)) {
+            val d = s.stats.diff
+            Text(
+                buildString {
+                    if (s.stats.biezacyMiesiac) {
+                        append("cały miesiąc: ${s.stats.rozliczone} h")
+                        append(if (d >= 0) "  (+$d h)" else "  ($d h)")
+                    }
+                    if (s.stats.urlopH > 0) {
+                        if (isNotEmpty()) append("  ·  ")
+                        append("w tym ${s.stats.urlopH} h urlopu")
+                    }
+                },
+                fontSize = 10.sp, color = OnFaint
+            )
         }
     }
 }

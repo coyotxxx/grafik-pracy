@@ -47,4 +47,27 @@ class UrlopNormaTest {
         )
         assertEquals("urlop nie doklejał się do żadnej zmiany", 152, st.byShift.values.sum())
     }
+
+    @Test
+    fun urlop_liczy_sie_zawsze_gdy_dzien_jest_oznaczony() {
+        // dwa dni urlopu = 16 h, niezależnie od tego, co mówił cykl —
+        // skoro dzień znika z puli urlopu, musi też pokryć godziny
+        val st = MonthStats(worked = 160, norm = 176, urlopH = 16)
+        assertEquals(176, st.rozliczone)
+        assertEquals(0, st.diff)
+    }
+
+    @Test
+    fun w_trwajacym_miesiacu_liczymy_do_dzis() {
+        val st = MonthStats(worked = 176, norm = 176, doDzis = 88, biezacyMiesiac = true)
+        assertEquals("połowa miesiąca", 88, st.doDzis)
+        assertEquals("cały miesiąc i tak wyjdzie na normę", 176, st.rozliczone)
+        assertEquals(0, st.diff)
+    }
+
+    @Test
+    fun w_zamknietym_miesiacu_do_dzis_nie_ma_znaczenia() {
+        val st = MonthStats(worked = 176, norm = 176, doDzis = 176, biezacyMiesiac = false)
+        assertEquals(176, st.rozliczone)
+    }
 }

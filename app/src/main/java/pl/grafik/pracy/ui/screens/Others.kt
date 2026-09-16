@@ -40,10 +40,19 @@ fun SummaryScreen(vm: Vm) {
         Card(Surface1) {
             Row(verticalAlignment = Alignment.Bottom) {
                 Column(Modifier.weight(1f)) {
-                    Text("RAZEM", fontSize = 10.sp, color = OnFaint, fontWeight = FontWeight.Medium)
+                    Text(
+                        if (st.biezacyMiesiac) "DO DZIŚ" else "RAZEM",
+                        fontSize = 10.sp, color = OnFaint, fontWeight = FontWeight.Medium
+                    )
                     Row(verticalAlignment = Alignment.Bottom) {
-                        Text("${st.rozliczone}", fontSize = 34.sp, fontWeight = FontWeight.Bold, color = OnBg)
+                        Text(
+                            "${if (st.biezacyMiesiac) st.doDzis else st.rozliczone}",
+                            fontSize = 34.sp, fontWeight = FontWeight.Bold, color = OnBg
+                        )
                         Text(" h", fontSize = 14.sp, color = OnMuted, modifier = Modifier.padding(bottom = 5.dp))
+                    }
+                    if (st.biezacyMiesiac) {
+                        Text("cały miesiąc wyjdzie ${st.rozliczone} h", fontSize = 10.sp, color = OnFaint)
                     }
                     if (st.urlopH > 0) {
                         Text(
