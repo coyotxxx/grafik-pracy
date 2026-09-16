@@ -112,4 +112,32 @@ class PlannerTest {
         assertTrue("dla cyklu zmianowego też powinny być propozycje", p.isNotEmpty())
         assertTrue(p.all { it.koszt in 1..VacationPlanner.MAX_DNI_URLOPU })
     }
+
+    /** Propozycje muszą wynikać z AKTUALNIE ustawionego cyklu, nie z jakiegoś domyślnego. */
+    @Test
+    fun zmiana_cyklu_zmienia_propozycje() {
+        fun dla(p: CyclePattern): List<VacationSuggestion> {
+            val cfg = CycleConfig(
+                pattern = p, anchorDate = LocalDate.of(2026, 1, 1), generate = true,
+                genFrom = java.time.YearMonth.of(2026, 1), genTo = java.time.YearMonth.of(2026, 12)
+            )
+            return VacationPlanner.zaproponuj(
+                LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31),
+                wolny = { !CycleGenerator.shiftFor(cfg, it).isWork },
+                swieto = { Holidays.isHoliday(it) }, budzet = 26
+            )
+        }
+        val szesnastka = dla(CyclePattern.B4_16D)
+        val tygodniowy = dla(CyclePattern.TYGODNIOWY)
+        assertTrue(szesnastka.isNotEmpty())
+        assertTrue(tygodniowy.isNotEmpty())
+        assertNotEquals(
+            "inny cykl musi dać inne propozycje",
+            szesnastka.map { it.urlop }, tygodniowy.map { it.urlop }
+        )
+        // w cyklu tygodniowym weekend daje tanie okazje: 2 dni urlopu za 4 wolne
+        assertTrue("tygodniowy powinien mieć tanią propozycję", tygodniowy.any { it.koszt <= 2 })
+        // w 16-dniowym wolne bloki są krótkie, więc mosty są dłuższe
+        assertTrue("w 16-dniowym mosty są dłuższe", szesnastka.all { it.koszt >= 2 })
+    }
 }

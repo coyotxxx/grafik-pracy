@@ -6,6 +6,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material.icons.filled.BeachAccess
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -15,6 +16,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import pl.grafik.pracy.domain.CycleGenerator
 import pl.grafik.pracy.domain.Holidays
 import pl.grafik.pracy.domain.VacationSuggestion
 import pl.grafik.pracy.ui.UiState
@@ -33,7 +35,9 @@ private val DZIEN_KR = DateTimeFormatter.ofPattern("d.MM", PLP)
 @Composable
 fun PlanSheet(vm: Vm, s: UiState, onClose: () -> Unit) {
     val plan by vm.plan.collectAsState()
-    LaunchedEffect(Unit) { vm.policzPlan() }
+    // Przeliczamy przy każdej zmianie cyklu — propozycje mają dotyczyć tego,
+    // co jest ustawione teraz, a nie tego, co było przy poprzednim otwarciu.
+    LaunchedEffect(s.cfg, s.urlopBilans.zostalo) { vm.policzPlan() }
 
     // Pełna wysokość — lista nie ma się chować za krawędzią ekranu.
     val stanKarty = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -55,6 +59,27 @@ fun PlanSheet(vm: Vm, s: UiState, onClose: () -> Unit) {
                     "Liczone na rok do przodu z Twojego grafiku i świąt.",
                 fontSize = 11.sp, color = OnMuted, lineHeight = 15.sp
             )
+            if (s.cfg.generate) {
+                Row(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(Surface2)
+                        .padding(horizontal = 11.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.Autorenew, null, Modifier.size(14.dp), tint = Accent)
+                    Spacer(Modifier.width(8.dp))
+                    Column {
+                        Text(
+                            s.cfg.pattern.label, fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium, color = OnBg
+                        )
+                        Text(
+                            "brygada ${s.cfg.brigade} · ${CycleGenerator.rotationLabel(s.cfg)}" +
+                                if (s.cfg.anchorIndex > 0) " · przesunięcie ${s.cfg.anchorIndex}" else "",
+                            fontSize = 10.sp, color = OnFaint
+                        )
+                    }
+                }
+            }
 
             when {
                 !s.cfg.generate -> Info(
