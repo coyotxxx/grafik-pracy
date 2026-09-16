@@ -10,6 +10,7 @@ import pl.grafik.pracy.domain.*
 import pl.grafik.pracy.location.GeofenceManager
 import pl.grafik.pracy.location.PresenceState
 import pl.grafik.pracy.location.PresenceWatchdog
+import pl.grafik.pracy.events.Reminders
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -18,12 +19,16 @@ enum class Tool { I, II, III, W5, WS, DWN, BWN, URLOP, L4, OT, DEV, ERASE }
 data class UiState(
     val ym: YearMonth = YearMonth.now(),
     val entries: Map<LocalDate, DayEntry> = emptyMap(),
+    /** Wydarzenia w całej widocznej siatce, także z sąsiednich miesięcy. */
+    val events: Map<LocalDate, List<EventRow>> = emptyMap(),
     val cfg: CycleConfig = CycleConfig(),
     val colors: Map<String, String> = Palette0.defaults,
     val tool: Tool = Tool.OT,
     val otHours: Int = 8,
     val otRate: OtRate = OtRate.P100,
-    val stats: MonthStats = MonthStats()
+    val stats: MonthStats = MonthStats(),
+    val remindOn: Boolean = true,
+    val remindHour: Int = 18
 )
 
 private object Palette0 { val defaults = pl.grafik.pracy.ui.theme.Palette.defaults }
@@ -31,6 +36,7 @@ private object Palette0 { val defaults = pl.grafik.pracy.ui.theme.Palette.defaul
 class Vm(app: Application) : AndroidViewModel(app) {
 
     private val dao = AppDb.get(app).dayDao()
+    private val events = AppDb.get(app).eventDao()
     private val settings = SettingsStore(app)
 
     private val _ym = MutableStateFlow(YearMonth.now())
@@ -39,11 +45,33 @@ class Vm(app: Application) : AndroidViewModel(app) {
     private val _otR = MutableStateFlow(OtRate.P100)
     private val undoStack = ArrayDeque<Pair<LocalDate, DayEntry?>>()
 
+    init {
+        // Przypomnienia planujemy przy każdym starcie — WorkManager sam pilnuje, żeby był jeden.
+        viewModelScope.launch {
+            if (settings.reminders.first().first) Reminders.schedule(getApplication())
+        }
+    }
+
+    /** Siatka miesiąca rozciągnięta do pełnych tygodni — stąd dni z sąsiednich miesięcy. */
+    private fun gridRange(ym: YearMonth): Pair<LocalDate, LocalDate> {
+        val first = ym.atDay(1)
+        val start = first.minusDays(((first.dayOfWeek.value + 6) % 7).toLong())
+        val last = ym.atEndOfMonth()
+        val end = last.plusDays((7 - last.dayOfWeek.value).toLong())
+        return start to end
+    }
+
     val state: StateFlow<UiState> = combine(
         _ym, _tool, _otH, _otR, settings.config, settings.colors,
         _ym.flatMapLatest { ym ->
-            dao.observeRange(ym.atDay(1).toString(), ym.atEndOfMonth().toString())
-        }
+            val (a, b) = gridRange(ym)
+            dao.observeRange(a.toString(), b.toString())
+        },
+        _ym.flatMapLatest { ym ->
+            val (a, b) = gridRange(ym)
+            events.observeRange(a.toString(), b.toString())
+        },
+        settings.reminders
     ) { arr ->
         @Suppress("UNCHECKED_CAST")
         val ym = arr[0] as YearMonth
@@ -53,15 +81,23 @@ class Vm(app: Application) : AndroidViewModel(app) {
         val cfg = arr[4] as CycleConfig
         val cols = (arr[5] as Map<String, String>).ifEmpty { pl.grafik.pracy.ui.theme.Palette.defaults }
         val rows = arr[6] as List<DayRow>
+        val evRows = arr[7] as List<EventRow>
+        @Suppress("UNCHECKED_CAST")
+        val rem = arr[8] as Pair<Boolean, Int>
 
+        val (gStart, gEnd) = gridRange(ym)
         val saved = rows.associate { LocalDate.parse(it.date) to it.toEntry() }
         // Pusta aplikacja pokazuje tylko to, co użytkownik sam wpisał.
-        val gen = if (cfg.generate) CycleGenerator.month(cfg, ym.year, ym.monthValue) else emptyMap()
+        val gen = CycleGenerator.range(cfg, gStart, gEnd)
         val merged = LinkedHashMap<LocalDate, DayEntry>()
         gen.forEach { (d, s) -> merged[d] = saved[d] ?: DayEntry(date = d, shift = s) }
         saved.forEach { (d, e) -> merged[d] = e }
 
-        UiState(ym, merged, cfg, cols, tool, otH, otR, calc(merged, ym))
+        val ev = evRows.groupBy { LocalDate.parse(it.date) }
+        // Statystyki liczymy TYLKO z bieżącego miesiąca, mimo że siatka pokazuje więcej.
+        val wMiesiacu = merged.filterKeys { YearMonth.from(it) == ym }
+
+        UiState(ym, merged, ev, cfg, cols, tool, otH, otR, calc(wMiesiacu, ym), rem.first, rem.second)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState())
 
     private fun calc(m: Map<LocalDate, DayEntry>, ym: YearMonth): MonthStats {
@@ -143,11 +179,36 @@ class Vm(app: Application) : AndroidViewModel(app) {
         PresenceState.clear(app)
         val db = AppDb.get(app)
         db.presenceDao().clearAll()
+        db.eventDao().clearAll()
         db.dayDao().clearAll()
+        Reminders.cancel(app)
         settings.clearAll()
         undoStack.clear()
     }
 
     fun saveConfig(c: CycleConfig) = viewModelScope.launch { settings.saveConfig(c) }
+
+    fun setReminders(on: Boolean, hour: Int) = viewModelScope.launch {
+        settings.saveReminders(on, hour)
+        if (on) Reminders.schedule(getApplication()) else Reminders.cancel(getApplication())
+    }
+
+    // --- wydarzenia ---
+
+    fun addEvent(d: LocalDate, time: String, text: String, remind: Boolean) = viewModelScope.launch {
+        if (text.isBlank()) return@launch
+        events.upsert(EventRow(date = d.toString(), time = time.trim(), text = text.trim(), remind = remind))
+        Reminders.schedule(getApplication())
+    }
+
+    fun updateEvent(e: EventRow) = viewModelScope.launch {
+        events.update(e)
+        Reminders.schedule(getApplication())
+    }
+
+    fun deleteEvent(id: Long) = viewModelScope.launch {
+        events.delete(id)
+        Reminders.schedule(getApplication())
+    }
     fun saveColors(m: Map<String, String>) = viewModelScope.launch { settings.saveColors(m) }
 }

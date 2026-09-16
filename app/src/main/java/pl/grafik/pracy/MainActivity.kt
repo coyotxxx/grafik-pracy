@@ -38,6 +38,8 @@ private data class Tab(val label: String, val icon: ImageVector)
 @Composable
 fun App(vm: Vm, pvm: PresenceVm, uvm: UpdateVm) {
     var tab by remember { mutableIntStateOf(0) }
+    var otwartyDzien by remember { mutableStateOf<java.time.LocalDate?>(null) }
+    val stan by vm.state.collectAsState()
     val tabs = listOf(
         Tab("Miesiąc", Icons.Default.CalendarMonth),
         Tab("Podsum.", Icons.Default.QueryStats),
@@ -71,13 +73,17 @@ fun App(vm: Vm, pvm: PresenceVm, uvm: UpdateVm) {
             UpdateBar(uvm)
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 when (tab) {
-                    0 -> CalendarScreen(vm) { }
+                    0 -> CalendarScreen(vm) { d -> otwartyDzien = d }
                     1 -> SummaryScreen(vm)
                     2 -> SetupScreen(vm, uvm)
                     3 -> WorkPlaceScreen(pvm)
                     else -> ColorsScreen(vm)
                 }
             }
+        }
+
+        otwartyDzien?.let { d ->
+            DaySheet(vm, stan, d) { otwartyDzien = null }
         }
     }
 }

@@ -136,7 +136,16 @@ fun SetupScreen(vm: Vm, uvm: pl.grafik.pracy.ui.UpdateVm) {
                 }
                 Switch(
                     checked = s.cfg.generate,
-                    onCheckedChange = { vm.saveConfig(s.cfg.copy(generate = it)) },
+                    onCheckedChange = { wl ->
+                        // Przy włączeniu domyślnie rok od bieżącego miesiąca — nie w nieskończoność.
+                        vm.saveConfig(
+                            s.cfg.copy(
+                                generate = wl,
+                                genFrom = s.cfg.genFrom ?: java.time.YearMonth.now(),
+                                genTo = s.cfg.genTo ?: java.time.YearMonth.now().plusMonths(11)
+                            )
+                        )
+                    },
                     colors = SwitchDefaults.colors(checkedThumbColor = AccentOn, checkedTrackColor = Accent)
                 )
             }
@@ -146,6 +155,110 @@ fun SetupScreen(vm: Vm, uvm: pl.grafik.pracy.ui.UpdateVm) {
                     "Dni, które wpiszesz ręcznie, zawsze mają pierwszeństwo przed cyklem.",
                 fontSize = 10.sp, color = OnFaint, lineHeight = 14.sp
             )
+        }
+
+        // zakres, na jaki cykl ma wypełnić kalendarz
+        if (s.cfg.generate) {
+            val teraz = java.time.YearMonth.now()
+            val od = s.cfg.genFrom ?: teraz
+            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Surface1).padding(14.dp)) {
+                Text("NA JAKI OKRES", fontSize = 10.sp, color = OnFaint, fontWeight = FontWeight.Medium)
+                Spacer(Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Od:", fontSize = 13.sp, color = OnMuted)
+                    Spacer(Modifier.width(8.dp))
+                    Button(
+                        onClick = { vm.saveConfig(s.cfg.copy(genFrom = od.minusMonths(1))) },
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Surface2, contentColor = OnBg)
+                    ) { Text("−", fontSize = 15.sp) }
+                    Text(
+                        miesiacPl(od), Modifier.weight(1f), fontSize = 13.sp,
+                        color = OnBg, textAlign = TextAlign.Center, fontWeight = FontWeight.Medium
+                    )
+                    Button(
+                        onClick = { vm.saveConfig(s.cfg.copy(genFrom = od.plusMonths(1))) },
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Surface2, contentColor = OnBg)
+                    ) { Text("+", fontSize = 15.sp) }
+                }
+                Spacer(Modifier.height(10.dp))
+                Text("Na ile:", fontSize = 13.sp, color = OnMuted)
+                Spacer(Modifier.height(6.dp))
+                val opcje = listOf(1 to "1 mies.", 3 to "3 mies.", 6 to "6 mies.", 12 to "rok", 0 to "bez końca")
+                Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                    opcje.forEach { (n, etykieta) ->
+                        val wybrane = if (n == 0) s.cfg.genTo == null
+                        else s.cfg.genTo == od.plusMonths((n - 1).toLong())
+                        Box(
+                            Modifier.weight(1f).clip(RoundedCornerShape(10.dp))
+                                .background(if (wybrane) Color(0xFF4A3410) else Surface2)
+                                .border(if (wybrane) 2.dp else 0.dp, if (wybrane) Accent else Color.Transparent, RoundedCornerShape(10.dp))
+                                .clickable {
+                                    vm.saveConfig(
+                                        s.cfg.copy(
+                                            genFrom = od,
+                                            genTo = if (n == 0) null else od.plusMonths((n - 1).toLong())
+                                        )
+                                    )
+                                }
+                                .padding(vertical = 9.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(etykieta, fontSize = 11.sp, fontWeight = FontWeight.Medium,
+                                color = if (wybrane) Accent else OnMuted, maxLines = 1)
+                        }
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    if (s.cfg.genTo == null) "Cykl wypełnia kalendarz od ${miesiacPlD(od)} bez ograniczenia."
+                    else "Cykl wypełnia kalendarz od ${miesiacPlD(od)} do ${miesiacPlD(s.cfg.genTo!!)}.",
+                    fontSize = 10.sp, color = OnFaint, lineHeight = 14.sp
+                )
+            }
+        }
+
+        // przypomnienia o wydarzeniach
+        Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Surface1).padding(14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Przypomnienia o wydarzeniach", fontSize = 14.sp, color = OnBg)
+                    Text(
+                        if (s.remindOn) "dzień wcześniej o ${"%02d".format(s.remindHour)}:00" else "wyłączone",
+                        fontSize = 11.sp, color = if (s.remindOn) Accent else OnFaint
+                    )
+                }
+                Switch(
+                    checked = s.remindOn,
+                    onCheckedChange = { vm.setReminders(it, s.remindHour) },
+                    colors = SwitchDefaults.colors(checkedThumbColor = AccentOn, checkedTrackColor = Accent)
+                )
+            }
+            if (s.remindOn) {
+                Spacer(Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Godzina:", fontSize = 12.sp, color = OnMuted)
+                    Spacer(Modifier.width(10.dp))
+                    Button(
+                        onClick = { vm.setReminders(true, (s.remindHour + 23) % 24) },
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 2.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Surface2, contentColor = OnBg)
+                    ) { Text("−", fontSize = 15.sp) }
+                    Text("${"%02d".format(s.remindHour)}:00", Modifier.weight(1f), fontSize = 14.sp,
+                        color = OnBg, textAlign = TextAlign.Center, fontWeight = FontWeight.SemiBold)
+                    Button(
+                        onClick = { vm.setReminders(true, (s.remindHour + 1) % 24) },
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 2.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Surface2, contentColor = OnBg)
+                    ) { Text("+", fontSize = 15.sp) }
+                }
+                Text(
+                    "Wieczorem dostaniesz listę wszystkiego, co masz zaplanowane na jutro. " +
+                        "Ustaw godzinę tak, żeby nie trafiała w Twoją zmianę.",
+                    fontSize = 10.sp, color = OnFaint, lineHeight = 14.sp, modifier = Modifier.padding(top = 6.dp)
+                )
+            }
         }
 
         Text("SYSTEM PRACY", fontSize = 10.sp, color = OnFaint, fontWeight = FontWeight.Medium)
@@ -290,6 +403,17 @@ fun SetupScreen(vm: Vm, uvm: pl.grafik.pracy.ui.UpdateVm) {
         Spacer(Modifier.height(20.dp))
     }
 }
+
+private val PL_LOC = java.util.Locale.forLanguageTag("pl-PL")
+
+/** Mianownik — „Wrzesień 2026". Do samodzielnego wyświetlenia. */
+private fun miesiacPl(ym: java.time.YearMonth): String =
+    ym.month.getDisplayName(java.time.format.TextStyle.FULL_STANDALONE, PL_LOC)
+        .replaceFirstChar { it.uppercase() } + " " + ym.year
+
+/** Dopełniacz — „od września 2026 do sierpnia 2027". */
+private fun miesiacPlD(ym: java.time.YearMonth): String =
+    ym.month.getDisplayName(java.time.format.TextStyle.FULL, PL_LOC) + " " + ym.year
 
 @Composable
 fun ColorsScreen(vm: Vm) {

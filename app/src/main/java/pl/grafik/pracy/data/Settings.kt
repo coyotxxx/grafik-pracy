@@ -20,6 +20,10 @@ class SettingsStore(private val ctx: Context) {
     private val kIndex = intPreferencesKey("anchorIndex")
     private val kBrigade = stringPreferencesKey("brigade")
     private val kGenerate = booleanPreferencesKey("generate")
+    private val kGenFrom = stringPreferencesKey("gen_from")
+    private val kGenTo = stringPreferencesKey("gen_to")
+    private val kRemindOn = booleanPreferencesKey("remind_on")
+    private val kRemindHour = intPreferencesKey("remind_hour")
     private val kColors = stringPreferencesKey("colors")
     private val kWpOn = booleanPreferencesKey("wp_enabled")
     private val kWpLat = doublePreferencesKey("wp_lat")
@@ -35,7 +39,9 @@ class SettingsStore(private val ctx: Context) {
             anchorDate = runCatching { LocalDate.parse(p[kAnchor]) }.getOrDefault(LocalDate.of(2024, 3, 1)),
             anchorIndex = p[kIndex] ?: 0,
             brigade = p[kBrigade] ?: "A",
-            generate = p[kGenerate] ?: false
+            generate = p[kGenerate] ?: false,
+            genFrom = p[kGenFrom]?.let { runCatching { java.time.YearMonth.parse(it) }.getOrNull() },
+            genTo = p[kGenTo]?.let { runCatching { java.time.YearMonth.parse(it) }.getOrNull() }
         )
     }
 
@@ -53,6 +59,8 @@ class SettingsStore(private val ctx: Context) {
             p[kIndex] = c.anchorIndex
             p[kBrigade] = c.brigade
             p[kGenerate] = c.generate
+            if (c.genFrom != null) p[kGenFrom] = c.genFrom.toString() else p.remove(kGenFrom)
+            if (c.genTo != null) p[kGenTo] = c.genTo.toString() else p.remove(kGenTo)
         }
     }
 
@@ -79,6 +87,15 @@ class SettingsStore(private val ctx: Context) {
             p[kWpStay] = w.minStayMin
             p[kWpGap] = w.mergeGapMin
         }
+    }
+
+    /** Przypomnienia o wydarzeniach: czy włączone i o której dnia poprzedniego. */
+    val reminders: Flow<Pair<Boolean, Int>> = ctx.ds.data.map { p ->
+        (p[kRemindOn] ?: true) to (p[kRemindHour] ?: 18)
+    }
+
+    suspend fun saveReminders(on: Boolean, hour: Int) {
+        ctx.ds.edit { p -> p[kRemindOn] = on; p[kRemindHour] = hour.coerceIn(0, 23) }
     }
 
     /** Kasuje WSZYSTKIE ustawienia — cykl, kolory, miejsce pracy. */

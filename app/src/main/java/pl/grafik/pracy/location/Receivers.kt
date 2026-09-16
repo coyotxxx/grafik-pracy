@@ -50,6 +50,8 @@ class BootReceiver : BroadcastReceiver() {
                     GeofenceManager.register(app, wp)
                     PresenceWatchdog.schedule(app)
                 }
+                // Przypomnienia też giną przy restarcie telefonu.
+                pl.grafik.pracy.events.Reminders.schedule(app)
             } finally {
                 pending.finish()
             }

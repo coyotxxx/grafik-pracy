@@ -47,8 +47,21 @@ data class CycleConfig(
      * Czy kalendarz ma być wypełniany z cyklu. Domyślnie NIE — po instalacji aplikacja
      * jest pusta i pokazuje wyłącznie to, co użytkownik sam wpisze.
      */
-    val generate: Boolean = false
-)
+    val generate: Boolean = false,
+    /** Od którego miesiąca cykl ma wypełniać kalendarz (null = bez ograniczenia). */
+    val genFrom: java.time.YearMonth? = null,
+    /** Do którego miesiąca włącznie (null = bez końca). */
+    val genTo: java.time.YearMonth? = null
+) {
+    /** Czy cykl obejmuje wskazany dzień. */
+    fun covers(d: LocalDate): Boolean {
+        if (!generate) return false
+        val ym = java.time.YearMonth.from(d)
+        if (genFrom != null && ym < genFrom) return false
+        if (genTo != null && ym > genTo) return false
+        return true
+    }
+}
 
 object CycleGenerator {
 
@@ -66,12 +79,15 @@ object CycleGenerator {
     }
 
     /** Grafik na cały miesiąc, wyliczony z cyklu. */
-    fun month(cfg: CycleConfig, year: Int, month: Int): Map<LocalDate, Shift> {
+    fun month(cfg: CycleConfig, year: Int, month: Int): Map<LocalDate, Shift> =
+        range(cfg, LocalDate.of(year, month, 1), LocalDate.of(year, month, 1).plusMonths(1).minusDays(1))
+
+    /** Grafik dla dowolnego zakresu dat — tylko dni objęte zakresem cyklu. */
+    fun range(cfg: CycleConfig, from: LocalDate, to: LocalDate): Map<LocalDate, Shift> {
         val out = LinkedHashMap<LocalDate, Shift>()
-        var d = LocalDate.of(year, month, 1)
-        val end = d.plusMonths(1)
-        while (d.isBefore(end)) {
-            out[d] = shiftFor(cfg, d)
+        var d = from
+        while (!d.isAfter(to)) {
+            if (cfg.covers(d)) out[d] = shiftFor(cfg, d)
             d = d.plusDays(1)
         }
         return out

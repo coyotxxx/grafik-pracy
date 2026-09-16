@@ -7,8 +7,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -28,12 +30,15 @@ private val PL = Locale("pl", "PL")
 fun CalendarScreen(vm: Vm, onOpenDay: (LocalDate) -> Unit) {
     val s by vm.state.collectAsState()
 
+    // Domyślnie schowana — kalendarz zajmuje cały ekran, paleta wyskakuje tylko na wybór.
+    var paletaOtwarta by rememberSaveable { mutableStateOf(false) }
+
     Column(Modifier.fillMaxSize().background(Bg)) {
         Header(vm, s)
         WeekHeader()
-        Grid(s, onTap = { vm.tap(it) }, onLong = onOpenDay)
-        Spacer(Modifier.weight(1f))
-        Palette(vm, s)
+        // Siatka bierze całe wolne miejsce — po zwinięciu palety kalendarz robi się duży.
+        Grid(s, Modifier.weight(1f), onTap = { vm.tap(it) }, onLong = onOpenDay)
+        Palette(vm, s, paletaOtwarta) { paletaOtwarta = !paletaOtwarta }
     }
 }
 
@@ -105,24 +110,37 @@ private fun WeekHeader() {
 }
 
 @Composable
-private fun Grid(s: UiState, onTap: (LocalDate) -> Unit, onLong: (LocalDate) -> Unit) {
+private fun Grid(s: UiState, m: Modifier, onTap: (LocalDate) -> Unit, onLong: (LocalDate) -> Unit) {
     val first = s.ym.atDay(1)
-    val lead = first.dayOfWeek.value - 1
-    val total = s.ym.lengthOfMonth()
-    val weeks = ((lead + total + 6) / 7)
+    val start = first.minusDays(((first.dayOfWeek.value + 6) % 7).toLong())
+    val last = s.ym.atEndOfMonth()
+    val end = last.plusDays((7 - last.dayOfWeek.value).toLong())
+    val weeks = (java.time.temporal.ChronoUnit.DAYS.between(start, end).toInt() + 1) / 7
     val today = LocalDate.now()
 
-    Column(Modifier.padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+    Column(
+        m.fillMaxWidth().padding(horizontal = 10.dp, vertical = 2.dp),
+        verticalArrangement = Arrangement.spacedBy(3.dp)
+    ) {
         repeat(weeks) { w ->
-            Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+            Row(
+                Modifier.fillMaxWidth().weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(3.dp)
+            ) {
                 repeat(7) { i ->
-                    val n = w * 7 + i - lead + 1
-                    if (n < 1 || n > total) {
-                        Box(Modifier.weight(1f).height(48.dp).clip(RoundedCornerShape(10.dp)).background(Color(0xFF1A1C22)))
-                    } else {
-                        val d = s.ym.atDay(n)
-                        DayCell(d, s.entries[d], s.colors, d == today, Modifier.weight(1f), { onTap(d) }, { onLong(d) })
-                    }
+                    val d = start.plusDays((w * 7 + i).toLong())
+                    DayCell(
+                        date = d,
+                        e = s.entries[d],
+                        events = s.events[d].orEmpty().size,
+                        colors = s.colors,
+                        isToday = d == today,
+                        // Sąsiednie miesiące widać, ale są przygaszone.
+                        obcy = java.time.YearMonth.from(d) != s.ym,
+                        m = Modifier.weight(1f).fillMaxHeight(),
+                        onTap = { onTap(d) },
+                        onLong = { onLong(d) }
+                    )
                 }
             }
         }
@@ -132,11 +150,12 @@ private fun Grid(s: UiState, onTap: (LocalDate) -> Unit, onLong: (LocalDate) -> 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun DayCell(
-    date: LocalDate, e: DayEntry?, colors: Map<String, String>,
-    isToday: Boolean, m: Modifier, onTap: () -> Unit, onLong: () -> Unit
+    date: LocalDate, e: DayEntry?, events: Int, colors: Map<String, String>,
+    isToday: Boolean, obcy: Boolean, m: Modifier, onTap: () -> Unit, onLong: () -> Unit
 ) {
     val sw = Palette.byId(colors[e?.shift?.code] ?: Palette.defaults[e?.shift?.code])
     val kind = Holidays.kindOf(date)
+    val swieto = Holidays.isHoliday(date)
     val works = e?.shift?.isWork == true
     val special = works && (kind == DayKind.NIEDZIELA || kind == DayKind.SWIETO)
     val satWork = works && kind == DayKind.SOBOTA
@@ -150,93 +169,149 @@ private fun DayCell(
     val bw = if (isToday || special || satWork) 2.dp else 1.dp
 
     Column(
-        m.height(48.dp).clip(RoundedCornerShape(10.dp))
+        m.alpha(if (obcy) 0.42f else 1f)
+            .clip(RoundedCornerShape(10.dp))
             .background(if (e?.shift == null) Surface1 else sw.fill)
             .border(bw, border, RoundedCornerShape(10.dp))
             .combinedClickable(onClick = onTap, onLongClick = onLong)
     ) {
         if ((e?.otHours ?: 0) > 0) {
             Box(Modifier.fillMaxWidth().background(if (e!!.otRate == OtRate.P100) OtColor100 else OtColor50)) {
-                Text("+${e.otHours}h ${e.otRate.percent}%", Modifier.fillMaxWidth().padding(vertical = 1.dp),
-                    fontSize = 8.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2A1C06), textAlign = TextAlign.Center)
+                Text(
+                    "+${e.otHours}h ${e.otRate.percent}%",
+                    Modifier.fillMaxWidth().padding(vertical = 1.dp),
+                    fontSize = 8.sp, fontWeight = FontWeight.Bold,
+                    color = Color(0xFF2A1C06), textAlign = TextAlign.Center, maxLines = 1
+                )
             }
         }
-        Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 1.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("$${date.dayOfMonth}".removePrefix("$"), fontSize = 11.sp,
-                fontWeight = if (isToday) FontWeight.Bold else FontWeight.Medium,
-                color = when (kind) { DayKind.SOBOTA -> SatColor; DayKind.NIEDZIELA, DayKind.SWIETO -> SunColor; else -> OnBg })
-            Spacer(Modifier.weight(1f))
-            if (e?.deviation == true) Box(Modifier.size(6.dp).clip(RoundedCornerShape(2.dp)).background(DevColor))
-            if (e?.note?.isNotEmpty() == true) Box(Modifier.padding(start = 2.dp).size(5.dp).clip(RoundedCornerShape(3.dp)).background(OnMuted))
-        }
-        val lbl = e?.shift?.code ?: ""
-        Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
-            Text(lbl, fontSize = if (lbl.length > 3) 9.sp else 15.sp,
-                fontWeight = FontWeight.Bold, color = sw.text, maxLines = 1)
+        // Numer dnia leży NA polu etykiety, a nie nad nim — dzięki temu etykieta
+        // zawsze ma całą wysokość komórki i nigdy nie zostaje przycięta.
+        Box(Modifier.fillMaxWidth().weight(1f)) {
+            val lbl = e?.shift?.code ?: ""
+            if (lbl.isNotEmpty()) {
+                Text(
+                    lbl,
+                    // Pod numerem dnia, nie na nim — w wąskich komórkach nachodziły na siebie.
+                    Modifier.align(Alignment.BottomCenter).padding(bottom = 3.dp),
+                    fontSize = if (lbl.length > 3) 11.sp else 18.sp,
+                    fontWeight = FontWeight.Bold, color = sw.text, maxLines = 1
+                )
+            }
+            Row(
+                Modifier.align(Alignment.TopStart).fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "${date.dayOfMonth}", fontSize = 12.sp,
+                    fontWeight = if (isToday) FontWeight.Bold else FontWeight.Medium,
+                    color = when (kind) {
+                        DayKind.SOBOTA -> SatColor
+                        DayKind.NIEDZIELA, DayKind.SWIETO -> SunColor
+                        else -> OnBg
+                    }
+                )
+                Spacer(Modifier.weight(1f))
+                if (swieto) Box(Modifier.size(6.dp).clip(RoundedCornerShape(3.dp)).background(SunColor))
+                if (e?.deviation == true) Box(Modifier.padding(start = 2.dp).size(6.dp).clip(RoundedCornerShape(2.dp)).background(DevColor))
+                if (events > 0) Box(Modifier.padding(start = 2.dp).size(6.dp).clip(RoundedCornerShape(3.dp)).background(EventColor))
+            }
         }
     }
 }
 
 @Composable
-private fun Palette(vm: Vm, s: UiState) {
+private fun Palette(vm: Vm, s: UiState, otwarta: Boolean, przelacz: () -> Unit) {
     Column(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp))
-            .background(Surface1).padding(start = 8.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
+            .background(Surface1).padding(start = 8.dp, end = 8.dp, top = 2.dp, bottom = 4.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(toolName(s), fontSize = 9.sp, fontWeight = FontWeight.SemiBold, color = OnMuted, modifier = Modifier.weight(1f))
-            TextButton(onClick = { vm.undo() }, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)) {
-                Icon(Icons.Default.Undo, null, tint = OnMuted, modifier = Modifier.size(13.dp))
+        // Pasek zawsze widoczny: co maluję, sterowanie nadgodzinami i cofanie.
+        Row(
+            Modifier.fillMaxWidth().clickable(onClick = przelacz).padding(vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                if (otwarta) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
+                if (otwarta) "schowaj paletę" else "wybierz, czym malujesz",
+                tint = Accent, modifier = Modifier.size(20.dp)
+            )
+            Spacer(Modifier.width(6.dp))
+            Column(Modifier.weight(1f)) {
+                Text(toolName(s), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = OnBg, maxLines = 1)
+                if (!otwarta) Text("dotknij, by zmienić", fontSize = 8.sp, color = OnFaint)
+            }
+
+            // Godziny i stawka zostają pod ręką także przy schowanej palecie.
+            if (s.tool == Tool.OT) {
+                Row(
+                    Modifier.clip(RoundedCornerShape(10.dp)).background(Surface2).padding(horizontal = 3.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = { vm.otMinus() }, modifier = Modifier.size(26.dp)) {
+                        Icon(Icons.Default.Remove, "mniej", tint = OnBg, modifier = Modifier.size(14.dp))
+                    }
+                    Text("${s.otHours}h", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = OnBg)
+                    IconButton(onClick = { vm.otPlus() }, modifier = Modifier.size(26.dp)) {
+                        Icon(Icons.Default.Add, "więcej", tint = OnBg, modifier = Modifier.size(14.dp))
+                    }
+                }
+                Spacer(Modifier.width(4.dp))
+                Box(
+                    Modifier.clip(RoundedCornerShape(10.dp))
+                        .background(if (s.otRate == OtRate.P100) Color(0xFF4A3410) else Surface2)
+                        .clickable { vm.toggleRate() }.padding(horizontal = 9.dp, vertical = 6.dp)
+                ) {
+                    Text("${s.otRate.percent}%", fontSize = 11.sp, fontWeight = FontWeight.Bold,
+                        color = if (s.otRate == OtRate.P100) OtColor100 else OnMuted)
+                }
+                Spacer(Modifier.width(4.dp))
+            }
+
+            TextButton(onClick = { vm.undo() }, contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)) {
+                Icon(Icons.Default.Undo, null, tint = OnMuted, modifier = Modifier.size(14.dp))
                 Spacer(Modifier.width(3.dp)); Text("Cofnij", fontSize = 10.sp, color = OnMuted)
             }
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-            Tool(vm, s, Tool.I, "I", "6–14", Modifier.weight(1f))
-            Tool(vm, s, Tool.II, "II", "14–22", Modifier.weight(1f))
-            Tool(vm, s, Tool.III, "III", "22–6", Modifier.weight(1f))
-            Tool(vm, s, Tool.W5, "w5", "wolne", Modifier.weight(1f))
-            Tool(vm, s, Tool.WS, "wś", "wolne św.", Modifier.weight(1f))
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-            Tool(vm, s, Tool.DWN, "DWN", "za niedz.", Modifier.weight(1f))
-            Tool(vm, s, Tool.BWN, "bezw.", "wolna nd.", Modifier.weight(1f))
-            Tool(vm, s, Tool.URLOP, "U", "urlop", Modifier.weight(1f))
-            Tool(vm, s, Tool.DEV, "odb.", "od schem.", Modifier.weight(1f))
-            Tool(vm, s, Tool.ERASE, "×", "wyczyść", Modifier.weight(1f))
-        }
+        if (!otwarta) return@Column
 
-        Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
+        // Po wyborze paleta chowa się sama — od razu malujesz na pełnym kalendarzu.
+        val wybierz: (Tool) -> Unit = { t -> vm.pick(t); przelacz() }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+            Tool(s, Tool.I, "I", "6–14", Modifier.weight(1f), wybierz)
+            Tool(s, Tool.II, "II", "14–22", Modifier.weight(1f), wybierz)
+            Tool(s, Tool.III, "III", "22–6", Modifier.weight(1f), wybierz)
+            Tool(s, Tool.W5, "w5", "wolne", Modifier.weight(1f), wybierz)
+            Tool(s, Tool.WS, "wś", "wolne św.", Modifier.weight(1f), wybierz)
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+            Tool(s, Tool.DWN, "DWN", "za niedz.", Modifier.weight(1f), wybierz)
+            Tool(s, Tool.BWN, "bezw.", "wolna nd.", Modifier.weight(1f), wybierz)
+            Tool(s, Tool.URLOP, "U", "urlop", Modifier.weight(1f), wybierz)
+            Tool(s, Tool.DEV, "odb.", "od schem.", Modifier.weight(1f), wybierz)
+            Tool(s, Tool.ERASE, "×", "wyczyść", Modifier.weight(1f), wybierz)
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
             val on = s.tool == Tool.OT
             Column(
                 Modifier.weight(1f).clip(RoundedCornerShape(11.dp))
                     .background(if (on) Color(0xFF4A3410) else Surface2)
                     .border(if (on) 2.dp else 0.dp, if (on) OtColor100 else Color.Transparent, RoundedCornerShape(11.dp))
-                    .clickable { vm.pick(Tool.OT) }.padding(horizontal = 9.dp, vertical = 4.dp)
+                    .clickable { wybierz(Tool.OT) }.padding(horizontal = 9.dp, vertical = 6.dp)
             ) {
-                Text("NADGODZINY", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = if (on) OtColor100 else OnMuted)
-                Text("dotknij dzień", fontSize = 8.sp, color = OnFaint)
+                Text("NADGODZINY", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = if (on) OtColor100 else OnMuted)
+                Text("godziny i stawkę ustawisz na pasku", fontSize = 8.sp, color = OnFaint, maxLines = 1)
             }
-            Row(
-                Modifier.clip(RoundedCornerShape(11.dp)).background(Surface2).padding(horizontal = 5.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = { vm.otMinus() }, modifier = Modifier.size(24.dp)) { Icon(Icons.Default.Remove, "mniej", tint = OnBg, modifier = Modifier.size(14.dp)) }
-                Text("${s.otHours}h", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = OnBg)
-                IconButton(onClick = { vm.otPlus() }, modifier = Modifier.size(24.dp)) { Icon(Icons.Default.Add, "więcej", tint = OnBg, modifier = Modifier.size(14.dp)) }
-            }
-            Box(
-                Modifier.clip(RoundedCornerShape(11.dp))
-                    .background(if (s.otRate == OtRate.P100) Color(0xFF4A3410) else Surface2)
-                    .clickable { vm.toggleRate() }.padding(horizontal = 10.dp, vertical = 7.dp)
-            ) { Text("${s.otRate.percent}%", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = if (s.otRate == OtRate.P100) OtColor100 else OnMuted) }
         }
+        Spacer(Modifier.height(2.dp))
     }
 }
 
 @Composable
-private fun Tool(vm: Vm, s: UiState, t: Tool, big: String, small: String, m: Modifier) {
+private fun Tool(s: UiState, t: Tool, big: String, small: String, m: Modifier, wybierz: (Tool) -> Unit) {
     val on = s.tool == t
     val sw = when (t) {
         Tool.I -> Palette.byId(s.colors["I"]); Tool.II -> Palette.byId(s.colors["II"])
@@ -249,7 +324,7 @@ private fun Tool(vm: Vm, s: UiState, t: Tool, big: String, small: String, m: Mod
         m.clip(RoundedCornerShape(11.dp))
             .background(if (on) sw.fill else Surface2)
             .border(if (on) 2.dp else 0.dp, if (on) sw.text else Color.Transparent, RoundedCornerShape(11.dp))
-            .clickable { vm.pick(t) }.padding(vertical = 4.dp),
+            .clickable { wybierz(t) }.padding(vertical = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(big, fontSize = if (big.length > 3) 9.sp else 14.sp, fontWeight = FontWeight.Bold, color = if (on) sw.text else OnMuted, maxLines = 1)

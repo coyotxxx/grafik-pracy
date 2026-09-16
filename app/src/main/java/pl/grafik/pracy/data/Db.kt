@@ -89,6 +89,42 @@ interface PresenceDao {
     suspend fun clearAll()
 }
 
+/** Wydarzenie na dany dzień — „fryzjer 10:00", „wizyta", „urodziny". */
+@Entity(tableName = "events")
+data class EventRow(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    @ColumnInfo(index = true) val date: String,                      // ISO yyyy-MM-dd
+    /** HH:mm albo pusty, gdy wydarzenie bez godziny. */
+    val time: String = "",
+    val text: String,
+    /** Czy przypomnieć dzień wcześniej. */
+    val remind: Boolean = true
+)
+
+@Dao
+interface EventDao {
+    @Query("SELECT * FROM events WHERE date >= :from AND date <= :to ORDER BY date, time")
+    fun observeRange(from: String, to: String): Flow<List<EventRow>>
+
+    @Query("SELECT * FROM events WHERE date = :date ORDER BY time")
+    suspend fun forDate(date: String): List<EventRow>
+
+    @Query("SELECT * FROM events WHERE date = :date AND remind = 1 ORDER BY time")
+    suspend fun remindersFor(date: String): List<EventRow>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(row: EventRow): Long
+
+    @Update
+    suspend fun update(row: EventRow)
+
+    @Query("DELETE FROM events WHERE id = :id")
+    suspend fun delete(id: Long)
+
+    @Query("DELETE FROM events")
+    suspend fun clearAll()
+}
+
 @Dao
 interface DayDao {
     @Query("SELECT * FROM days WHERE date >= :from AND date <= :to")
@@ -113,10 +149,11 @@ interface DayDao {
     suspend fun clearAll()
 }
 
-@Database(entities = [DayRow::class, PresenceRow::class], version = 2, exportSchema = false)
+@Database(entities = [DayRow::class, PresenceRow::class, EventRow::class], version = 3, exportSchema = false)
 abstract class AppDb : RoomDatabase() {
     abstract fun dayDao(): DayDao
     abstract fun presenceDao(): PresenceDao
+    abstract fun eventDao(): EventDao
 
     companion object {
         /**
@@ -145,10 +182,28 @@ abstract class AppDb : RoomDatabase() {
             }
         }
 
+        /** v2 -> v3: wydarzenia z przypomnieniem dzień wcześniej. */
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `events` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `date` TEXT NOT NULL,
+                        `time` TEXT NOT NULL,
+                        `text` TEXT NOT NULL,
+                        `remind` INTEGER NOT NULL
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_events_date` ON `events` (`date`)")
+            }
+        }
+
         @Volatile private var inst: AppDb? = null
         fun get(ctx: Context): AppDb = inst ?: synchronized(this) {
             inst ?: Room.databaseBuilder(ctx.applicationContext, AppDb::class.java, "grafik.db")
-                .addMigrations(MIGRATION_1_2)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                 .build().also { inst = it }
         }
     }

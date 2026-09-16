@@ -44,6 +44,8 @@ class PresenceFlowTest {
         SettingsStore(ctx).saveWorkPlace(
             WorkPlace(enabled = true, lat = 52.1, lon = 21.0, radiusM = 200, minStayMin = 30)
         )
+        // Test nie może zależeć od cyklu, który ktoś zostawił w ustawieniach urządzenia.
+        SettingsStore(ctx).saveConfig(CycleConfig())
     }
 
     private suspend fun planShift(d: LocalDate, s: Shift) {
