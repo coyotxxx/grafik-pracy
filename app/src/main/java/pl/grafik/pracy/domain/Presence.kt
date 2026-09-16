@@ -44,7 +44,11 @@ data class PresenceResult(
     val otRate: OtRate,
     val shift: Shift?,
     /** Praca w dniu, który wg grafiku był wolny — całość jest nadgodziną. */
-    val onFreeDay: Boolean
+    val onFreeDay: Boolean,
+    /** Zmiana rozpoznana po godzinie przyjazdu — do opisu w powiadomieniu. */
+    val recognized: Shift = Shift.I,
+    /** Ile odpoczynku zostaje przed następną zmianą, gdy jest go za mało. null = w porządku. */
+    val restHours: Long? = null
 )
 
 /**
@@ -56,6 +60,15 @@ data class PresenceResult(
  * Zaokrąglenie liczy wyłącznie NADWYŻKĘ poza zmianą: spóźnienie nie obcina normy.
  */
 object PresenceEngine {
+
+    /** Art. 132 KP — dobowy odpoczynek. Nowa zmiana nie może zacząć się wcześniej. */
+    const val MIN_REST_HOURS = 11L
+
+    /**
+     * Zamianę zmian uznajemy dopiero przy pobycie tej długości. Krótsza wizyta
+     * w dniu, w którym grafik przewidywał inną zmianę, to nadgodziny, a nie cała zmiana.
+     */
+    const val MIN_SWAP_MIN = 240L
 
     fun roundUp(t: LocalDateTime): LocalDateTime {
         val floor = t.truncatedTo(ChronoUnit.HOURS)
@@ -84,14 +97,50 @@ object PresenceEngine {
 
     /**
      * Do którego dnia grafiku należy pobyt.
-     * Wejście przed 6:00 przy zmianie III z poprzedniego dnia → to jeszcze tamten dzień.
+     *
+     * Rozstrzyga o tym dobowy odpoczynek (art. 132 KP). Po zmianie kończącej się o 6:00
+     * następna nie może ruszyć przed 17:00, więc każde wejście w tym oknie to nie nowa
+     * zmiana, tylko przedłużenie poprzedniej — i liczy się do TAMTEGO dnia.
      */
     fun assignDate(span: PresenceSpan, shiftOf: (LocalDate) -> Shift?): LocalDate {
         val d = span.enter.toLocalDate()
-        if (span.enter.toLocalTime() < LocalTime.of(6, 0) && shiftOf(d.minusDays(1)) == Shift.III) {
-            return d.minusDays(1)
-        }
-        return d
+        val prev = d.minusDays(1)
+        val prevEnd = shiftWindow(prev, shiftOf(prev))?.second ?: return d
+        return if (span.enter.isBefore(prevEnd.plusHours(MIN_REST_HOURS))) prev else d
+    }
+
+    /**
+     * Na którą zmianę przyjechałem — po godzinie wejścia, już zaokrąglonej w górę.
+     * 21:30 → 22:00 → nocka. Używane, gdy pobyt nie pasuje do zmiany z grafiku.
+     */
+    fun shiftByEntry(enter: LocalDateTime): Shift = when (roundUp(enter).hour) {
+        in 5..11 -> Shift.I
+        in 12..19 -> Shift.II
+        else -> Shift.III
+    }
+
+    /** Czy pobyt w ogóle zahacza o okno zmiany. */
+    fun overlaps(span: PresenceSpan, w: Pair<LocalDateTime, LocalDateTime>): Boolean =
+        span.enter.isBefore(w.second) && span.exit.isAfter(w.first)
+
+    /**
+     * Czy normę tego dnia pokrył już wcześniejszy pobyt. Liczymy po godzinach
+     * zaliczonych, nie po samym istnieniu wpisu — krótkie zajrzenie do pracy
+     * niczego nie pokrywa i nie może zabrać normy właściwej zmianie.
+     */
+    fun normAlreadyCounted(planned: Pair<LocalDateTime, LocalDateTime>?, previous: List<PresenceSpan>): Boolean {
+        if (planned == null) return false
+        return previous.any { it.enter.isBefore(planned.second) && it.exit.isAfter(planned.first) }
+    }
+
+    /**
+     * Ile odpoczynku zostaje do najbliższej zaplanowanej zmiany.
+     * Zwraca liczbę godzin tylko wtedy, gdy jest ich mniej niż wymagane 11 — inaczej null.
+     */
+    fun restBefore(countedTo: LocalDateTime, nextStarts: List<LocalDateTime>): Long? {
+        val next = nextStarts.filter { it.isAfter(countedTo) }.minOrNull() ?: return null
+        val h = Duration.between(countedTo, next).toHours()
+        return if (h < MIN_REST_HOURS) h else null
     }
 
     /** Skleja pobyty rozdzielone krótką przerwą (wyjście po zakupy, na papierosa). */
@@ -118,30 +167,64 @@ object PresenceEngine {
 
     /**
      * Analiza jednego pobytu.
-     * @param shift zmiana wynikająca z grafiku dla [date]; null lub dzień wolny → cała obecność to nadgodziny.
+     *
+     * @param shift zmiana wynikająca z grafiku dla [date]; dzień wolny → cała obecność to nadgodziny.
+     * @param normUsed czy normę tego dnia pokrył już wcześniejszy pobyt — wtedy to, co teraz, jest nadgodziną.
      */
-    fun analyze(date: LocalDate, span: PresenceSpan, shift: Shift?, kind: DayKind): PresenceResult {
-        val window = shiftWindow(date, shift)
+    fun analyze(
+        date: LocalDate,
+        span: PresenceSpan,
+        shift: Shift?,
+        kind: DayKind,
+        normUsed: Boolean = false
+    ): PresenceResult {
         val upIn = roundUp(span.enter)
         val downOut = roundDown(span.exit)
 
+        val planned = shiftWindow(date, shift)
+        val onFree = planned == null
+        val rozpoznana = shiftByEntry(span.enter)
+
+        // Okno zmiany z grafiku stosujemy TYLKO wtedy, gdy pobyt faktycznie w nie trafia.
+        // Bez tego przyjazd o 21:30 w dniu ze zmianą I rozciągał liczenie od 6:00 do 6:00
+        // następnego dnia — 24 h i 16 h wymyślonych nadgodzin.
+        val planPasuje = planned != null && overlaps(span, planned)
+
+        // Zamiana zmian: grafik mówi jedno, przyjechałem na inną zmianę. Uznajemy to
+        // dopiero przy odpowiednio długim pobycie i tylko gdy norma dnia jest jeszcze wolna —
+        // inaczej krótkie zajrzenie do pracy zaliczyłoby się jako cała zmiana.
+        val szukajZamiany = !onFree && !planPasuje && !normUsed && span.minutes >= MIN_SWAP_MIN
+        val oknoZamiany = if (szukajZamiany) shiftWindow(date, rozpoznana) else null
+        val zamianaPasuje = oknoZamiany != null && overlaps(span, oknoZamiany)
+
+        // Gdy norma tego dnia jest już policzona, nie rozciągamy niczego na okno zmiany —
+        // liczą się wyłącznie godziny faktycznie spędzone w pracy.
+        val window = when {
+            normUsed -> null
+            planPasuje -> planned
+            zamianaPasuje -> oknoZamiany
+            else -> null
+        }
+        val zmiana = when {
+            planPasuje -> shift
+            zamianaPasuje -> rozpoznana
+            else -> shift
+        }
+
         val from: LocalDateTime
         val to: LocalDateTime
-        val norm: Int
         if (window != null) {
             // Spóźnienie nie obcina normy, wcześniejsze wyjście też nie — grafik zostaje grafikiem.
             from = minOf(window.first, upIn)
             to = maxOf(window.second, downOut)
-            norm = shift!!.hours
         } else {
             from = upIn
             to = downOut
-            norm = 0
         }
+        val norm = if (window != null) (zmiana?.hours ?: 0) else 0
 
         val counted = if (to.isAfter(from)) Duration.between(from, to).toHours().toInt() else 0
         val ot = (counted - norm).coerceAtLeast(0)
-        val onFree = window == null
         return PresenceResult(
             date = date,
             span = span,
@@ -151,8 +234,9 @@ object PresenceEngine {
             normHours = norm,
             otHours = ot,
             otRate = rateFor(kind, onFree),
-            shift = shift,
-            onFreeDay = onFree
+            shift = zmiana,
+            onFreeDay = onFree,
+            recognized = rozpoznana
         )
     }
 }

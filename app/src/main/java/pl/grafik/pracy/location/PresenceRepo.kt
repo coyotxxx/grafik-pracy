@@ -127,7 +127,26 @@ object PresenceRepo {
         )
         val date = PresenceEngine.assignDate(span) { d -> known[d] }
         val shift = known[date] ?: effectiveShift(ctx, cfg, date, hour)
-        val result = PresenceEngine.analyze(date, span, shift, Holidays.kindOf(date))
+
+        // Czy normę tego dnia pokrył już wcześniejszy pobyt (dwie wizyty w jednym dniu).
+        val planowane = PresenceEngine.shiftWindow(date, shift)
+        val wczesniejsze = db.presenceDao().forDate(date.toString())
+            .filter { it.status != "rejected" }
+            .mapNotNull { r ->
+                runCatching {
+                    PresenceSpan(LocalDateTime.parse(r.countedFrom), LocalDateTime.parse(r.countedTo))
+                }.getOrNull()
+            }
+        val normaZajeta = PresenceEngine.normAlreadyCounted(planowane, wczesniejsze)
+
+        val analiza = PresenceEngine.analyze(date, span, shift, Holidays.kindOf(date), normaZajeta)
+
+        // Art. 132 KP — czy do następnej zmiany zostaje wymagane 11 h odpoczynku.
+        val nastepne = listOfNotNull(
+            PresenceEngine.shiftWindow(date.plusDays(1), effectiveShift(ctx, cfg, date.plusDays(1)))?.first,
+            PresenceEngine.shiftWindow(date.plusDays(2), effectiveShift(ctx, cfg, date.plusDays(2)))?.first
+        )
+        val result = analiza.copy(restHours = PresenceEngine.restBefore(analiza.countedTo, nastepne))
 
         val id = db.presenceDao().insert(
             PresenceRow(
@@ -163,11 +182,8 @@ object PresenceRepo {
     }
 
     /** Przybliżenie zmiany po godzinie wejścia — używane tylko, gdy grafik jest pusty. */
-    fun shiftFromHour(h: Int): Shift = when (h) {
-        in 5..11 -> Shift.I
-        in 12..19 -> Shift.II
-        else -> Shift.III
-    }
+    fun shiftFromHour(h: Int): Shift =
+        PresenceEngine.shiftByEntry(LocalDateTime.of(2000, 1, 1, h.coerceIn(0, 23), 0))
 
     /** Zatwierdzenie propozycji — dopiero tu wpis trafia do grafiku. */
     suspend fun accept(ctx: Context, id: Long) {

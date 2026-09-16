@@ -10,7 +10,9 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import pl.grafik.pracy.MainActivity
 import pl.grafik.pracy.R
+import pl.grafik.pracy.domain.PresenceEngine
 import pl.grafik.pracy.domain.PresenceResult
+import pl.grafik.pracy.domain.Shift
 import java.time.format.DateTimeFormatter
 
 /** Powiadomienie z propozycją. Nic nie trafia do grafiku bez dotknięcia „Zapisz". */
@@ -51,7 +53,11 @@ object PresenceNotif {
             append("W pracy ${r.span.enter.format(hm)}–${r.span.exit.format(hm)}")
             append(" · liczone ${r.countedFrom.format(hm)}–${r.countedTo.format(hm)}")
             append(" = ${r.countedHours} h")
-            if (r.onFreeDay) append("\nTo był dzień wolny — cała obecność jako nadgodziny.")
+            append("\n${opisZmiany(r)}")
+            if (r.onFreeDay) append(" · dzień wolny — cała obecność jako nadgodziny.")
+            r.restHours?.let {
+                append("\n⚠ Do następnej zmiany tylko $it h odpoczynku (wymagane ${PresenceEngine.MIN_REST_HOURS} h).")
+            }
         }
 
         val open = PendingIntent.getActivity(
@@ -71,6 +77,13 @@ object PresenceNotif {
             .build()
 
         runCatching { NotificationManagerCompat.from(ctx).notify(id.toInt(), n) }
+    }
+
+    /** Na którą zmianę wyszło — po godzinie przyjazdu, nawet gdy grafik mówił co innego. */
+    private fun opisZmiany(r: PresenceResult): String {
+        val z = r.recognized
+        val nazwa = if (z == Shift.III) "Zmiana III (nocka)" else "Zmiana ${z.code}"
+        return "$nazwa ${z.from}–${z.to}"
     }
 
     private fun action(ctx: Context, id: Long, act: String): PendingIntent {
