@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.map
 import pl.grafik.pracy.domain.CyclePattern
 import pl.grafik.pracy.domain.CycleConfig
 import pl.grafik.pracy.domain.WorkPlace
+import pl.grafik.pracy.domain.SettlementCfg
 import pl.grafik.pracy.domain.VacationCfg
 import pl.grafik.pracy.ui.theme.PaletteTheme
 import java.time.LocalDate
@@ -41,6 +42,10 @@ class SettingsStore(private val ctx: Context) {
     private val kWpSsid = stringPreferencesKey("wp_ssid")
     private val kWpStay = intPreferencesKey("wp_min_stay")
     private val kWpGap = intPreferencesKey("wp_merge_gap")
+    private val kOkrDl = intPreferencesKey("okres_dlugosc")
+    private val kOkrZakl = booleanPreferencesKey("okres_norma_zakl")
+    private val kOkrNormy = stringPreferencesKey("okres_normy")
+    private val kOkrLimitRok = intPreferencesKey("okres_limit_rok")
 
     val config: Flow<CycleConfig> = ctx.ds.data.map { p ->
         CycleConfig(
@@ -126,6 +131,34 @@ class SettingsStore(private val ctx: Context) {
             p[kUrlStanDni] = v.stanBiezacy.coerceIn(0, 99)
             p[kUrlStanZal] = v.stanZalegly.coerceIn(0, 99)
             if (v.stanData != null) p[kUrlStanData] = v.stanData.toString() else p.remove(kUrlStanData)
+        }
+    }
+
+    /**
+     * Rozliczenie czasu pracy: długość okresu i normy.
+     * Normy zakładowe trzymamy jako „2026-01:168,2026-02:160" — jedna linia zamiast tabeli.
+     */
+    val settlement: Flow<SettlementCfg> = ctx.ds.data.map { p ->
+        SettlementCfg(
+            months = p[kOkrDl] ?: 3,
+            useCompanyNorm = p[kOkrZakl] ?: false,
+            companyNorms = (p[kOkrNormy] ?: "").split(",").mapNotNull {
+                val kv = it.split(":")
+                val h = kv.getOrNull(1)?.trim()?.toIntOrNull()
+                if (kv.size == 2 && h != null) kv[0].trim() to h else null
+            }.toMap(),
+            otLimitYear = p[kOkrLimitRok] ?: 150
+        )
+    }
+
+    suspend fun saveSettlement(c: SettlementCfg) {
+        ctx.ds.edit { p ->
+            p[kOkrDl] = c.months.coerceIn(1, 12)
+            p[kOkrZakl] = c.useCompanyNorm
+            p[kOkrNormy] = c.companyNorms.entries
+                .filter { it.value > 0 }
+                .joinToString(",") { "${it.key}:${it.value}" }
+            p[kOkrLimitRok] = c.otLimitYear.coerceIn(0, 999)
         }
     }
 

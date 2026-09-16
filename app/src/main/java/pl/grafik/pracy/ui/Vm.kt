@@ -36,7 +36,11 @@ data class UiState(
     val urlopRok: List<LocalDate> = emptyList(),
     /** Dni urlopu w roku poprzednim — do podpowiedzi, ile przeszło na ten rok. */
     val urlopPoprzedniRok: List<LocalDate> = emptyList(),
-    val motyw: pl.grafik.pracy.ui.theme.PaletteTheme = pl.grafik.pracy.ui.theme.PaletteTheme.OBECNA
+    val motyw: pl.grafik.pracy.ui.theme.PaletteTheme = pl.grafik.pracy.ui.theme.PaletteTheme.OBECNA,
+    /** Jak zakład rozlicza czas pracy: długość okresu i normy. */
+    val okres: SettlementCfg = SettlementCfg(),
+    /** Rozliczenie całego okresu, w którym leży wyświetlany miesiąc. */
+    val okresStats: PeriodStats = PeriodStats()
 ) {
     /**
      * Bilans urlopu w roku wyświetlanego miesiąca.
@@ -116,7 +120,12 @@ class Vm(app: Application) : AndroidViewModel(app) {
         _ym.flatMapLatest { ym ->
             dao.observeWithShift(Shift.URLOP.code, "${ym.year - 1}-01-01", "${ym.year - 1}-12-31")
         },
-        settings.motyw
+        settings.motyw,
+        settings.settlement,
+        // Cały rok — z tego liczymy i okres rozliczeniowy, i limit roczny nadgodzin.
+        _ym.flatMapLatest { ym ->
+            dao.observeRange("${ym.year}-01-01", "${ym.year}-12-31")
+        }
     ) { arr ->
         @Suppress("UNCHECKED_CAST")
         val ym = arr[0] as YearMonth
@@ -136,6 +145,9 @@ class Vm(app: Application) : AndroidViewModel(app) {
         @Suppress("UNCHECKED_CAST")
         val urlPrev = (arr[12] as List<DayRow>).map { LocalDate.parse(it.date) }
         val motyw = arr[13] as pl.grafik.pracy.ui.theme.PaletteTheme
+        val okres = arr[14] as SettlementCfg
+        @Suppress("UNCHECKED_CAST")
+        val rokRows = arr[15] as List<DayRow>
 
         val (gStart, gEnd) = gridRange(ym)
         val saved = rows.associate { LocalDate.parse(it.date) to it.toEntry() }
@@ -149,10 +161,11 @@ class Vm(app: Application) : AndroidViewModel(app) {
         // Statystyki liczymy TYLKO z bieżącego miesiąca, mimo że siatka pokazuje więcej.
         val wMiesiacu = merged.filterKeys { YearMonth.from(it) == ym }
 
-        UiState(ym, merged, ev, cfg, cols, tool, otH, otR, calc(wMiesiacu, ym, cfg), rem.first, rem.second, maluj, url, urlRok, urlPrev, motyw)
+        UiState(ym, merged, ev, cfg, cols, tool, otH, otR, calc(wMiesiacu, ym, okres), rem.first, rem.second,
+            maluj, url, urlRok, urlPrev, motyw, okres, calcPeriod(rokRows, ym, cfg, okres))
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState())
 
-    private fun calc(m: Map<LocalDate, DayEntry>, ym: YearMonth, cfg: CycleConfig): MonthStats {
+    private fun calc(m: Map<LocalDate, DayEntry>, ym: YearMonth, okres: SettlementCfg): MonthStats {
         var worked = 0; var ot100 = 0; var ot50 = 0
         var dw = 0; var df = 0; var sun = 0; var hol = 0; var sat = 0
         val by = mutableMapOf<Shift, Int>()
@@ -183,10 +196,54 @@ class Vm(app: Application) : AndroidViewModel(app) {
                 if (e.shift == Shift.URLOP) urlopH += 8
             }
         }
-        return MonthStats(worked, Holidays.monthlyNorm(ym.year, ym.monthValue),
+        return MonthStats(worked, Settlement.normOfMonth(ym, okres),
             ot100, ot50, dw, df, sun, hol, sat, by, dni, urlopH, doDzis,
             biezacyMiesiac = YearMonth.from(dzis) == ym)
     }
+
+    /**
+     * Rozliczenie okresu. Bierzemy cały rok, bo z tych samych dni liczymy limit roczny
+     * nadgodzin, a okres i tak nigdy nie przechodzi przez granicę roku.
+     */
+    private fun calcPeriod(
+        rokRows: List<DayRow>, ym: YearMonth, cfg: CycleConfig, okres: SettlementCfg
+    ): PeriodStats {
+        val p = Settlement.periodOf(ym, okres)
+        val rokOd = LocalDate.of(ym.year, 1, 1)
+        val rokDo = LocalDate.of(ym.year, 12, 31)
+
+        // Ten sam sposób scalania co w kalendarzu: cykl daje tło, wpisy ręczne mają pierwszeństwo.
+        val zapisane = rokRows.associate { LocalDate.parse(it.date) to it.toEntry() }
+        val dni = LinkedHashMap<LocalDate, DayEntry>()
+        CycleGenerator.range(cfg, rokOd, rokDo).forEach { (d, sh) -> dni[d] = zapisane[d] ?: DayEntry(date = d, shift = sh) }
+        zapisane.forEach { (d, e) -> dni[d] = e }
+
+        val dzis = LocalDate.now()
+        var rozliczone = 0; var doDzis = 0; var ot = 0; var otRok = 0
+        dni.forEach { (d, e) ->
+            otRok += e.otHours
+            if (d in p) {
+                val godz = e.workedHours + (if (e.shift == Shift.URLOP) 8 else 0)
+                rozliczone += godz
+                ot += e.otHours
+                if (!d.isAfter(dzis)) doDzis += godz
+            }
+        }
+        return PeriodStats(
+            period = p,
+            rozliczone = rozliczone,
+            doDzis = doDzis,
+            norm = Settlement.norm(p, okres),
+            normUstawowa = Settlement.statutoryNorm(p),
+            ot = ot,
+            otLimit = Settlement.otLimit(p),
+            otRok = otRok,
+            otLimitRok = okres.otLimitYear,
+            biezacy = dzis in p
+        )
+    }
+
+    fun saveSettlement(c: SettlementCfg) = viewModelScope.launch { settings.saveSettlement(c) }
 
     fun setMonth(ym: YearMonth) { _ym.value = ym }
     fun prevMonth() { _ym.value = _ym.value.minusMonths(1) }
@@ -234,10 +291,10 @@ class Vm(app: Application) : AndroidViewModel(app) {
 
     fun saveVacation(v: VacationCfg) = viewModelScope.launch { settings.saveVacation(v) }
 
-    /** Wejście na zakładkę Miesiąc: wracamy do dziś i blokujemy malowanie. */
     /** Wejście w podsumowanie — zawsze startujemy od bieżącego miesiąca. */
     fun onEnterSummary() { _ym.value = YearMonth.now() }
 
+    /** Wejście na zakładkę Miesiąc: wracamy do dziś i blokujemy malowanie. */
     fun onEnterCalendar() {
         _ym.value = YearMonth.now()
         _maluj.value = false

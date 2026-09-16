@@ -5,6 +5,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -21,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -68,6 +70,63 @@ fun SummaryScreen(vm: Vm) {
             }
         }
         Text("Brygada ${s.cfg.brigade}", fontSize = 12.sp, color = OnMuted)
+
+        // --- okres rozliczeniowy: to z niego rozlicza się zakład, miesiąc jest tylko kawałkiem ---
+        val okr = s.okresStats
+        Card(Surface1) {
+            Text(
+                "OKRES ROZLICZENIOWY · ${okresLabel(okr.period).uppercase()}",
+                fontSize = 10.sp, color = OnFaint, fontWeight = FontWeight.Medium
+            )
+            Spacer(Modifier.height(8.dp))
+
+            // Przy okresie miesięcznym godziny są te same co w karcie niżej — nie dublujemy ich.
+            if (okr.period.months.size > 1) {
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Column(Modifier.weight(1f)) {
+                        Row(verticalAlignment = Alignment.Bottom) {
+                            Text(
+                                "${if (okr.biezacy) okr.doDzis else okr.rozliczone}",
+                                fontSize = 28.sp, fontWeight = FontWeight.Bold, color = OnBg
+                            )
+                            Text(
+                                " / ${okr.norm} h", fontSize = 14.sp, color = OnMuted,
+                                modifier = Modifier.padding(bottom = 4.dp)
+                            )
+                            if (okr.biezacy) {
+                                Text(
+                                    "  do dziś", fontSize = 11.sp, color = OnFaint,
+                                    modifier = Modifier.padding(bottom = 5.dp)
+                                )
+                            }
+                        }
+                        if (okr.biezacy) {
+                            Text(
+                                "cały okres wyjdzie ${okr.rozliczone} h " +
+                                    (if (okr.diff >= 0) "(+${okr.diff} h)" else "(${okr.diff} h)"),
+                                fontSize = 10.sp, color = OnFaint
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+                Pasek(okr.doDzis.coerceAtLeast(0), okr.norm, Accent)
+                Spacer(Modifier.height(10.dp))
+            }
+
+            // Obie normy obok siebie — zakładowa rządzi, ustawowa jest punktem odniesienia.
+            if (okr.normaInna) {
+                Text(
+                    "norma zakładowa ${okr.norm} h · ustawowa ${okr.normUstawowa} h",
+                    fontSize = 10.sp, color = DevColor
+                )
+                Spacer(Modifier.height(10.dp))
+            }
+
+            LimitNadgodzin("nadgodziny w okresie", okr.ot, okr.otLimit)
+            Spacer(Modifier.height(8.dp))
+            LimitNadgodzin("nadgodziny w ${okr.period.from.year}", okr.otRok, okr.otLimitRok)
+        }
 
         Card(Surface1) {
             Row(verticalAlignment = Alignment.Bottom) {
@@ -299,6 +358,40 @@ private fun PulaUrlopu(etykieta: String, zostalo: Int, baza: Int, kolor: Color, 
 }
 
 @Composable
+private fun Pasek(ile: Int, z: Int, kolor: Color) {
+    LinearProgressIndicator(
+        progress = { if (z > 0) (ile.toFloat() / z).coerceIn(0f, 1f) else 0f },
+        modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
+        color = kolor,
+        trackColor = Surface3
+    )
+}
+
+/** Wykorzystanie limitu nadgodzin. Na wyczerpaniu robi się czerwono, żeby rzucało się w oczy. */
+@Composable
+private fun LimitNadgodzin(nazwa: String, ile: Int, limit: Int) {
+    val pelny = limit > 0 && ile >= limit
+    val blisko = limit > 0 && ile >= limit * 0.9
+    val kolor = when {
+        pelny -> Danger
+        blisko -> DevColor
+        else -> OtColor100
+    }
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(nazwa, fontSize = 11.sp, color = OnMuted, modifier = Modifier.weight(1f))
+        Text("$ile / $limit h", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = kolor)
+    }
+    Spacer(Modifier.height(4.dp))
+    Pasek(ile, limit, kolor)
+    if (pelny) {
+        Text(
+            "Limit wyczerpany.", fontSize = 10.sp, color = Danger,
+            modifier = Modifier.padding(top = 3.dp)
+        )
+    }
+}
+
+@Composable
 private fun Card(bg: Color, content: @Composable ColumnScope.() -> Unit) {
     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(bg).padding(16.dp), content = content)
 }
@@ -315,8 +408,12 @@ private fun Stat(big: String, small: String, c: Color, m: Modifier) {
 @Composable
 fun SetupScreen(vm: Vm, uvm: pl.grafik.pracy.ui.UpdateVm) {
     val s by vm.state.collectAsState()
-    Column(Modifier.fillMaxSize().background(Bg).verticalScroll(rememberScrollState()).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    Column(
+        Modifier.fillMaxSize().background(Bg).verticalScroll(rememberScrollState())
+            .imePadding()                       // klawiatura nie może zasłaniać pól z normami
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
 
         Text("Mój cykl", fontSize = 21.sp, fontWeight = FontWeight.SemiBold, color = OnBg)
         Text("Ustaw raz — grafik wyliczy się sam na każdy miesiąc.", fontSize = 12.sp, color = OnMuted)
@@ -571,6 +668,156 @@ fun SetupScreen(vm: Vm, uvm: pl.grafik.pracy.ui.UpdateVm) {
             Text("Przywróć ten miesiąc do cyklu", color = OnBg, fontSize = 13.sp)
         }
 
+        // --- czas pracy: okres rozliczeniowy i normy ---
+        Text("CZAS PRACY", fontSize = 10.sp, color = OnFaint, fontWeight = FontWeight.Medium)
+        Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Surface1).padding(14.dp)) {
+            val okresTeraz = Settlement.periodOf(s.ym, s.okres)
+
+            Text("Okres rozliczeniowy", fontSize = 13.sp, color = OnBg)
+            Text(
+                "Zakład rozlicza godziny w całym okresie, nie w pojedynczym miesiącu — " +
+                    "niedobór z jednego miesiąca odrabiasz w kolejnym.",
+                fontSize = 10.sp, color = OnFaint, lineHeight = 14.sp
+            )
+            Spacer(Modifier.height(8.dp))
+            listOf(
+                listOf(1 to "miesiąc", 3 to "kwartał", 4 to "4 miesiące"),
+                listOf(6 to "pół roku", 12 to "rok")
+            ).forEach { rzad ->
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(bottom = 6.dp)) {
+                    rzad.forEach { (ile, nazwa) ->
+                        val on = s.okres.months == ile
+                        Box(
+                            Modifier.weight(1f).clip(RoundedCornerShape(10.dp))
+                                .background(if (on) Color(0xFF4A3410) else Surface2)
+                                .border(if (on) 2.dp else 0.dp, if (on) Accent else Color.Transparent, RoundedCornerShape(10.dp))
+                                .clickable { vm.saveSettlement(s.okres.copy(months = ile)) }
+                                .padding(vertical = 10.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(nazwa, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = if (on) Accent else OnMuted)
+                        }
+                    }
+                    repeat(3 - rzad.size) { Spacer(Modifier.weight(1f)) }
+                }
+            }
+            Text(
+                "Bieżący okres: ${okresLabel(okresTeraz)} · norma ustawowa ${Settlement.statutoryNorm(okresTeraz)} h",
+                fontSize = 11.sp, color = Accent, lineHeight = 15.sp
+            )
+
+            Spacer(Modifier.height(14.dp))
+            HorizontalDivider(color = Surface3)
+            Spacer(Modifier.height(12.dp))
+
+            // Norma zakładowa — w ruchu ciągłym wychodzi inna liczba niż z art. 130 KP.
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Norma zakładowa", fontSize = 13.sp, color = OnBg)
+                    Text(
+                        "Włącz, jeśli zakład podaje inną liczbę godzin niż Kodeks pracy.",
+                        fontSize = 10.sp, color = OnFaint, lineHeight = 14.sp
+                    )
+                }
+                Switch(
+                    checked = s.okres.useCompanyNorm,
+                    onCheckedChange = { vm.saveSettlement(s.okres.copy(useCompanyNorm = it)) },
+                    colors = SwitchDefaults.colors(checkedThumbColor = AccentOn, checkedTrackColor = Accent)
+                )
+            }
+
+            if (s.okres.useCompanyNorm) {
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    "Puste pole = zostaje norma ustawowa.",
+                    fontSize = 10.sp, color = OnFaint, modifier = Modifier.padding(bottom = 4.dp)
+                )
+                okresTeraz.months.forEach { m ->
+                    val klucz = Settlement.key(m)
+                    val ustawowa = Settlement.statutoryNorm(m)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(vertical = 3.dp)
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(miesiacPl(m), fontSize = 13.sp, color = OnBg)
+                            Text("ustawowa $ustawowa h", fontSize = 10.sp, color = OnFaint)
+                        }
+                        // Klucz to sam miesiąc, nigdy zapisywana wartość: emisja z DataStore
+                        // wracała w trakcie pisania i przestawiała cyfry („184" → „148").
+                        var wpis by remember(klucz) {
+                            mutableStateOf(s.okres.companyNorms[klucz]?.toString() ?: "")
+                        }
+                        OutlinedTextField(
+                            value = wpis,
+                            onValueChange = { v ->
+                                val czyste = v.filter(Char::isDigit).take(3)
+                                wpis = czyste
+                                val mapa = s.okres.companyNorms.toMutableMap()
+                                val h = czyste.toIntOrNull()
+                                if (h != null && h > 0) mapa[klucz] = h else mapa.remove(klucz)
+                                vm.saveSettlement(s.okres.copy(companyNorms = mapa))
+                            },
+                            placeholder = { Text("$ustawowa", fontSize = 13.sp, color = OnFaint) },
+                            suffix = { Text("h", fontSize = 12.sp, color = OnMuted) },
+                            singleLine = true,
+                            modifier = Modifier.width(112.dp),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            colors = poleLiczbowe(),
+                            textStyle = androidx.compose.ui.text.TextStyle(color = OnBg, fontSize = 14.sp)
+                        )
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(14.dp))
+            HorizontalDivider(color = Surface3)
+            Spacer(Modifier.height(12.dp))
+
+            Text("Limit nadgodzin", fontSize = 13.sp, color = OnBg)
+            Spacer(Modifier.height(8.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("W okresie", fontSize = 12.sp, color = OnBg)
+                    Text(
+                        "Art. 131 KP — z nadgodzinami przeciętnie ${Settlement.MAX_WEEK_WITH_OT} h tygodniowo.",
+                        fontSize = 10.sp, color = OnFaint, lineHeight = 14.sp
+                    )
+                }
+                Text(
+                    "${Settlement.otLimit(okresTeraz)} h",
+                    fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = OnMuted,
+                    modifier = Modifier.padding(start = 8.dp)
+                )
+            }
+            Spacer(Modifier.height(10.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("W roku", fontSize = 12.sp, color = OnBg)
+                    Text(
+                        "Ustawowo 150 h (art. 151 § 3). Zmień, jeśli regulamin zakładu daje więcej.",
+                        fontSize = 10.sp, color = OnFaint, lineHeight = 14.sp
+                    )
+                }
+                var limit by remember { mutableStateOf(s.okres.otLimitYear.toString()) }
+                OutlinedTextField(
+                    value = limit,
+                    onValueChange = { v ->
+                        val czyste = v.filter(Char::isDigit).take(3)
+                        limit = czyste
+                        czyste.toIntOrNull()?.let { vm.saveSettlement(s.okres.copy(otLimitYear = it)) }
+                    },
+                    placeholder = { Text("150", fontSize = 13.sp, color = OnFaint) },
+                    suffix = { Text("h", fontSize = 12.sp, color = OnMuted) },
+                    singleLine = true,
+                    modifier = Modifier.width(112.dp),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    colors = poleLiczbowe(),
+                    textStyle = androidx.compose.ui.text.TextStyle(color = OnBg, fontSize = 14.sp)
+                )
+            }
+        }
+
         // --- urlop ---
         Text("URLOP", fontSize = 10.sp, color = OnFaint, fontWeight = FontWeight.Medium)
         Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Surface1).padding(14.dp)) {
@@ -788,6 +1035,28 @@ private fun miesiacPl(ym: java.time.YearMonth): String =
 /** Dopełniacz — „od września 2026 do sierpnia 2027". */
 private fun miesiacPlD(ym: java.time.YearMonth): String =
     ym.month.getDisplayName(java.time.format.TextStyle.FULL, PL_LOC) + " " + ym.year
+
+@Composable
+private fun poleLiczbowe() = OutlinedTextFieldDefaults.colors(
+    focusedBorderColor = Accent,
+    unfocusedBorderColor = Surface3,
+    cursorColor = Accent,
+    focusedContainerColor = Color.Transparent,
+    unfocusedContainerColor = Color.Transparent
+)
+
+/** „III kwartał 2026", „lipiec–wrzesień 2026" albo sam miesiąc — zależnie od długości okresu. */
+fun okresLabel(p: Period): String {
+    val n = p.months.size
+    return when {
+        n == 1 -> miesiacPl(p.from)
+        n == 3 -> "${(p.from.monthValue - 1) / 3 + 1}. kwartał ${p.from.year}"
+        n == 12 -> "rok ${p.from.year}"
+        else -> p.from.month.getDisplayName(java.time.format.TextStyle.FULL_STANDALONE, PL_LOC) +
+            "–" + p.to.month.getDisplayName(java.time.format.TextStyle.FULL_STANDALONE, PL_LOC) +
+            " " + p.from.year
+    }
+}
 
 /** Skrót miesiąca do siatki wyboru — „sty", „lut". */
 private fun miesiacSkrot(ym: java.time.YearMonth): String =
