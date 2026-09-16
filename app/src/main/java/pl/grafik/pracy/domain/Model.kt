@@ -92,8 +92,12 @@ data class MonthStats(
     val saturdayWork: Int = 0,
     val byShift: Map<Shift, Int> = emptyMap(),
     /** Ile dni na każdej zmianie — obok godzin. */
-    val daysByShift: Map<Shift, Int> = emptyMap()
+    val daysByShift: Map<Shift, Int> = emptyMap(),
+    /** Godziny pokryte urlopem — dzień urlopu pokrywa dzień roboczy, który wypadał wg grafiku. */
+    val urlopH: Int = 0
 ) {
+    /** Co idzie do rozliczenia miesiąca: przepracowane + pokryte urlopem. */
+    val rozliczone: Int get() = worked + urlopH
     val ot: Int get() = ot100 + ot50
-    val diff: Int get() = worked - norm
+    val diff: Int get() = rozliczone - norm
 }

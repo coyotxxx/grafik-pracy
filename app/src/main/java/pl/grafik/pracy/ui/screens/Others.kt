@@ -42,8 +42,14 @@ fun SummaryScreen(vm: Vm) {
                 Column(Modifier.weight(1f)) {
                     Text("RAZEM", fontSize = 10.sp, color = OnFaint, fontWeight = FontWeight.Medium)
                     Row(verticalAlignment = Alignment.Bottom) {
-                        Text("${st.worked}", fontSize = 34.sp, fontWeight = FontWeight.Bold, color = OnBg)
+                        Text("${st.rozliczone}", fontSize = 34.sp, fontWeight = FontWeight.Bold, color = OnBg)
                         Text(" h", fontSize = 14.sp, color = OnMuted, modifier = Modifier.padding(bottom = 5.dp))
+                    }
+                    if (st.urlopH > 0) {
+                        Text(
+                            "${st.worked} h przepracowane + ${st.urlopH} h urlopu",
+                            fontSize = 10.sp, color = OnFaint
+                        )
                     }
                 }
                 Column(horizontalAlignment = Alignment.End) {
@@ -52,7 +58,7 @@ fun SummaryScreen(vm: Vm) {
                 }
             }
             Spacer(Modifier.height(10.dp))
-            val pct = if (st.norm > 0) (st.worked * 100f / st.norm) else 0f
+            val pct = if (st.norm > 0) (st.rozliczone * 100f / st.norm) else 0f
             LinearProgressIndicator(
                 progress = { (pct / 100f).coerceIn(0f, 1.3f).coerceAtMost(1f) },
                 modifier = Modifier.fillMaxWidth().height(9.dp).clip(RoundedCornerShape(5.dp)),

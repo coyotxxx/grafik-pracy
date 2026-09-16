@@ -80,8 +80,12 @@ private fun Header(vm: Vm, s: UiState) {
         Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text("${s.stats.worked}", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = OnBg)
+        Text("${s.stats.rozliczone}", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = OnBg)
         Text(" / ${s.stats.norm} h", fontSize = 12.sp, color = OnMuted)
+        if (s.stats.urlopH > 0) {
+            Spacer(Modifier.width(6.dp))
+            Text("(w tym ${s.stats.urlopH} h urlopu)", fontSize = 10.sp, color = OnFaint)
+        }
         Spacer(Modifier.width(10.dp))
         val d = s.stats.diff
         Text(if (d >= 0) "+$d h" else "$d h", fontSize = 13.sp, fontWeight = FontWeight.SemiBold,

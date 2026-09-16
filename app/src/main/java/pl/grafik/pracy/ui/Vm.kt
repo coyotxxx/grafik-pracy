@@ -149,14 +149,15 @@ class Vm(app: Application) : AndroidViewModel(app) {
         // Statystyki liczymy TYLKO z bieżącego miesiąca, mimo że siatka pokazuje więcej.
         val wMiesiacu = merged.filterKeys { YearMonth.from(it) == ym }
 
-        UiState(ym, merged, ev, cfg, cols, tool, otH, otR, calc(wMiesiacu, ym), rem.first, rem.second, maluj, url, urlRok, urlPrev, motyw)
+        UiState(ym, merged, ev, cfg, cols, tool, otH, otR, calc(wMiesiacu, ym, cfg), rem.first, rem.second, maluj, url, urlRok, urlPrev, motyw)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState())
 
-    private fun calc(m: Map<LocalDate, DayEntry>, ym: YearMonth): MonthStats {
+    private fun calc(m: Map<LocalDate, DayEntry>, ym: YearMonth, cfg: CycleConfig): MonthStats {
         var worked = 0; var ot100 = 0; var ot50 = 0
         var dw = 0; var df = 0; var sun = 0; var hol = 0; var sat = 0
         val by = mutableMapOf<Shift, Int>()
         val dni = mutableMapOf<Shift, Int>()
+        var urlopH = 0
         m.values.forEach { e ->
             worked += e.workedHours
             if (e.otRate == OtRate.P100) ot100 += e.otHours else ot50 += e.otHours
@@ -170,10 +171,17 @@ class Vm(app: Application) : AndroidViewModel(app) {
                     DayKind.SOBOTA -> sat++
                     else -> {}
                 }
-            } else df++
+            } else {
+                df++
+                // Urlop pokrywa dzień roboczy — liczymy 8 h, chyba że wg cyklu i tak było wolne.
+                if (e.shift == Shift.URLOP) {
+                    val wgCyklu = if (cfg.covers(e.date)) CycleGenerator.shiftFor(cfg, e.date) else null
+                    if (wgCyklu == null || wgCyklu.isWork) urlopH += 8
+                }
+            }
         }
         return MonthStats(worked, Holidays.monthlyNorm(ym.year, ym.monthValue),
-            ot100, ot50, dw, df, sun, hol, sat, by, dni)
+            ot100, ot50, dw, df, sun, hol, sat, by, dni, urlopH)
     }
 
     fun setMonth(ym: YearMonth) { _ym.value = ym }
