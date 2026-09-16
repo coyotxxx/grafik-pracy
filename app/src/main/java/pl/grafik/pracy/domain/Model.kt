@@ -45,13 +45,40 @@ data class DayEntry(
 data class VacationCfg(
     /** Wymiar roczny: 20 dni do 10 lat stażu, 26 powyżej. */
     val wymiar: Int = 26,
-    /** Niewykorzystany z poprzedniego roku. */
+    /** Niewykorzystany z poprzedniego roku. Trzeba go wybrać do 30 września. */
     val zalegly: Int = 0,
     /** Dzień, na który znamy prawdziwy stan (null = liczymy od początku roku). */
     val stanData: LocalDate? = null,
-    /** Ile dni zostało na ten dzień. */
-    val stanDni: Int = 0
-)
+    /** Ile zostało z puli bieżącego roku na ten dzień. */
+    val stanBiezacy: Int = 0,
+    /** Ile zostało z puli zaległej na ten dzień. */
+    val stanZalegly: Int = 0
+) {
+    companion object {
+        /** Art. 168 KP — urlopu zaległego udziela się najpóźniej do 30 września. */
+        fun terminZaleglego(rok: Int): LocalDate = LocalDate.of(rok, 9, 30)
+    }
+}
+
+/** Rozbicie urlopu na pulę zaległą i bieżącą — zużywamy najpierw zaległą. */
+data class VacationBalance(
+    val bazaZalegly: Int,
+    val bazaBiezacy: Int,
+    val zuzyte: Int,
+    val rok: Int
+) {
+    val zZaleglego: Int get() = minOf(zuzyte, bazaZalegly)
+    val zBiezacego: Int get() = zuzyte - zZaleglego
+    val zostaloZaleglego: Int get() = bazaZalegly - zZaleglego
+    val zostaloBiezacego: Int get() = bazaBiezacy - zBiezacego
+    val zostalo: Int get() = zostaloZaleglego + zostaloBiezacego
+    val baza: Int get() = bazaZalegly + bazaBiezacy
+
+    val termin: LocalDate get() = VacationCfg.terminZaleglego(rok)
+    /** Ile dni do 30 września; ujemne = termin minął. */
+    fun dniDoTerminu(dzis: LocalDate): Long =
+        java.time.temporal.ChronoUnit.DAYS.between(dzis, termin)
+}
 
 data class MonthStats(
     val worked: Int = 0,

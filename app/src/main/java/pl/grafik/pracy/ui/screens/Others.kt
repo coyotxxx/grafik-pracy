@@ -74,30 +74,70 @@ fun SummaryScreen(vm: Vm) {
         }
 
         // --- URLOP ---
+        val bil = s.urlopBilans
+        val dzis = java.time.LocalDate.now()
         Card(Surface1) {
             Row(verticalAlignment = Alignment.Bottom) {
                 Column(Modifier.weight(1f)) {
-                    Text("URLOP", fontSize = 10.sp, color = OnFaint, fontWeight = FontWeight.Medium)
+                    Text("URLOP ${s.ym.year}", fontSize = 10.sp, color = OnFaint, fontWeight = FontWeight.Medium)
                     Spacer(Modifier.height(6.dp))
                     Row(verticalAlignment = Alignment.Bottom) {
                         Text(
-                            "${s.urlopPozostalo}", fontSize = 30.sp, fontWeight = FontWeight.Bold,
-                            color = if (s.urlopPozostalo <= 0) Danger else Palette.byId(s.colors["U"]).text
+                            "${bil.zostalo}", fontSize = 30.sp, fontWeight = FontWeight.Bold,
+                            color = if (bil.zostalo <= 0) Danger else Palette.byId(s.colors["U"]).text
                         )
-                        Text(" ${dniSlowo(s.urlopPozostalo)} zostało", fontSize = 13.sp, color = OnMuted,
+                        Text(" ${dniSlowo(bil.zostalo)} zostało", fontSize = 13.sp, color = OnMuted,
                             modifier = Modifier.padding(bottom = 4.dp))
                     }
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text("wykorzystane", fontSize = 10.sp, color = OnFaint)
-                    Text("${s.urlopZuzyty} / ${s.urlopBaza}", fontSize = 15.sp,
+                    Text("${bil.zuzyte} / ${bil.baza}", fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold, color = OnBg)
                 }
             }
-            Spacer(Modifier.height(6.dp))
+
+            // Dwie pule osobno — zaległa ma swój termin.
+            Spacer(Modifier.height(12.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                PulaUrlopu(
+                    "z ${s.ym.year - 1}", bil.zostaloZaleglego, bil.bazaZalegly,
+                    if (bil.zostaloZaleglego > 0) DevColor else OnMuted, Modifier.weight(1f)
+                )
+                PulaUrlopu(
+                    "za ${s.ym.year}", bil.zostaloBiezacego, bil.bazaBiezacy,
+                    Palette.byId(s.colors["U"]).text, Modifier.weight(1f)
+                )
+            }
+
+            if (bil.zostaloZaleglego > 0) {
+                Spacer(Modifier.height(10.dp))
+                val doTerminu = bil.dniDoTerminu(dzis)
+                val poTerminie = doTerminu < 0
+                Row(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
+                        .background(if (poTerminie) Color(0xFF3A1F1E) else Color(0xFF33301A))
+                        .padding(horizontal = 11.dp, vertical = 9.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(if (poTerminie) "⚠" else "⏳", fontSize = 14.sp)
+                    Spacer(Modifier.width(9.dp))
+                    Text(
+                        if (poTerminie)
+                            "Termin na urlop zaległy minął ${bil.termin.format(DATA_KR)}. " +
+                                "Masz jeszcze ${bil.zostaloZaleglego} ${dniSlowo(bil.zostaloZaleglego)} — dogadaj to z przełożonym."
+                        else
+                            "Urlop zaległy wykorzystaj do ${bil.termin.format(DATA_KR)} — " +
+                                "zostało $doTerminu ${if (doTerminu == 1L) "dzień" else "dni"}.",
+                        fontSize = 11.sp, color = if (poTerminie) Danger else DevColor, lineHeight = 15.sp
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(8.dp))
             Text(
                 if (s.urlop.stanData != null && s.urlop.stanData!!.year == s.ym.year)
-                    "licząc od stanu ${s.urlop.stanDni} dni na ${s.urlop.stanData!!.format(DATA_KR)}"
+                    "licząc od stanu zapisanego ${s.urlop.stanData!!.format(DATA_KR)}"
                 else "wymiar ${s.urlop.wymiar} dni" + if (s.urlop.zalegly > 0) " + ${s.urlop.zalegly} zaległe" else "",
                 fontSize = 10.sp, color = OnFaint
             )
@@ -160,6 +200,39 @@ fun SummaryScreen(vm: Vm) {
             Stat("${st.daysFree}", "dni wolnych", OnMuted, Modifier.weight(1f))
         }
         Spacer(Modifier.height(20.dp))
+    }
+}
+
+@Composable
+private fun LicznikDni(etykieta: String, wartosc: Int, mniej: () -> Unit, wiecej: () -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(etykieta, fontSize = 12.sp, color = OnMuted, modifier = Modifier.width(66.dp))
+        Row(
+            Modifier.clip(RoundedCornerShape(10.dp)).background(Surface2),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = mniej, modifier = Modifier.size(32.dp)) {
+                Icon(Icons.Default.Remove, "mniej", tint = OnBg, modifier = Modifier.size(16.dp))
+            }
+            Text("$wartosc", Modifier.width(30.dp), fontSize = 15.sp, fontWeight = FontWeight.Bold,
+                color = OnBg, textAlign = TextAlign.Center)
+            IconButton(onClick = wiecej, modifier = Modifier.size(32.dp)) {
+                Icon(Icons.Default.Add, "więcej", tint = OnBg, modifier = Modifier.size(16.dp))
+            }
+        }
+        Spacer(Modifier.width(8.dp))
+        Text(dniSlowo(wartosc), fontSize = 11.sp, color = OnFaint)
+    }
+}
+
+@Composable
+private fun PulaUrlopu(etykieta: String, zostalo: Int, baza: Int, kolor: Color, m: Modifier) {
+    Column(m.clip(RoundedCornerShape(11.dp)).background(Surface2).padding(horizontal = 11.dp, vertical = 9.dp)) {
+        Text(etykieta, fontSize = 9.sp, color = OnFaint)
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text("$zostalo", fontSize = 19.sp, fontWeight = FontWeight.Bold, color = kolor)
+            Text(" z $baza", fontSize = 11.sp, color = OnFaint, modifier = Modifier.padding(bottom = 2.dp))
+        }
     }
 }
 
@@ -334,7 +407,10 @@ fun SetupScreen(vm: Vm, uvm: pl.grafik.pracy.ui.UpdateVm) {
                 Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
                     .background(if (on) Color(0xFF4A3410) else Surface1)
                     .border(if (on) 2.dp else 0.dp, if (on) Accent else Color.Transparent, RoundedCornerShape(14.dp))
-                    .clickable { vm.saveConfig(s.cfg.copy(pattern = p)) }
+                    .clickable {
+                        val kroki = if (p.weekAligned) p.weeks else p.length
+                        vm.saveConfig(s.cfg.copy(pattern = p, anchorIndex = s.cfg.anchorIndex % kroki))
+                    }
                     .padding(14.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -388,14 +464,32 @@ fun SetupScreen(vm: Vm, uvm: pl.grafik.pracy.ui.UpdateVm) {
             }
         }
 
-        Text("PRZESUNIĘCIE CYKLU", fontSize = 10.sp, color = OnFaint, fontWeight = FontWeight.Medium)
-        Text("Jeśli grafik nie zgadza się z Twoim, przesuń start cyklu.", fontSize = 11.sp, color = OnMuted)
+        val tygodniowy = s.cfg.pattern.weekAligned
+        Text(
+            if (tygodniowy) "PRZESUNIĘCIE — CO TYDZIEŃ" else "PRZESUNIĘCIE CYKLU",
+            fontSize = 10.sp, color = OnFaint, fontWeight = FontWeight.Medium
+        )
+        Text(
+            if (tygodniowy)
+                "Ten cykl jest przywiązany do tygodnia — soboty i niedziele zawsze wolne. " +
+                    "Przesuwasz go o całe tygodnie, czyli zmieniasz, na której zmianie jesteś w tym tygodniu."
+            else "Jeśli grafik nie zgadza się z Twoim, przesuń start cyklu.",
+            fontSize = 11.sp, color = OnMuted, lineHeight = 15.sp
+        )
+        val krokow = if (tygodniowy) s.cfg.pattern.weeks else s.cfg.pattern.length
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Button(onClick = { vm.saveConfig(s.cfg.copy(anchorIndex = (s.cfg.anchorIndex - 1 + s.cfg.pattern.length) % s.cfg.pattern.length)) },
-                colors = ButtonDefaults.buttonColors(containerColor = Surface2)) { Text("−1 dzień", color = OnBg) }
-            Text("pozycja ${s.cfg.anchorIndex}", Modifier.weight(1f), fontSize = 13.sp, color = OnBg, textAlign = TextAlign.Center)
-            Button(onClick = { vm.saveConfig(s.cfg.copy(anchorIndex = (s.cfg.anchorIndex + 1) % s.cfg.pattern.length)) },
-                colors = ButtonDefaults.buttonColors(containerColor = Surface2)) { Text("+1 dzień", color = OnBg) }
+            Button(
+                onClick = { vm.saveConfig(s.cfg.copy(anchorIndex = (s.cfg.anchorIndex - 1 + krokow) % krokow)) },
+                colors = ButtonDefaults.buttonColors(containerColor = Surface2)
+            ) { Text(if (tygodniowy) "−1 tydzień" else "−1 dzień", color = OnBg) }
+            Text(
+                if (tygodniowy) "tydzień ${s.cfg.anchorIndex + 1} z $krokow" else "pozycja ${s.cfg.anchorIndex}",
+                Modifier.weight(1f), fontSize = 13.sp, color = OnBg, textAlign = TextAlign.Center
+            )
+            Button(
+                onClick = { vm.saveConfig(s.cfg.copy(anchorIndex = (s.cfg.anchorIndex + 1) % krokow)) },
+                colors = ButtonDefaults.buttonColors(containerColor = Surface2)
+            ) { Text(if (tygodniowy) "+1 tydzień" else "+1 dzień", color = OnBg) }
         }
 
         Text("PODGLĄD CYKLU", fontSize = 10.sp, color = OnFaint, fontWeight = FontWeight.Medium)
@@ -471,6 +565,24 @@ fun SetupScreen(vm: Vm, uvm: pl.grafik.pracy.ui.UpdateVm) {
                     }
                 }
             }
+            // Jeśli apka zna poprzedni rok, podpowiada ile mogło przejść.
+            if (s.urlop.zalegly == 0 && s.urlopSugestiaZaleglego > 0 && s.urlopPoprzedniRok.isNotEmpty()) {
+                Spacer(Modifier.height(6.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        "W ${s.ym.year - 1} wykorzystałeś ${s.urlopPoprzedniRok.size} " +
+                            "${dniSlowo(s.urlopPoprzedniRok.size)} — mogło zostać ${s.urlopSugestiaZaleglego}.",
+                        fontSize = 10.sp, color = OnFaint, modifier = Modifier.weight(1f), lineHeight = 14.sp
+                    )
+                    TextButton(onClick = { vm.saveVacation(s.urlop.copy(zalegly = s.urlopSugestiaZaleglego)) }) {
+                        Text("Wpisz", fontSize = 11.sp, color = Accent)
+                    }
+                }
+            }
+            Text(
+                "Zaległy trzeba wykorzystać do 30 września.",
+                fontSize = 10.sp, color = DevColor, modifier = Modifier.padding(top = 4.dp)
+            )
 
             Spacer(Modifier.height(14.dp))
             HorizontalDivider(color = Surface3)
@@ -479,37 +591,36 @@ fun SetupScreen(vm: Vm, uvm: pl.grafik.pracy.ui.UpdateVm) {
             // Prawdziwy stan trzyma kadrowa — tu go przepisujesz, a apka liczy dalej sama.
             Text("Stan z zakładu", fontSize = 13.sp, color = OnBg)
             Text(
-                "Jeśli kadrowa poda Ci aktualną liczbę dni, zapisz ją tutaj. " +
-                    "Od tego dnia aplikacja odlicza już sama.",
+                "Jeśli kadrowa poda Ci aktualne liczby, zapisz je tutaj. " +
+                    "Od tego dnia aplikacja odlicza już sama, zdejmując najpierw urlop zaległy.",
                 fontSize = 10.sp, color = OnFaint, lineHeight = 14.sp
             )
-            Spacer(Modifier.height(8.dp))
-            var stan by remember(s.urlop.stanDni) { mutableIntStateOf(s.urlop.stanDni) }
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(
-                    Modifier.clip(RoundedCornerShape(10.dp)).background(Surface2),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(onClick = { if (stan > 0) stan-- }, modifier = Modifier.size(32.dp)) {
-                        Icon(Icons.Default.Remove, "mniej", tint = OnBg, modifier = Modifier.size(16.dp))
-                    }
-                    Text("$stan", Modifier.width(30.dp), fontSize = 15.sp, fontWeight = FontWeight.Bold,
-                        color = OnBg, textAlign = TextAlign.Center)
-                    IconButton(onClick = { stan++ }, modifier = Modifier.size(32.dp)) {
-                        Icon(Icons.Default.Add, "więcej", tint = OnBg, modifier = Modifier.size(16.dp))
-                    }
-                }
-                Button(
-                    onClick = { vm.saveVacation(s.urlop.copy(stanData = java.time.LocalDate.now(), stanDni = stan)) },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = Accent, contentColor = AccentOn)
-                ) { Text("Zapisz na dziś", fontSize = 12.sp) }
-            }
+            Spacer(Modifier.height(10.dp))
+            var stanB by remember(s.urlop.stanBiezacy) { mutableIntStateOf(s.urlop.stanBiezacy) }
+            var stanZ by remember(s.urlop.stanZalegly) { mutableIntStateOf(s.urlop.stanZalegly) }
+            LicznikDni("bieżący", stanB, { if (stanB > 0) stanB-- }, { stanB++ })
+            Spacer(Modifier.height(6.dp))
+            LicznikDni("zaległy", stanZ, { if (stanZ > 0) stanZ-- }, { stanZ++ })
+            Spacer(Modifier.height(10.dp))
+            Button(
+                onClick = {
+                    vm.saveVacation(
+                        s.urlop.copy(
+                            stanData = java.time.LocalDate.now(),
+                            stanBiezacy = stanB,
+                            stanZalegly = stanZ
+                        )
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Accent, contentColor = AccentOn)
+            ) { Text("Zapisz stan na dziś", fontSize = 12.sp) }
+
             s.urlop.stanData?.let { d ->
                 Spacer(Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        "Zapisane: ${s.urlop.stanDni} ${dniSlowo(s.urlop.stanDni)} na ${d.format(DATA_KR)}",
+                        "Zapisane ${d.format(DATA_KR)}: ${s.urlop.stanBiezacy} bieżącego, ${s.urlop.stanZalegly} zaległego",
                         fontSize = 11.sp, color = Accent, modifier = Modifier.weight(1f)
                     )
                     TextButton(onClick = { vm.saveVacation(s.urlop.copy(stanData = null)) }) {

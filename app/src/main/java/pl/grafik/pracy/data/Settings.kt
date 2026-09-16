@@ -30,6 +30,7 @@ class SettingsStore(private val ctx: Context) {
     private val kUrlZalegly = intPreferencesKey("url_zalegly")
     private val kUrlStanData = stringPreferencesKey("url_stan_data")
     private val kUrlStanDni = intPreferencesKey("url_stan_dni")
+    private val kUrlStanZal = intPreferencesKey("url_stan_zal")
     private val kColors = stringPreferencesKey("colors")
     private val kWpOn = booleanPreferencesKey("wp_enabled")
     private val kWpLat = doublePreferencesKey("wp_lat")
@@ -111,7 +112,8 @@ class SettingsStore(private val ctx: Context) {
             wymiar = p[kUrlWymiar] ?: 26,
             zalegly = p[kUrlZalegly] ?: 0,
             stanData = p[kUrlStanData]?.let { runCatching { LocalDate.parse(it) }.getOrNull() },
-            stanDni = p[kUrlStanDni] ?: 0
+            stanBiezacy = p[kUrlStanDni] ?: 0,
+            stanZalegly = p[kUrlStanZal] ?: 0
         )
     }
 
@@ -119,7 +121,8 @@ class SettingsStore(private val ctx: Context) {
         ctx.ds.edit { p ->
             p[kUrlWymiar] = v.wymiar.coerceIn(0, 60)
             p[kUrlZalegly] = v.zalegly.coerceIn(0, 60)
-            p[kUrlStanDni] = v.stanDni.coerceIn(0, 99)
+            p[kUrlStanDni] = v.stanBiezacy.coerceIn(0, 99)
+            p[kUrlStanZal] = v.stanZalegly.coerceIn(0, 99)
             if (v.stanData != null) p[kUrlStanData] = v.stanData.toString() else p.remove(kUrlStanData)
         }
     }

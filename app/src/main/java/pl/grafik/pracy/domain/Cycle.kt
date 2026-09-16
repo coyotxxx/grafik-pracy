@@ -7,7 +7,16 @@ import java.time.temporal.ChronoUnit
  * Wzorce grafików zmianowych. Domyślny odwzorowany 1:1 z arkusza zakładowego Macieja
  * (analiza roku 2024: trafność ~94%, reszta to celowe korekty „odbieg od schematu").
  */
-enum class CyclePattern(val label: String, val desc: String, val days: List<String>) {
+enum class CyclePattern(
+    val label: String,
+    val desc: String,
+    val days: List<String>,
+    /**
+     * Cykl przywiązany do tygodnia — sobota zawsze sobotą, niedziela niedzielą.
+     * Takiego cyklu NIE wolno przesuwać o pojedyncze dni, bo weekend by się rozjechał.
+     */
+    val weekAligned: Boolean = false
+) {
 
     B4_16D(
         "4-brygadowy, cykl 16-dniowy",
@@ -18,7 +27,8 @@ enum class CyclePattern(val label: String, val desc: String, val days: List<Stri
     TYGODNIOWY(
         "3-zmianowy, rotacja tygodniowa",
         "5 dni na zmianie, weekend wolny, co tydzień inna zmiana",
-        listOf("I","I","I","I","I","w","w","II","II","II","II","II","w","w","III","III","III","III","III","w","w")
+        listOf("I","I","I","I","I","w","w","II","II","II","II","II","w","w","III","III","III","III","III","w","w"),
+        weekAligned = true
     ),
 
     B4_CIAGLY(
@@ -34,6 +44,8 @@ enum class CyclePattern(val label: String, val desc: String, val days: List<Stri
     );
 
     val length: Int get() = days.size
+    /** Ile tygodni obejmuje cykl tygodniowy. */
+    val weeks: Int get() = days.size / 7
 }
 
 data class CycleConfig(
@@ -72,8 +84,13 @@ object CycleGenerator {
      * Odwrócenie listy odwraca kierunek rotacji razem z rozkładem dni wolnych —
      * czyli dokładnie to, co znaczy „chodzę cykl w drugą stronę".
      */
-    fun days(cfg: CycleConfig): List<String> =
-        if (cfg.reverse) cfg.pattern.days.reversed() else cfg.pattern.days
+    fun days(cfg: CycleConfig): List<String> = when {
+        !cfg.reverse -> cfg.pattern.days
+        // W cyklu tygodniowym odwracamy KOLEJNOŚĆ TYGODNI, nie dni — inaczej
+        // wolny weekend wylądowałby w środku tygodnia.
+        cfg.pattern.weekAligned -> cfg.pattern.days.chunked(7).reversed().flatten()
+        else -> cfg.pattern.days.reversed()
+    }
 
     /** Kolejność zmian, jaką daje ta konfiguracja — np. „III → II → I". */
     fun rotationLabel(cfg: CycleConfig): String {
@@ -85,10 +102,22 @@ object CycleGenerator {
     }
 
     fun shiftFor(cfg: CycleConfig, date: LocalDate): Shift {
-        val delta = ChronoUnit.DAYS.between(cfg.anchorDate, date)
         val dni = days(cfg)
         val len = dni.size
-        var idx = ((delta + cfg.anchorIndex) % len).toInt()
+        // Cykl tygodniowy liczymy od poniedziałku, a przesunięcie jest o całe tygodnie.
+        val delta: Long
+        val offset: Long
+        if (cfg.pattern.weekAligned) {
+            val poniedzialek = cfg.anchorDate.with(
+                java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY)
+            )
+            delta = ChronoUnit.DAYS.between(poniedzialek, date)
+            offset = cfg.anchorIndex.toLong() * 7L
+        } else {
+            delta = ChronoUnit.DAYS.between(cfg.anchorDate, date)
+            offset = cfg.anchorIndex.toLong()
+        }
+        var idx = ((delta + offset) % len).toInt()
         if (idx < 0) idx += len
         return when (dni[idx]) {
             "I" -> Shift.I

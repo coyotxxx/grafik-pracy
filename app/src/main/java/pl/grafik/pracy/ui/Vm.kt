@@ -33,24 +33,33 @@ data class UiState(
     val painting: Boolean = false,
     val urlop: VacationCfg = VacationCfg(),
     /** Wszystkie dni urlopu w roku wyświetlanego miesiąca. */
-    val urlopRok: List<LocalDate> = emptyList()
+    val urlopRok: List<LocalDate> = emptyList(),
+    /** Dni urlopu w roku poprzednim — do podpowiedzi, ile przeszło na ten rok. */
+    val urlopPoprzedniRok: List<LocalDate> = emptyList()
 ) {
-    /** Dni urlopu policzone do bilansu — od punktu odniesienia albo od początku roku. */
-    val urlopZuzyty: Int
+    /**
+     * Bilans urlopu w roku wyświetlanego miesiąca.
+     * Zużywamy najpierw pulę zaległą — to ona ma termin 30 września.
+     */
+    val urlopBilans: VacationBalance
         get() {
             val stan = urlop.stanData
-            return if (stan != null && stan.year == ym.year) urlopRok.count { it.isAfter(stan) }
-            else urlopRok.size
+            return if (stan != null && stan.year == ym.year) VacationBalance(
+                bazaZalegly = urlop.stanZalegly,
+                bazaBiezacy = urlop.stanBiezacy,
+                zuzyte = urlopRok.count { it.isAfter(stan) },
+                rok = ym.year
+            ) else VacationBalance(
+                bazaZalegly = urlop.zalegly,
+                bazaBiezacy = urlop.wymiar,
+                zuzyte = urlopRok.size,
+                rok = ym.year
+            )
         }
 
-    val urlopBaza: Int
-        get() {
-            val stan = urlop.stanData
-            return if (stan != null && stan.year == ym.year) urlop.stanDni
-            else urlop.wymiar + urlop.zalegly
-        }
-
-    val urlopPozostalo: Int get() = urlopBaza - urlopZuzyty
+    /** Ile dni urlopu zostało niewykorzystanych w poprzednim roku — podpowiedź do pola „zaległy". */
+    val urlopSugestiaZaleglego: Int
+        get() = (urlop.wymiar - urlopPoprzedniRok.size).coerceAtLeast(0)
 
     /** Urlop w wyświetlanym miesiącu — do listy z datami. */
     val urlopMiesiaca: List<LocalDate> get() = urlopRok.filter { YearMonth.from(it) == ym }
@@ -102,6 +111,9 @@ class Vm(app: Application) : AndroidViewModel(app) {
         settings.vacation,
         _ym.flatMapLatest { ym ->
             dao.observeWithShift(Shift.URLOP.code, "${ym.year}-01-01", "${ym.year}-12-31")
+        },
+        _ym.flatMapLatest { ym ->
+            dao.observeWithShift(Shift.URLOP.code, "${ym.year - 1}-01-01", "${ym.year - 1}-12-31")
         }
     ) { arr ->
         @Suppress("UNCHECKED_CAST")
@@ -119,6 +131,8 @@ class Vm(app: Application) : AndroidViewModel(app) {
         val url = arr[10] as VacationCfg
         @Suppress("UNCHECKED_CAST")
         val urlRok = (arr[11] as List<DayRow>).map { LocalDate.parse(it.date) }
+        @Suppress("UNCHECKED_CAST")
+        val urlPrev = (arr[12] as List<DayRow>).map { LocalDate.parse(it.date) }
 
         val (gStart, gEnd) = gridRange(ym)
         val saved = rows.associate { LocalDate.parse(it.date) to it.toEntry() }
@@ -132,7 +146,7 @@ class Vm(app: Application) : AndroidViewModel(app) {
         // Statystyki liczymy TYLKO z bieżącego miesiąca, mimo że siatka pokazuje więcej.
         val wMiesiacu = merged.filterKeys { YearMonth.from(it) == ym }
 
-        UiState(ym, merged, ev, cfg, cols, tool, otH, otR, calc(wMiesiacu, ym), rem.first, rem.second, maluj, url, urlRok)
+        UiState(ym, merged, ev, cfg, cols, tool, otH, otR, calc(wMiesiacu, ym), rem.first, rem.second, maluj, url, urlRok, urlPrev)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState())
 
     private fun calc(m: Map<LocalDate, DayEntry>, ym: YearMonth): MonthStats {
