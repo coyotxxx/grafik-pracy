@@ -28,6 +28,9 @@ import java.util.Locale
 
 private val PL = Locale("pl", "PL")
 
+/** Święta w kalendarzu: numer dnia na czerwonym krążku — widać od razu i nic nie zasłania. */
+private val SwietoKolor = Color(0xFFD64545)
+
 @Composable
 fun CalendarScreen(vm: Vm, onOpenDay: (LocalDate) -> Unit) {
     val s by vm.state.collectAsState()
@@ -158,6 +161,7 @@ private fun Grid(
                 repeat(7) { i ->
                     val d = start.plusDays((w * 7 + i).toLong())
                     DayCell(
+                        motyw = s.motyw,
                         date = d,
                         e = s.entries[d],
                         events = s.events[d].orEmpty().size,
@@ -178,10 +182,11 @@ private fun Grid(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun DayCell(
+    motyw: PaletteTheme,
     date: LocalDate, e: DayEntry?, events: Int, colors: Map<String, String>,
     isToday: Boolean, obcy: Boolean, m: Modifier, onTap: () -> Unit, onLong: () -> Unit
 ) {
-    val sw = Palette.byId(colors[e?.shift?.code] ?: Palette.defaults[e?.shift?.code])
+    val sw = Palette.byId(colors[e?.shift?.code] ?: Palette.defaults[e?.shift?.code], motyw)
     val kind = Holidays.kindOf(date)
     val swieto = Holidays.isHoliday(date)
     val works = e?.shift?.isWork == true
@@ -230,17 +235,25 @@ private fun DayCell(
                 Modifier.align(Alignment.TopStart).fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    "${date.dayOfMonth}", fontSize = 12.sp,
-                    fontWeight = if (isToday) FontWeight.Bold else FontWeight.Medium,
-                    color = when (kind) {
-                        DayKind.SOBOTA -> SatColor
-                        DayKind.NIEDZIELA, DayKind.SWIETO -> SunColor
-                        else -> OnBg
+                if (swieto) {
+                    Box(
+                        Modifier.size(21.dp).clip(RoundedCornerShape(11.dp)).background(SwietoKolor),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("${date.dayOfMonth}", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
                     }
-                )
+                } else {
+                    Text(
+                        "${date.dayOfMonth}", fontSize = 12.sp,
+                        fontWeight = if (isToday) FontWeight.Bold else FontWeight.Medium,
+                        color = when (kind) {
+                            DayKind.SOBOTA -> SatColor
+                            DayKind.NIEDZIELA, DayKind.SWIETO -> SunColor
+                            else -> OnBg
+                        }
+                    )
+                }
                 Spacer(Modifier.weight(1f))
-                if (swieto) Box(Modifier.size(6.dp).clip(RoundedCornerShape(3.dp)).background(SunColor))
                 if (e?.deviation == true) Box(Modifier.padding(start = 2.dp).size(6.dp).clip(RoundedCornerShape(2.dp)).background(DevColor))
                 if (events > 0) Box(Modifier.padding(start = 2.dp).size(6.dp).clip(RoundedCornerShape(3.dp)).background(EventColor))
             }
@@ -371,11 +384,11 @@ private fun Palette(vm: Vm, s: UiState, otwarta: Boolean, przelacz: () -> Unit) 
 private fun Tool(s: UiState, t: Tool, big: String, small: String, m: Modifier, wybierz: (Tool) -> Unit) {
     val on = s.tool == t
     val sw = when (t) {
-        Tool.I -> Palette.byId(s.colors["I"]); Tool.II -> Palette.byId(s.colors["II"])
-        Tool.III -> Palette.byId(s.colors["III"]); Tool.W5 -> Palette.byId(s.colors["w5"])
-        Tool.WS -> Palette.byId(s.colors["wś"]); Tool.DWN -> Palette.byId(s.colors["DWN"])
-        Tool.BWN -> Palette.byId(s.colors["bezw."]); Tool.URLOP -> Palette.byId(s.colors["U"])
-        else -> Palette.byId("grafit")
+        Tool.I -> Palette.byId(s.colors["I"], s.motyw); Tool.II -> Palette.byId(s.colors["II"], s.motyw)
+        Tool.III -> Palette.byId(s.colors["III"], s.motyw); Tool.W5 -> Palette.byId(s.colors["w5"], s.motyw)
+        Tool.WS -> Palette.byId(s.colors["wś"], s.motyw); Tool.DWN -> Palette.byId(s.colors["DWN"], s.motyw)
+        Tool.BWN -> Palette.byId(s.colors["bezw."], s.motyw); Tool.URLOP -> Palette.byId(s.colors["U"], s.motyw)
+        else -> Palette.byId("grafit", s.motyw)
     }
     Column(
         m.clip(RoundedCornerShape(11.dp))

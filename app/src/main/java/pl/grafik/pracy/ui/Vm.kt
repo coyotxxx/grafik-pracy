@@ -35,7 +35,8 @@ data class UiState(
     /** Wszystkie dni urlopu w roku wyświetlanego miesiąca. */
     val urlopRok: List<LocalDate> = emptyList(),
     /** Dni urlopu w roku poprzednim — do podpowiedzi, ile przeszło na ten rok. */
-    val urlopPoprzedniRok: List<LocalDate> = emptyList()
+    val urlopPoprzedniRok: List<LocalDate> = emptyList(),
+    val motyw: pl.grafik.pracy.ui.theme.PaletteTheme = pl.grafik.pracy.ui.theme.PaletteTheme.OBECNA
 ) {
     /**
      * Bilans urlopu w roku wyświetlanego miesiąca.
@@ -114,7 +115,8 @@ class Vm(app: Application) : AndroidViewModel(app) {
         },
         _ym.flatMapLatest { ym ->
             dao.observeWithShift(Shift.URLOP.code, "${ym.year - 1}-01-01", "${ym.year - 1}-12-31")
-        }
+        },
+        settings.motyw
     ) { arr ->
         @Suppress("UNCHECKED_CAST")
         val ym = arr[0] as YearMonth
@@ -133,6 +135,7 @@ class Vm(app: Application) : AndroidViewModel(app) {
         val urlRok = (arr[11] as List<DayRow>).map { LocalDate.parse(it.date) }
         @Suppress("UNCHECKED_CAST")
         val urlPrev = (arr[12] as List<DayRow>).map { LocalDate.parse(it.date) }
+        val motyw = arr[13] as pl.grafik.pracy.ui.theme.PaletteTheme
 
         val (gStart, gEnd) = gridRange(ym)
         val saved = rows.associate { LocalDate.parse(it.date) to it.toEntry() }
@@ -146,7 +149,7 @@ class Vm(app: Application) : AndroidViewModel(app) {
         // Statystyki liczymy TYLKO z bieżącego miesiąca, mimo że siatka pokazuje więcej.
         val wMiesiacu = merged.filterKeys { YearMonth.from(it) == ym }
 
-        UiState(ym, merged, ev, cfg, cols, tool, otH, otR, calc(wMiesiacu, ym), rem.first, rem.second, maluj, url, urlRok, urlPrev)
+        UiState(ym, merged, ev, cfg, cols, tool, otH, otR, calc(wMiesiacu, ym), rem.first, rem.second, maluj, url, urlRok, urlPrev, motyw)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState())
 
     private fun calc(m: Map<LocalDate, DayEntry>, ym: YearMonth): MonthStats {
@@ -180,6 +183,42 @@ class Vm(app: Application) : AndroidViewModel(app) {
     fun pick(t: Tool) { _tool.value = t; _maluj.value = true }
 
     fun setPainting(on: Boolean) { _maluj.value = on }
+
+    // --- podpowiedzi, kiedy wziąć urlop ---
+
+    private val _plan = MutableStateFlow<List<VacationSuggestion>>(emptyList())
+    val plan: StateFlow<List<VacationSuggestion>> = _plan.asStateFlow()
+
+    /**
+     * Liczy propozycje na najbliższy rok. Wolne bierzemy z grafiku: ręczne wpisy mają
+     * pierwszeństwo, reszta z cyklu. Bez włączonego cyklu nie ma z czego liczyć.
+     */
+    fun policzPlan() = viewModelScope.launch {
+        val cfg = settings.config.first()
+        if (!cfg.generate) { _plan.value = emptyList(); return@launch }
+
+        val dzis = LocalDate.now()
+        var od = maxOf(dzis, cfg.genFrom?.atDay(1) ?: dzis)
+        val doDnia = minOf(dzis.plusYears(1), cfg.genTo?.atEndOfMonth() ?: dzis.plusYears(1))
+        if (od.isAfter(doDnia)) { _plan.value = emptyList(); return@launch }
+
+        val zapisane = dao.observeRange(od.toString(), doDnia.toString()).first()
+            .associate { LocalDate.parse(it.date) to it.toEntry() }
+        val st = state.value
+        val bilans = st.urlopBilans
+
+        _plan.value = VacationPlanner.zaproponuj(
+            od = od,
+            do_ = doDnia,
+            wolny = { d ->
+                val e = zapisane[d]
+                if (e != null) e.shift?.isWork != true
+                else !CycleGenerator.shiftFor(cfg, d).isWork
+            },
+            swieto = { Holidays.isHoliday(it) },
+            budzet = bilans.zostalo
+        )
+    }
 
     fun saveVacation(v: VacationCfg) = viewModelScope.launch { settings.saveVacation(v) }
 
@@ -273,5 +312,7 @@ class Vm(app: Application) : AndroidViewModel(app) {
         events.delete(id)
         Reminders.schedule(getApplication())
     }
+    fun saveMotyw(m: pl.grafik.pracy.ui.theme.PaletteTheme) = viewModelScope.launch { settings.saveMotyw(m) }
+
     fun saveColors(m: Map<String, String>) = viewModelScope.launch { settings.saveColors(m) }
 }

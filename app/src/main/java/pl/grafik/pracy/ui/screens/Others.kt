@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.BeachAccess
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
@@ -27,6 +28,8 @@ import pl.grafik.pracy.ui.theme.*
 @Composable
 fun SummaryScreen(vm: Vm) {
     val s by vm.state.collectAsState()
+    var pokazPlan by remember { mutableStateOf(false) }
+    if (pokazPlan) PlanSheet(vm, s) { pokazPlan = false }
     val st = s.stats
     Column(Modifier.fillMaxSize().background(Bg).verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -53,7 +56,7 @@ fun SummaryScreen(vm: Vm) {
             LinearProgressIndicator(
                 progress = { (pct / 100f).coerceIn(0f, 1.3f).coerceAtMost(1f) },
                 modifier = Modifier.fillMaxWidth().height(9.dp).clip(RoundedCornerShape(5.dp)),
-                color = if (st.diff >= 0) OtColor100 else Palette.byId("lazur").text,
+                color = if (st.diff >= 0) OtColor100 else Palette.byId("lazur", s.motyw).text,
                 trackColor = Surface3
             )
             Spacer(Modifier.height(6.dp))
@@ -69,7 +72,7 @@ fun SummaryScreen(vm: Vm) {
         }
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Stat("${st.sundayWork}", "prac. niedziele", SunColor, Modifier.weight(1f))
-            Stat("${st.holidayWork}", "prac. święta", Palette.byId("malina").text, Modifier.weight(1f))
+            Stat("${st.holidayWork}", "prac. święta", Palette.byId("malina", s.motyw).text, Modifier.weight(1f))
             Stat("${st.saturdayWork}", "prac. soboty", SatColor, Modifier.weight(1f))
         }
 
@@ -84,7 +87,7 @@ fun SummaryScreen(vm: Vm) {
                     Row(verticalAlignment = Alignment.Bottom) {
                         Text(
                             "${bil.zostalo}", fontSize = 30.sp, fontWeight = FontWeight.Bold,
-                            color = if (bil.zostalo <= 0) Danger else Palette.byId(s.colors["U"]).text
+                            color = if (bil.zostalo <= 0) Danger else Palette.byId(s.colors["U"], s.motyw).text
                         )
                         Text(" ${dniSlowo(bil.zostalo)} zostało", fontSize = 13.sp, color = OnMuted,
                             modifier = Modifier.padding(bottom = 4.dp))
@@ -106,7 +109,7 @@ fun SummaryScreen(vm: Vm) {
                 )
                 PulaUrlopu(
                     "za ${s.ym.year}", bil.zostaloBiezacego, bil.bazaBiezacy,
-                    Palette.byId(s.colors["U"]).text, Modifier.weight(1f)
+                    Palette.byId(s.colors["U"], s.motyw).text, Modifier.weight(1f)
                 )
             }
 
@@ -142,6 +145,18 @@ fun SummaryScreen(vm: Vm) {
                 fontSize = 10.sp, color = OnFaint
             )
 
+            Spacer(Modifier.height(12.dp))
+            Button(
+                onClick = { pokazPlan = true },
+                modifier = Modifier.fillMaxWidth().height(44.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Surface2, contentColor = Accent)
+            ) {
+                Icon(Icons.Default.BeachAccess, null, Modifier.size(16.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Kiedy wziąć urlop", fontSize = 13.sp, fontWeight = FontWeight.Medium)
+            }
+
             if (s.urlopMiesiaca.isNotEmpty()) {
                 Spacer(Modifier.height(12.dp))
                 HorizontalDivider(color = Surface3)
@@ -156,11 +171,11 @@ fun SummaryScreen(vm: Vm) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Box(Modifier.size(7.dp).clip(RoundedCornerShape(4.dp))
-                            .background(Palette.byId(s.colors["U"]).text))
+                            .background(Palette.byId(s.colors["U"], s.motyw).text))
                         Spacer(Modifier.width(10.dp))
                         Text(d.format(DATA_DZIEN), fontSize = 13.sp, color = OnBg, modifier = Modifier.weight(1f))
                         if (zmiana != null && zmiana.isWork) {
-                            val sw = Palette.byId(s.colors[zmiana.code])
+                            val sw = Palette.byId(s.colors[zmiana.code], s.motyw)
                             Box(Modifier.clip(RoundedCornerShape(7.dp)).background(sw.fill)
                                 .padding(horizontal = 9.dp, vertical = 3.dp)) {
                                 Text("zm. ${zmiana.code}", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = sw.text)
@@ -181,7 +196,7 @@ fun SummaryScreen(vm: Vm) {
                 val h = st.byShift[sh] ?: 0
                 val d = st.daysByShift[sh] ?: 0
                 val max = (st.byShift.values.maxOrNull() ?: 1).coerceAtLeast(1)
-                val sw = Palette.byId(s.colors[sh.code])
+                val sw = Palette.byId(s.colors[sh.code], s.motyw)
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 5.dp)) {
                     Text(sh.code, Modifier.width(28.dp), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = sw.text)
                     Box(Modifier.weight(1f).height(8.dp).clip(RoundedCornerShape(4.dp)).background(Surface3)) {
@@ -496,7 +511,7 @@ fun SetupScreen(vm: Vm, uvm: pl.grafik.pracy.ui.UpdateVm) {
         Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Surface1).padding(10.dp),
             horizontalArrangement = Arrangement.spacedBy(2.dp)) {
             CycleGenerator.days(s.cfg).forEach { code ->
-                val sw = Palette.byId(s.colors[if (code == "w") "w5" else code])
+                val sw = Palette.byId(s.colors[if (code == "w") "w5" else code], s.motyw)
                 Box(Modifier.weight(1f).height(30.dp).clip(RoundedCornerShape(5.dp)).background(sw.fill),
                     contentAlignment = Alignment.Center) {
                     Text(if (code == "w") "·" else code, fontSize = 8.sp, fontWeight = FontWeight.Bold, color = sw.text)
@@ -739,10 +754,48 @@ fun ColorsScreen(vm: Vm) {
         verticalArrangement = Arrangement.spacedBy(10.dp)) {
 
         Text("Kolory", fontSize = 21.sp, fontWeight = FontWeight.SemiBold, color = OnBg)
+        Text("Zestaw kolorów", fontSize = 10.sp, color = OnFaint, fontWeight = FontWeight.Medium)
+        PaletteTheme.entries.forEach { m ->
+            val on = s.motyw == m
+            Row(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
+                    .background(if (on) Color(0xFF4A3410) else Surface1)
+                    .border(if (on) 2.dp else 0.dp, if (on) Accent else Color.Transparent, RoundedCornerShape(14.dp))
+                    .clickable { vm.saveMotyw(m) }
+                    .padding(horizontal = 14.dp, vertical = 11.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(m.label, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
+                        color = if (on) Accent else OnBg)
+                    Text(m.opis, fontSize = 10.sp, color = OnFaint)
+                }
+                // podgląd: trzy zmiany + wolne w tym zestawie
+                Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                    listOf("I", "II", "III", "w5").forEach { kod ->
+                        val sw = Palette.byId(s.colors[kod] ?: Palette.defaults[kod], m)
+                        Box(
+                            Modifier.size(width = 26.dp, height = 30.dp)
+                                .clip(RoundedCornerShape(6.dp)).background(sw.fill)
+                                .border(1.dp, sw.border, RoundedCornerShape(6.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(kod, fontSize = if (kod.length > 2) 8.sp else 10.sp,
+                                fontWeight = FontWeight.Bold, color = sw.text, maxLines = 1)
+                        }
+                    }
+                }
+                if (on) {
+                    Spacer(Modifier.width(8.dp))
+                    Icon(Icons.Default.Check, null, tint = Accent, modifier = Modifier.size(18.dp))
+                }
+            }
+        }
+        Spacer(Modifier.height(6.dp))
         Text("Każdy rodzaj dnia ma swój kolor. Wybierasz z gotowego zestawu.", fontSize = 12.sp, color = OnMuted)
 
         types.forEach { (code, name) ->
-            val sw = Palette.byId(s.colors[code] ?: Palette.defaults[code])
+            val sw = Palette.byId(s.colors[code] ?: Palette.defaults[code], s.motyw)
             val on = sel == code
             Row(
                 Modifier.fillMaxWidth().clip(RoundedCornerShape(13.dp))
@@ -764,7 +817,7 @@ fun ColorsScreen(vm: Vm) {
         Text("KOLOR DLA: ${types.firstOrNull { it.first == sel }?.second ?: ""}", fontSize = 10.sp, color = OnFaint, fontWeight = FontWeight.Medium)
         Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Surface1).padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Palette.all.chunked(5).forEach { rowItems ->
+            Palette.all(s.motyw).chunked(5).forEach { rowItems ->
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     rowItems.forEach { sw ->
                         val on = (s.colors[sel] ?: Palette.defaults[sel]) == sw.id

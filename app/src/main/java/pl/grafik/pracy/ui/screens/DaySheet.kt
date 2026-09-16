@@ -52,8 +52,12 @@ fun DaySheet(vm: Vm, s: UiState, date: LocalDate, onClose: () -> Unit) {
     var nowaGodzina by remember(date) { mutableStateOf("") }
     var przypomnij by remember(date) { mutableStateOf(true) }
 
+    // Pełna wysokość — lista nie ma się chować za krawędzią ekranu.
+    val stanKarty = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
     ModalBottomSheet(
         onDismissRequest = onClose,
+        sheetState = stanKarty,
         containerColor = Surface1,
         dragHandle = { BottomSheetDefaults.DragHandle(color = Surface3) }
     ) {

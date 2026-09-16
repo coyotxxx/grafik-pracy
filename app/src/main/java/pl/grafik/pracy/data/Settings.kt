@@ -9,6 +9,7 @@ import pl.grafik.pracy.domain.CyclePattern
 import pl.grafik.pracy.domain.CycleConfig
 import pl.grafik.pracy.domain.WorkPlace
 import pl.grafik.pracy.domain.VacationCfg
+import pl.grafik.pracy.ui.theme.PaletteTheme
 import java.time.LocalDate
 
 private val Context.ds by preferencesDataStore("settings")
@@ -32,6 +33,7 @@ class SettingsStore(private val ctx: Context) {
     private val kUrlStanDni = intPreferencesKey("url_stan_dni")
     private val kUrlStanZal = intPreferencesKey("url_stan_zal")
     private val kColors = stringPreferencesKey("colors")
+    private val kMotyw = stringPreferencesKey("motyw")
     private val kWpOn = booleanPreferencesKey("wp_enabled")
     private val kWpLat = doublePreferencesKey("wp_lat")
     private val kWpLon = doublePreferencesKey("wp_lon")
@@ -130,6 +132,14 @@ class SettingsStore(private val ctx: Context) {
     /** Kasuje WSZYSTKIE ustawienia — cykl, kolory, miejsce pracy. */
     suspend fun clearAll() {
         ctx.ds.edit { it.clear() }
+    }
+
+    val motyw: Flow<PaletteTheme> = ctx.ds.data.map { p ->
+        runCatching { PaletteTheme.valueOf(p[kMotyw] ?: "") }.getOrDefault(PaletteTheme.OBECNA)
+    }
+
+    suspend fun saveMotyw(m: PaletteTheme) {
+        ctx.ds.edit { p -> p[kMotyw] = m.name }
     }
 
     suspend fun saveColors(m: Map<String, String>) {
