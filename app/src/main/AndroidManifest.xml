@@ -17,7 +17,7 @@
 
     <application
         android:allowBackup="true"
-        android:label="Grafik Pracy"
+        android:label="@string/app_name"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true"
@@ -25,7 +25,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="Grafik Pracy"
+            android:label="@string/app_name"
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.GrafikPracy">
             <intent-filter>
