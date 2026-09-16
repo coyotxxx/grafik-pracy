@@ -36,24 +36,47 @@ class OkresTest {
         assertEquals(recznie, Settlement.statutoryNorm(p))
     }
 
-    @Test fun norma_zakladowa_wchodzi_tylko_gdy_wlaczona_i_wpisana() {
-        val wrzesien = ym("2026-09")
-        val ustawowa = Holidays.monthlyNorm(2026, 9)
+    @Test fun godziny_z_zakladu_dotycza_calego_okresu() {
+        val q3 = Settlement.periodOf(ym("2026-08"), kwartalny)
+        assertEquals("2026-07", Settlement.key(q3))             // klucz to pierwszy miesiąc okresu
+        val ustawowa = Settlement.statutoryNorm(q3)
 
-        // wpisana, ale przełącznik wyłączony — nie rusza niczego
-        val wylaczona = SettlementCfg(useCompanyNorm = false, companyNorms = mapOf("2026-09" to 184))
-        assertEquals(ustawowa, Settlement.normOfMonth(wrzesien, wylaczona))
+        // wpisane, ale przełącznik wyłączony — nie rusza niczego
+        val wylaczona = SettlementCfg(useCompanyNorm = false, companyNorms = mapOf("2026-07" to 540))
+        assertEquals(ustawowa, Settlement.norm(q3, wylaczona))
 
-        // włączona i wpisana
+        // włączone i wpisane
         val wlaczona = wylaczona.copy(useCompanyNorm = true)
-        assertEquals(184, Settlement.normOfMonth(wrzesien, wlaczona))
+        assertEquals(540, Settlement.norm(q3, wlaczona))
 
-        // włączona, ale bez wpisu na ten miesiąc — zostaje ustawowa
-        assertEquals(Holidays.monthlyNorm(2026, 8), Settlement.normOfMonth(ym("2026-08"), wlaczona))
+        // inny kwartał bez wpisu — zostaje ustawowa
+        val q1 = Settlement.periodOf(ym("2026-02"), kwartalny)
+        assertEquals(Settlement.statutoryNorm(q1), Settlement.norm(q1, wlaczona))
 
         // zero nie może wyzerować normy
-        val zero = SettlementCfg(useCompanyNorm = true, companyNorms = mapOf("2026-09" to 0))
-        assertEquals(ustawowa, Settlement.normOfMonth(wrzesien, zero))
+        val zero = SettlementCfg(useCompanyNorm = true, companyNorms = mapOf("2026-07" to 0))
+        assertEquals(ustawowa, Settlement.norm(q3, zero))
+    }
+
+    @Test fun rok_dzieli_sie_na_cztery_kwartaly_do_wpisania() {
+        val okresy = Settlement.periodsOfYear(2026, kwartalny)
+        assertEquals(4, okresy.size)
+        assertEquals(listOf(1, 4, 7, 10), okresy.map { it.from.monthValue })
+        assertEquals(listOf(3, 6, 9, 12), okresy.map { it.to.monthValue })
+        // suma norm kwartałów musi dać cały rok
+        assertEquals(
+            (1..12).sumOf { Holidays.monthlyNorm(2026, it) },
+            okresy.sumOf { Settlement.statutoryNorm(it) }
+        )
+    }
+
+    @Test fun kazda_dlugosc_okresu_pokrywa_rok_bez_dziur() {
+        Settlement.DLUGOSCI.forEach { dl ->
+            val okresy = Settlement.periodsOfYear(2026, SettlementCfg(months = dl))
+            assertEquals("długość $dl", 12 / dl, okresy.size)
+            assertEquals("długość $dl", 1, okresy.first().from.monthValue)
+            assertEquals("długość $dl", 12, okresy.last().to.monthValue)
+        }
     }
 
     @Test fun limit_nadgodzin_w_kwartale_wynika_z_art_131() {

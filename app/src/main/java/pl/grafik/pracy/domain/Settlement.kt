@@ -16,7 +16,11 @@ data class SettlementCfg(
     val months: Int = 3,
     /** Czy rozliczamy się normą zakładową zamiast ustawowej. */
     val useCompanyNorm: Boolean = false,
-    /** Norma podana przez zakład, klucz „yyyy-MM". Brak wpisu = zostaje ustawowa. */
+    /**
+     * Godziny podane przez zakład na CAŁY okres (Maciej dostaje liczbę na kwartał,
+     * nie na pojedynczy miesiąc). Klucz to pierwszy miesiąc okresu, „yyyy-MM".
+     * Brak wpisu = zostaje norma ustawowa.
+     */
     val companyNorms: Map<String, Int> = emptyMap(),
     /** Art. 151 § 3 KP — 150 h rocznie, chyba że regulamin zakładu daje więcej. */
     val otLimitYear: Int = 150
@@ -57,7 +61,17 @@ object Settlement {
         return Period(from, from.plusMonths((len - 1).toLong()))
     }
 
-    fun key(ym: YearMonth): String = ym.toString()          // „2026-09"
+    /** Klucz normy zakładowej — pierwszy miesiąc okresu. */
+    fun key(p: Period): String = p.from.toString()          // „2026-07" dla III kwartału
+
+    /** Wszystkie okresy danego roku — do wpisania godzin z zakładu za jednym razem. */
+    fun periodsOfYear(year: Int, cfg: SettlementCfg): List<Period> {
+        val len = cfg.months.coerceIn(1, 12)
+        return (1..12 step len).map { m ->
+            val from = YearMonth.of(year, m)
+            Period(from, from.plusMonths((len - 1).toLong()))
+        }
+    }
 
     /** Norma ustawowa miesiąca — art. 130 KP. */
     fun statutoryNorm(ym: YearMonth): Int = Holidays.monthlyNorm(ym.year, ym.monthValue)
@@ -65,16 +79,14 @@ object Settlement {
     fun statutoryNorm(p: Period): Int = p.months.sumOf { statutoryNorm(it) }
 
     /**
-     * Norma obowiązująca w miesiącu. Zakładowa wchodzi tylko wtedy, gdy jest włączona
+     * Norma obowiązująca w okresie. Zakładowa wchodzi tylko wtedy, gdy jest włączona
      * i faktycznie wpisana — pusty wpis nie może wyzerować normy.
      */
-    fun normOfMonth(ym: YearMonth, cfg: SettlementCfg): Int {
-        val ust = statutoryNorm(ym)
+    fun norm(p: Period, cfg: SettlementCfg): Int {
+        val ust = statutoryNorm(p)
         if (!cfg.useCompanyNorm) return ust
-        return cfg.companyNorms[key(ym)]?.takeIf { it > 0 } ?: ust
+        return cfg.companyNorms[key(p)]?.takeIf { it > 0 } ?: ust
     }
-
-    fun norm(p: Period, cfg: SettlementCfg): Int = p.months.sumOf { normOfMonth(it, cfg) }
 
     /**
      * Ile nadgodzin wolno w okresie. Art. 131: łącznie z nadgodzinami przeciętnie 48 h

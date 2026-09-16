@@ -161,11 +161,11 @@ class Vm(app: Application) : AndroidViewModel(app) {
         // Statystyki liczymy TYLKO z bieżącego miesiąca, mimo że siatka pokazuje więcej.
         val wMiesiacu = merged.filterKeys { YearMonth.from(it) == ym }
 
-        UiState(ym, merged, ev, cfg, cols, tool, otH, otR, calc(wMiesiacu, ym, okres), rem.first, rem.second,
+        UiState(ym, merged, ev, cfg, cols, tool, otH, otR, calc(wMiesiacu, ym), rem.first, rem.second,
             maluj, url, urlRok, urlPrev, motyw, okres, calcPeriod(rokRows, ym, cfg, okres))
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState())
 
-    private fun calc(m: Map<LocalDate, DayEntry>, ym: YearMonth, okres: SettlementCfg): MonthStats {
+    private fun calc(m: Map<LocalDate, DayEntry>, ym: YearMonth): MonthStats {
         var worked = 0; var ot100 = 0; var ot50 = 0
         var dw = 0; var df = 0; var sun = 0; var hol = 0; var sat = 0
         val by = mutableMapOf<Shift, Int>()
@@ -196,7 +196,9 @@ class Vm(app: Application) : AndroidViewModel(app) {
                 if (e.shift == Shift.URLOP) urlopH += 8
             }
         }
-        return MonthStats(worked, Settlement.normOfMonth(ym, okres),
+        // Miesiąc liczymy normą ustawową — zakład podaje godziny na cały okres,
+        // a rozbijanie tej liczby na miesiące byłoby zmyślaniem.
+        return MonthStats(worked, Settlement.statutoryNorm(ym),
             ot100, ot50, dw, df, sun, hol, sat, by, dni, urlopH, doDzis,
             biezacyMiesiac = YearMonth.from(dzis) == ym)
     }

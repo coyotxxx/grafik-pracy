@@ -713,9 +713,9 @@ fun SetupScreen(vm: Vm, uvm: pl.grafik.pracy.ui.UpdateVm) {
             // Norma zakładowa — w ruchu ciągłym wychodzi inna liczba niż z art. 130 KP.
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text("Norma zakładowa", fontSize = 13.sp, color = OnBg)
+                    Text("Godziny z zakładu", fontSize = 13.sp, color = OnBg)
                     Text(
-                        "Włącz, jeśli zakład podaje inną liczbę godzin niż Kodeks pracy.",
+                        "Włącz, jeśli zakład podaje własną liczbę godzin na okres.",
                         fontSize = 10.sp, color = OnFaint, lineHeight = 14.sp
                     )
                 }
@@ -729,29 +729,36 @@ fun SetupScreen(vm: Vm, uvm: pl.grafik.pracy.ui.UpdateVm) {
             if (s.okres.useCompanyNorm) {
                 Spacer(Modifier.height(10.dp))
                 Text(
-                    "Puste pole = zostaje norma ustawowa.",
-                    fontSize = 10.sp, color = OnFaint, modifier = Modifier.padding(bottom = 4.dp)
+                    "Wpisz liczbę godzin, którą zakład podaje na cały okres. " +
+                        "Puste pole = zostaje norma ustawowa.",
+                    fontSize = 10.sp, color = OnFaint, lineHeight = 14.sp,
+                    modifier = Modifier.padding(bottom = 6.dp)
                 )
-                okresTeraz.months.forEach { m ->
-                    val klucz = Settlement.key(m)
-                    val ustawowa = Settlement.statutoryNorm(m)
+                Settlement.periodsOfYear(s.ym.year, s.okres).forEach { okr ->
+                    val klucz = Settlement.key(okr)
+                    val ustawowa = Settlement.statutoryNorm(okr)
+                    val teraz = okr.from == Settlement.periodOf(s.ym, s.okres).from
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.padding(vertical = 3.dp)
                     ) {
                         Column(Modifier.weight(1f)) {
-                            Text(miesiacPl(m), fontSize = 13.sp, color = OnBg)
-                            Text("ustawowa $ustawowa h", fontSize = 10.sp, color = OnFaint)
+                            Text(
+                                okresLabel(okr), fontSize = 13.sp,
+                                color = if (teraz) Accent else OnBg,
+                                fontWeight = if (teraz) FontWeight.SemiBold else FontWeight.Normal
+                            )
+                            Text("ustawowo $ustawowa h", fontSize = 10.sp, color = OnFaint)
                         }
-                        // Klucz to sam miesiąc, nigdy zapisywana wartość: emisja z DataStore
-                        // wracała w trakcie pisania i przestawiała cyfry („184" → „148").
+                        // Klucz remembera to sam okres, nigdy zapisywana wartość: emisja
+                        // z DataStore wracała w trakcie pisania i przestawiała cyfry („184" → „148").
                         var wpis by remember(klucz) {
                             mutableStateOf(s.okres.companyNorms[klucz]?.toString() ?: "")
                         }
                         OutlinedTextField(
                             value = wpis,
                             onValueChange = { v ->
-                                val czyste = v.filter(Char::isDigit).take(3)
+                                val czyste = v.filter(Char::isDigit).take(4)
                                 wpis = czyste
                                 val mapa = s.okres.companyNorms.toMutableMap()
                                 val h = czyste.toIntOrNull()
@@ -761,7 +768,7 @@ fun SetupScreen(vm: Vm, uvm: pl.grafik.pracy.ui.UpdateVm) {
                             placeholder = { Text("$ustawowa", fontSize = 13.sp, color = OnFaint) },
                             suffix = { Text("h", fontSize = 12.sp, color = OnMuted) },
                             singleLine = true,
-                            modifier = Modifier.width(112.dp),
+                            modifier = Modifier.width(118.dp),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             colors = poleLiczbowe(),
                             textStyle = androidx.compose.ui.text.TextStyle(color = OnBg, fontSize = 14.sp)
