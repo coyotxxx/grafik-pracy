@@ -240,8 +240,7 @@ class Vm(app: Application) : AndroidViewModel(app) {
             ot = ot,
             otLimit = Settlement.otLimit(p),
             otRok = otRok,
-            otLimitRok = Settlement.otLimitYear(okres),
-            otLimitRokZakladowy = okres.otLimitYearCompany > 0,
+            otLimitZakl = Settlement.otLimitCompany(p, okres),
             biezacy = dzis in p
         )
     }

@@ -45,7 +45,7 @@ class SettingsStore(private val ctx: Context) {
     private val kOkrDl = intPreferencesKey("okres_dlugosc")
     private val kOkrZakl = booleanPreferencesKey("okres_norma_zakl")
     private val kOkrNormy = stringPreferencesKey("okres_normy")
-    private val kOkrLimitRok = intPreferencesKey("okres_limit_rok")
+    private val kOkrLimity = stringPreferencesKey("okres_limity")
 
     val config: Flow<CycleConfig> = ctx.ds.data.map { p ->
         CycleConfig(
@@ -147,7 +147,11 @@ class SettingsStore(private val ctx: Context) {
                 val h = kv.getOrNull(1)?.trim()?.toIntOrNull()
                 if (kv.size == 2 && h != null) kv[0].trim() to h else null
             }.toMap(),
-            otLimitYearCompany = p[kOkrLimitRok] ?: 0
+            otLimitPeriods = (p[kOkrLimity] ?: "").split(",").mapNotNull {
+                val kv = it.split(":")
+                val h = kv.getOrNull(1)?.trim()?.toIntOrNull()
+                if (kv.size == 2 && h != null) kv[0].trim() to h else null
+            }.toMap()
         )
     }
 
@@ -158,7 +162,9 @@ class SettingsStore(private val ctx: Context) {
             p[kOkrNormy] = c.companyNorms.entries
                 .filter { it.value > 0 }
                 .joinToString(",") { "${it.key}:${it.value}" }
-            p[kOkrLimitRok] = c.otLimitYearCompany.coerceIn(0, 999)
+            p[kOkrLimity] = c.otLimitPeriods.entries
+                .filter { it.value > 0 }
+                .joinToString(",") { "${it.key}:${it.value}" }
         }
     }
 

@@ -23,10 +23,11 @@ data class SettlementCfg(
      */
     val companyNorms: Map<String, Int> = emptyMap(),
     /**
-     * Roczny limit nadgodzin ustalony przez zakład — ten, którego nie wolno przekroczyć.
-     * 0 = nie podany, obowiązuje ustawowy z art. 151 § 3 KP.
+     * Limit nadgodzin podany przez zakład na CAŁY okres — ten, którego nie wolno przekroczyć.
+     * Klucz jak przy godzinach: pierwszy miesiąc okresu. Brak wpisu = obowiązuje
+     * sufit techniczny z art. 131 KP.
      */
-    val otLimitYearCompany: Int = 0
+    val otLimitPeriods: Map<String, Int> = emptyMap()
 )
 
 /** Okres rozliczeniowy — od pierwszego do ostatniego miesiąca włącznie. */
@@ -109,9 +110,9 @@ object Settlement {
      */
     fun otLimit(p: Period): Int = (MAX_WEEK_WITH_OT - NORM_WEEK) * p.weeks
 
-    /** Obowiązujący limit roczny: zakładowy, gdy podany, inaczej ustawowy. */
-    fun otLimitYear(cfg: SettlementCfg): Int =
-        cfg.otLimitYearCompany.takeIf { it > 0 } ?: OT_LIMIT_YEAR
+    /** Limit okresu podany przez zakład; null = zakład nic nie narzucił. */
+    fun otLimitCompany(p: Period, cfg: SettlementCfg): Int? =
+        cfg.otLimitPeriods[key(p)]?.takeIf { it > 0 }
 }
 
 /** Rozliczenie całego okresu — to, co widać w podsumowaniu nad kartą miesiąca. */
@@ -126,11 +127,11 @@ data class PeriodStats(
     val ot: Int = 0,
     /** Sufit techniczny okresu z art. 131 — bez oglądania się na limit roczny. */
     val otLimit: Int = 0,
+    /** Limit okresu narzucony przez zakład; null = tylko sufit techniczny. */
+    val otLimitZakl: Int? = null,
     val otRok: Int = 0,
-    /** Limit roczny, który naprawdę obowiązuje: zakładowy albo ustawowy. */
+    /** Art. 151 § 3 KP. */
     val otLimitRok: Int = Settlement.OT_LIMIT_YEAR,
-    /** Czy roczny pochodzi z ustaleń zakładu — wtedy pokazujemy oba. */
-    val otLimitRokZakladowy: Boolean = false,
     val biezacy: Boolean = false
 ) {
     val diff: Int get() = rozliczone - norm
@@ -138,14 +139,20 @@ data class PeriodStats(
     val normaInna: Boolean get() = norm != normUstawowa
     val zostaloNadgodzinRok: Int get() = (otLimitRok - otRok).coerceAtLeast(0)
 
+    /** Mniejszy z dwóch sufitów okresu: technicznego i tego, co narzucił zakład. */
+    val otLimitOkresu: Int get() = minOf(otLimit, otLimitZakl ?: otLimit)
+
     /**
-     * Ile nadgodzin można mieć w tym okresie NAPRAWDĘ. Sufit techniczny obowiązuje
+     * Ile nadgodzin można mieć w tym okresie NAPRAWDĘ. Sufit okresu obowiązuje
      * tylko wtedy, gdy wcześniej nie wyczerpie się limit roczny.
      */
-    val otLimitEff: Int get() = minOf(otLimit, ot + zostaloNadgodzinRok)
+    val otLimitEff: Int get() = minOf(otLimitOkresu, ot + zostaloNadgodzinRok)
 
-    /** Czy to limit roczny, a nie art. 131, wyznacza granicę w tym okresie. */
-    val blokujeRoczny: Boolean get() = otLimitEff < otLimit
+    /** Czy to zakład, a nie art. 131, zawęża limit okresu. */
+    val blokujeZakladowy: Boolean get() = otLimitZakl != null && otLimitZakl < otLimit
+
+    /** Czy to limit roczny wyznacza granicę w tym okresie. */
+    val blokujeRoczny: Boolean get() = otLimitEff < otLimitOkresu
 
     val zostaloNadgodzin: Int get() = (otLimitEff - ot).coerceAtLeast(0)
 }

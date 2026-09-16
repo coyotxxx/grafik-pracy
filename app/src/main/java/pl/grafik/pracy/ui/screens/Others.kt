@@ -126,19 +126,24 @@ fun SummaryScreen(vm: Vm) {
             // Pokazujemy limit, który NAPRAWDĘ obowiązuje — sufit techniczny okresu
             // albo to, co zostało z rocznego, jeśli roczny kończy się wcześniej.
             LimitNadgodzin("nadgodziny w okresie", okr.ot, okr.otLimitEff)
-            if (okr.blokujeRoczny) {
+            // Mówimy wprost, która reguła wyznaczyła tę liczbę.
+            val powod = when {
+                okr.blokujeRoczny ->
+                    "Limit roczny zostawia tu ${okr.otLimitEff} h " +
+                        "(sufit okresu to ${okr.otLimitOkresu} h)."
+                okr.blokujeZakladowy ->
+                    "Limit zakładu na ten okres: ${okr.otLimitZakl} h. " +
+                        "Technicznie wolno ${okr.otLimit} h."
+                else -> null
+            }
+            powod?.let {
                 Text(
-                    "Technicznie wolno tu ${okr.otLimit} h, ale limit roczny zostawia ${okr.otLimitEff} h.",
-                    fontSize = 10.sp, color = DevColor, lineHeight = 14.sp,
+                    it, fontSize = 10.sp, color = DevColor, lineHeight = 14.sp,
                     modifier = Modifier.padding(top = 3.dp)
                 )
             }
             Spacer(Modifier.height(8.dp))
-            LimitNadgodzin(
-                "nadgodziny w ${okr.period.from.year}" +
-                    if (okr.otLimitRokZakladowy) " · limit zakładu" else "",
-                okr.otRok, okr.otLimitRok
-            )
+            LimitNadgodzin("nadgodziny w ${okr.period.from.year}", okr.otRok, okr.otLimitRok)
         }
 
         Card(Surface1) {
@@ -795,33 +800,55 @@ fun SetupScreen(vm: Vm, uvm: pl.grafik.pracy.ui.UpdateVm) {
             Spacer(Modifier.height(12.dp))
 
             Text("Limit nadgodzin", fontSize = 13.sp, color = OnBg)
-            Spacer(Modifier.height(8.dp))
-
-            Text("W okresie — sufit techniczny", fontSize = 12.sp, color = OnBg)
+            Spacer(Modifier.height(4.dp))
             Text(
-                "Art. 131 KP: z nadgodzinami przeciętnie ${Settlement.MAX_WEEK_WITH_OT} h tygodniowo, " +
-                    "czyli 8 h na każdy pełny tydzień okresu. Obowiązuje tylko wtedy, " +
-                    "gdy wcześniej nie wyczerpie się limit roczny.",
+                "Art. 131 KP daje 8 h na każdy pełny tydzień okresu — to sufit techniczny. " +
+                    "Wpisz limit, który podaje zakład; gdy jest niższy, to on obowiązuje.",
                 fontSize = 10.sp, color = OnFaint, lineHeight = 14.sp
             )
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(10.dp))
+
             Settlement.periodsOfYear(s.ym.year, s.okres).forEach { okr ->
+                val klucz = Settlement.key(okr)
+                val techniczny = Settlement.otLimit(okr)
                 val teraz = okr.from == okresTeraz.from
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(vertical = 2.dp)
+                    modifier = Modifier.padding(vertical = 3.dp)
                 ) {
-                    Text(
-                        okresLabel(okr), fontSize = 12.sp,
-                        color = if (teraz) Accent else OnMuted,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Text("${okr.weeks} tyg.", fontSize = 10.sp, color = OnFaint)
-                    Text(
-                        "${Settlement.otLimit(okr)} h", fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = if (teraz) Accent else OnMuted,
-                        modifier = Modifier.width(56.dp), textAlign = TextAlign.End
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            okresLabel(okr), fontSize = 13.sp,
+                            color = if (teraz) Accent else OnBg,
+                            fontWeight = if (teraz) FontWeight.SemiBold else FontWeight.Normal
+                        )
+                        Text(
+                            "technicznie $techniczny h · ${okr.weeks} tyg.",
+                            fontSize = 10.sp, color = OnFaint
+                        )
+                    }
+                    // Klucz remembera to sam okres, nigdy zapisywana wartość — opóźniona
+                    // emisja z DataStore przestawiałaby cyfry w trakcie pisania.
+                    var wpis by remember(klucz) {
+                        mutableStateOf(s.okres.otLimitPeriods[klucz]?.toString() ?: "")
+                    }
+                    OutlinedTextField(
+                        value = wpis,
+                        onValueChange = { v ->
+                            val czyste = v.filter(Char::isDigit).take(3)
+                            wpis = czyste
+                            val mapa = s.okres.otLimitPeriods.toMutableMap()
+                            val h = czyste.toIntOrNull()
+                            if (h != null && h > 0) mapa[klucz] = h else mapa.remove(klucz)
+                            vm.saveSettlement(s.okres.copy(otLimitPeriods = mapa))
+                        },
+                        placeholder = { Text("$techniczny", fontSize = 13.sp, color = OnFaint) },
+                        suffix = { Text("h", fontSize = 12.sp, color = OnMuted) },
+                        singleLine = true,
+                        modifier = Modifier.width(118.dp),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        colors = poleLiczbowe(),
+                        textStyle = androidx.compose.ui.text.TextStyle(color = OnBg, fontSize = 14.sp)
                     )
                 }
             }
@@ -830,44 +857,15 @@ fun SetupScreen(vm: Vm, uvm: pl.grafik.pracy.ui.UpdateVm) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("W roku — ustawowo", fontSize = 12.sp, color = OnBg)
-                    Text("Art. 151 § 3 KP.", fontSize = 10.sp, color = OnFaint)
+                    Text(
+                        "Art. 151 § 3 KP. Zamyka limity okresowe, jeśli wyczerpie się wcześniej.",
+                        fontSize = 10.sp, color = OnFaint, lineHeight = 14.sp
+                    )
                 }
                 Text(
                     "${Settlement.OT_LIMIT_YEAR} h",
                     fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = OnMuted,
                     modifier = Modifier.padding(start = 8.dp)
-                )
-            }
-
-            Spacer(Modifier.height(10.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text("W roku — limit zakładowy", fontSize = 12.sp, color = OnBg)
-                    Text(
-                        "Ile dopuszcza Twój zakład. Tego nie wolno przekroczyć — " +
-                            "gdy jest podany, to on obowiązuje zamiast ustawowego.",
-                        fontSize = 10.sp, color = OnFaint, lineHeight = 14.sp
-                    )
-                }
-                // Klucz remembera nie może zależeć od zapisywanej wartości — inaczej
-                // opóźniona emisja z DataStore przestawia cyfry w trakcie pisania.
-                var limit by remember {
-                    mutableStateOf(s.okres.otLimitYearCompany.takeIf { it > 0 }?.toString() ?: "")
-                }
-                OutlinedTextField(
-                    value = limit,
-                    onValueChange = { v ->
-                        val czyste = v.filter(Char::isDigit).take(3)
-                        limit = czyste
-                        vm.saveSettlement(s.okres.copy(otLimitYearCompany = czyste.toIntOrNull() ?: 0))
-                    },
-                    placeholder = { Text("—", fontSize = 13.sp, color = OnFaint) },
-                    suffix = { Text("h", fontSize = 12.sp, color = OnMuted) },
-                    singleLine = true,
-                    modifier = Modifier.width(112.dp),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    colors = poleLiczbowe(),
-                    textStyle = androidx.compose.ui.text.TextStyle(color = OnBg, fontSize = 14.sp)
                 )
             }
         }

@@ -96,29 +96,44 @@ class OkresTest {
         }
     }
 
-    @Test fun limit_roczny_zakladowy_ma_pierwszenstwo_przed_ustawowym() {
-        assertEquals(150, Settlement.otLimitYear(SettlementCfg()))
-        assertEquals(150, Settlement.otLimitYear(SettlementCfg(otLimitYearCompany = 0)))
-        assertEquals(416, Settlement.otLimitYear(SettlementCfg(otLimitYearCompany = 416)))
-        // zakład może też ustawić NIŻSZY limit niż ustawowy
-        assertEquals(100, Settlement.otLimitYear(SettlementCfg(otLimitYearCompany = 100)))
+    @Test fun limit_zakladowy_podawany_jest_na_kazdy_kwartal_osobno() {
+        val cfg = SettlementCfg(
+            months = 3,
+            otLimitPeriods = mapOf("2026-01" to 80, "2026-07" to 90)
+        )
+        val okresy = Settlement.periodsOfYear(2026, cfg)
+        assertEquals(80, Settlement.otLimitCompany(okresy[0], cfg))     // I kwartał
+        assertNull(Settlement.otLimitCompany(okresy[1], cfg))           // II — zakład nic nie podał
+        assertEquals(90, Settlement.otLimitCompany(okresy[2], cfg))     // III kwartał
+        assertNull(Settlement.otLimitCompany(okresy[3], cfg))
+
+        // zero to brak wpisu, nie limit zerowy
+        val zero = SettlementCfg(otLimitPeriods = mapOf("2026-01" to 0))
+        assertNull(Settlement.otLimitCompany(okresy[0], zero))
     }
 
-    @Test fun limit_roczny_potrafi_zablokowac_sufit_techniczny() {
-        // 130 h nadgodzin w roku przy limicie 150 — w okresie zostaje tylko 20 h,
-        // mimo że technicznie wolno 104 h.
-        val st = PeriodStats(ot = 10, otLimit = 104, otRok = 130, otLimitRok = 150)
-        assertEquals(20, st.zostaloNadgodzinRok)
-        assertEquals(30, st.otLimitEff)
-        assertEquals(20, st.zostaloNadgodzin)
-        assertTrue(st.blokujeRoczny)
-    }
-
-    @Test fun gdy_rok_nie_blokuje_obowiazuje_sufit_techniczny() {
-        val st = PeriodStats(ot = 10, otLimit = 104, otRok = 10, otLimitRok = 150)
-        assertEquals(104, st.otLimitEff)
-        assertEquals(94, st.zostaloNadgodzin)
+    @Test fun limit_zakladu_zaweza_sufit_techniczny() {
+        val st = PeriodStats(ot = 10, otLimit = 104, otLimitZakl = 60, otRok = 10)
+        assertEquals(60, st.otLimitOkresu)
+        assertEquals(60, st.otLimitEff)
+        assertEquals(50, st.zostaloNadgodzin)
+        assertTrue(st.blokujeZakladowy)
         assertFalse(st.blokujeRoczny)
+    }
+
+    @Test fun limit_zakladu_wyzszy_od_technicznego_niczego_nie_podnosi() {
+        val st = PeriodStats(ot = 0, otLimit = 96, otLimitZakl = 120, otRok = 0)
+        assertEquals(96, st.otLimitOkresu)
+        assertFalse(st.blokujeZakladowy)
+    }
+
+    @Test fun limit_roczny_zamyka_okres_wczesniej_niz_zakladowy() {
+        // 145 h nadgodzin w roku przy ustawowych 150 — w okresie zostaje 5 h,
+        // choć zakład dopuszcza 60, a technicznie wolno 104.
+        val st = PeriodStats(ot = 10, otLimit = 104, otLimitZakl = 60, otRok = 145)
+        assertEquals(5, st.zostaloNadgodzinRok)
+        assertEquals(15, st.otLimitEff)
+        assertTrue(st.blokujeRoczny)
     }
 
     @Test fun okres_zawiera_swoje_dni() {
