@@ -30,8 +30,31 @@ data class UiState(
     val remindOn: Boolean = true,
     val remindHour: Int = 18,
     /** Czy dotknięcie dnia zmienia grafik. Domyślnie NIE — żeby nie malować przez przypadek. */
-    val painting: Boolean = false
-)
+    val painting: Boolean = false,
+    val urlop: VacationCfg = VacationCfg(),
+    /** Wszystkie dni urlopu w roku wyświetlanego miesiąca. */
+    val urlopRok: List<LocalDate> = emptyList()
+) {
+    /** Dni urlopu policzone do bilansu — od punktu odniesienia albo od początku roku. */
+    val urlopZuzyty: Int
+        get() {
+            val stan = urlop.stanData
+            return if (stan != null && stan.year == ym.year) urlopRok.count { it.isAfter(stan) }
+            else urlopRok.size
+        }
+
+    val urlopBaza: Int
+        get() {
+            val stan = urlop.stanData
+            return if (stan != null && stan.year == ym.year) urlop.stanDni
+            else urlop.wymiar + urlop.zalegly
+        }
+
+    val urlopPozostalo: Int get() = urlopBaza - urlopZuzyty
+
+    /** Urlop w wyświetlanym miesiącu — do listy z datami. */
+    val urlopMiesiaca: List<LocalDate> get() = urlopRok.filter { YearMonth.from(it) == ym }
+}
 
 private object Palette0 { val defaults = pl.grafik.pracy.ui.theme.Palette.defaults }
 
@@ -75,7 +98,11 @@ class Vm(app: Application) : AndroidViewModel(app) {
             events.observeRange(a.toString(), b.toString())
         },
         settings.reminders,
-        _maluj
+        _maluj,
+        settings.vacation,
+        _ym.flatMapLatest { ym ->
+            dao.observeWithShift(Shift.URLOP.code, "${ym.year}-01-01", "${ym.year}-12-31")
+        }
     ) { arr ->
         @Suppress("UNCHECKED_CAST")
         val ym = arr[0] as YearMonth
@@ -89,6 +116,9 @@ class Vm(app: Application) : AndroidViewModel(app) {
         @Suppress("UNCHECKED_CAST")
         val rem = arr[8] as Pair<Boolean, Int>
         val maluj = arr[9] as Boolean
+        val url = arr[10] as VacationCfg
+        @Suppress("UNCHECKED_CAST")
+        val urlRok = (arr[11] as List<DayRow>).map { LocalDate.parse(it.date) }
 
         val (gStart, gEnd) = gridRange(ym)
         val saved = rows.associate { LocalDate.parse(it.date) to it.toEntry() }
@@ -102,7 +132,7 @@ class Vm(app: Application) : AndroidViewModel(app) {
         // Statystyki liczymy TYLKO z bieżącego miesiąca, mimo że siatka pokazuje więcej.
         val wMiesiacu = merged.filterKeys { YearMonth.from(it) == ym }
 
-        UiState(ym, merged, ev, cfg, cols, tool, otH, otR, calc(wMiesiacu, ym), rem.first, rem.second, maluj)
+        UiState(ym, merged, ev, cfg, cols, tool, otH, otR, calc(wMiesiacu, ym), rem.first, rem.second, maluj, url, urlRok)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState())
 
     private fun calc(m: Map<LocalDate, DayEntry>, ym: YearMonth): MonthStats {
@@ -136,6 +166,8 @@ class Vm(app: Application) : AndroidViewModel(app) {
     fun pick(t: Tool) { _tool.value = t; _maluj.value = true }
 
     fun setPainting(on: Boolean) { _maluj.value = on }
+
+    fun saveVacation(v: VacationCfg) = viewModelScope.launch { settings.saveVacation(v) }
 
     /** Wejście na zakładkę Miesiąc: wracamy do dziś i blokujemy malowanie. */
     fun onEnterCalendar() {

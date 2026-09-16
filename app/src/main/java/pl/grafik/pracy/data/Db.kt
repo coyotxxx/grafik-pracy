@@ -133,6 +133,10 @@ interface DayDao {
     @Query("SELECT * FROM days WHERE date = :date LIMIT 1")
     suspend fun get(date: String): DayRow?
 
+    /** Dni z konkretnym oznaczeniem (np. urlop) w zadanym zakresie. */
+    @Query("SELECT * FROM days WHERE shift = :code AND date >= :from AND date <= :to ORDER BY date")
+    fun observeWithShift(code: String, from: String, to: String): Flow<List<DayRow>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(row: DayRow)
 

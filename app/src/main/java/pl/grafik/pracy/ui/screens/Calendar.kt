@@ -1,6 +1,7 @@
 package pl.grafik.pracy.ui.screens
 
 import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -10,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -37,7 +39,13 @@ fun CalendarScreen(vm: Vm, onOpenDay: (LocalDate) -> Unit) {
         Header(vm, s)
         WeekHeader()
         // Siatka bierze całe wolne miejsce — po zwinięciu palety kalendarz robi się duży.
-        Grid(s, Modifier.weight(1f), onTap = { vm.tap(it) }, onLong = onOpenDay)
+        Grid(
+            s, Modifier.weight(1f),
+            onTap = { vm.tap(it) },
+            onLong = onOpenDay,
+            onPrev = { vm.prevMonth() },
+            onNext = { vm.nextMonth() }
+        )
         Palette(vm, s, paletaOtwarta) { paletaOtwarta = !paletaOtwarta }
     }
 }
@@ -110,7 +118,11 @@ private fun WeekHeader() {
 }
 
 @Composable
-private fun Grid(s: UiState, m: Modifier, onTap: (LocalDate) -> Unit, onLong: (LocalDate) -> Unit) {
+private fun Grid(
+    s: UiState, m: Modifier,
+    onTap: (LocalDate) -> Unit, onLong: (LocalDate) -> Unit,
+    onPrev: () -> Unit, onNext: () -> Unit
+) {
     val first = s.ym.atDay(1)
     val start = first.minusDays(((first.dayOfWeek.value + 6) % 7).toLong())
     val last = s.ym.atEndOfMonth()
@@ -118,8 +130,24 @@ private fun Grid(s: UiState, m: Modifier, onTap: (LocalDate) -> Unit, onLong: (L
     val weeks = (java.time.temporal.ChronoUnit.DAYS.between(start, end).toInt() + 1) / 7
     val today = LocalDate.now()
 
+    // Przesunięcie palcem przełącza miesiąc. Próg zależy od szerokości ekranu,
+    // żeby drobny ruch przy dotykaniu dnia niczego nie przewijał.
+    var przesuniecie by remember(s.ym) { mutableFloatStateOf(0f) }
+
     Column(
-        m.fillMaxWidth().padding(horizontal = 10.dp, vertical = 2.dp),
+        m.fillMaxWidth()
+            .pointerInput(s.ym) {
+                val prog = size.width * 0.18f
+                detectHorizontalDragGestures(
+                    onDragEnd = {
+                        if (przesuniecie > prog) onPrev() else if (przesuniecie < -prog) onNext()
+                        przesuniecie = 0f
+                    },
+                    onDragCancel = { przesuniecie = 0f },
+                    onHorizontalDrag = { _, delta -> przesuniecie += delta }
+                )
+            }
+            .padding(horizontal = 10.dp, vertical = 2.dp),
         verticalArrangement = Arrangement.spacedBy(3.dp)
     ) {
         repeat(weeks) { w ->

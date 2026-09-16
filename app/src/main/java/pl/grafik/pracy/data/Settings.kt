@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.map
 import pl.grafik.pracy.domain.CyclePattern
 import pl.grafik.pracy.domain.CycleConfig
 import pl.grafik.pracy.domain.WorkPlace
+import pl.grafik.pracy.domain.VacationCfg
 import java.time.LocalDate
 
 private val Context.ds by preferencesDataStore("settings")
@@ -25,6 +26,10 @@ class SettingsStore(private val ctx: Context) {
     private val kReverse = booleanPreferencesKey("reverse")
     private val kRemindOn = booleanPreferencesKey("remind_on")
     private val kRemindHour = intPreferencesKey("remind_hour")
+    private val kUrlWymiar = intPreferencesKey("url_wymiar")
+    private val kUrlZalegly = intPreferencesKey("url_zalegly")
+    private val kUrlStanData = stringPreferencesKey("url_stan_data")
+    private val kUrlStanDni = intPreferencesKey("url_stan_dni")
     private val kColors = stringPreferencesKey("colors")
     private val kWpOn = booleanPreferencesKey("wp_enabled")
     private val kWpLat = doublePreferencesKey("wp_lat")
@@ -99,6 +104,24 @@ class SettingsStore(private val ctx: Context) {
 
     suspend fun saveReminders(on: Boolean, hour: Int) {
         ctx.ds.edit { p -> p[kRemindOn] = on; p[kRemindHour] = hour.coerceIn(0, 23) }
+    }
+
+    val vacation: Flow<VacationCfg> = ctx.ds.data.map { p ->
+        VacationCfg(
+            wymiar = p[kUrlWymiar] ?: 26,
+            zalegly = p[kUrlZalegly] ?: 0,
+            stanData = p[kUrlStanData]?.let { runCatching { LocalDate.parse(it) }.getOrNull() },
+            stanDni = p[kUrlStanDni] ?: 0
+        )
+    }
+
+    suspend fun saveVacation(v: VacationCfg) {
+        ctx.ds.edit { p ->
+            p[kUrlWymiar] = v.wymiar.coerceIn(0, 60)
+            p[kUrlZalegly] = v.zalegly.coerceIn(0, 60)
+            p[kUrlStanDni] = v.stanDni.coerceIn(0, 99)
+            if (v.stanData != null) p[kUrlStanData] = v.stanData.toString() else p.remove(kUrlStanData)
+        }
     }
 
     /** Kasuje WSZYSTKIE ustawienia — cykl, kolory, miejsce pracy. */

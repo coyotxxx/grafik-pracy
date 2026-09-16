@@ -7,7 +7,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -69,6 +71,67 @@ fun SummaryScreen(vm: Vm) {
             Stat("${st.sundayWork}", "prac. niedziele", SunColor, Modifier.weight(1f))
             Stat("${st.holidayWork}", "prac. święta", Palette.byId("malina").text, Modifier.weight(1f))
             Stat("${st.saturdayWork}", "prac. soboty", SatColor, Modifier.weight(1f))
+        }
+
+        // --- URLOP ---
+        Card(Surface1) {
+            Row(verticalAlignment = Alignment.Bottom) {
+                Column(Modifier.weight(1f)) {
+                    Text("URLOP", fontSize = 10.sp, color = OnFaint, fontWeight = FontWeight.Medium)
+                    Spacer(Modifier.height(6.dp))
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        Text(
+                            "${s.urlopPozostalo}", fontSize = 30.sp, fontWeight = FontWeight.Bold,
+                            color = if (s.urlopPozostalo <= 0) Danger else Palette.byId(s.colors["U"]).text
+                        )
+                        Text(" ${dniSlowo(s.urlopPozostalo)} zostało", fontSize = 13.sp, color = OnMuted,
+                            modifier = Modifier.padding(bottom = 4.dp))
+                    }
+                }
+                Column(horizontalAlignment = Alignment.End) {
+                    Text("wykorzystane", fontSize = 10.sp, color = OnFaint)
+                    Text("${s.urlopZuzyty} / ${s.urlopBaza}", fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold, color = OnBg)
+                }
+            }
+            Spacer(Modifier.height(6.dp))
+            Text(
+                if (s.urlop.stanData != null && s.urlop.stanData!!.year == s.ym.year)
+                    "licząc od stanu ${s.urlop.stanDni} dni na ${s.urlop.stanData!!.format(DATA_KR)}"
+                else "wymiar ${s.urlop.wymiar} dni" + if (s.urlop.zalegly > 0) " + ${s.urlop.zalegly} zaległe" else "",
+                fontSize = 10.sp, color = OnFaint
+            )
+
+            if (s.urlopMiesiaca.isNotEmpty()) {
+                Spacer(Modifier.height(12.dp))
+                HorizontalDivider(color = Surface3)
+                Spacer(Modifier.height(8.dp))
+                Text("W TYM MIESIĄCU", fontSize = 10.sp, color = OnFaint, fontWeight = FontWeight.Medium)
+                Spacer(Modifier.height(4.dp))
+                s.urlopMiesiaca.forEach { d ->
+                    // Jaką zmianę urlop zastąpił — bierzemy z cyklu, bo wpis dnia już jej nie trzyma.
+                    val zmiana = if (s.cfg.covers(d)) CycleGenerator.shiftFor(s.cfg, d) else null
+                    Row(
+                        Modifier.fillMaxWidth().padding(vertical = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(Modifier.size(7.dp).clip(RoundedCornerShape(4.dp))
+                            .background(Palette.byId(s.colors["U"]).text))
+                        Spacer(Modifier.width(10.dp))
+                        Text(d.format(DATA_DZIEN), fontSize = 13.sp, color = OnBg, modifier = Modifier.weight(1f))
+                        if (zmiana != null && zmiana.isWork) {
+                            val sw = Palette.byId(s.colors[zmiana.code])
+                            Box(Modifier.clip(RoundedCornerShape(7.dp)).background(sw.fill)
+                                .padding(horizontal = 9.dp, vertical = 3.dp)) {
+                                Text("zm. ${zmiana.code}", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = sw.text)
+                            }
+                        } else {
+                            Text(if (zmiana == null) "poza cyklem" else "dzień wolny",
+                                fontSize = 11.sp, color = OnFaint)
+                        }
+                    }
+                }
+            }
         }
 
         Card(Surface1) {
@@ -352,6 +415,110 @@ fun SetupScreen(vm: Vm, uvm: pl.grafik.pracy.ui.UpdateVm) {
             Text("Przywróć ten miesiąc do cyklu", color = OnBg, fontSize = 13.sp)
         }
 
+        // --- urlop ---
+        Text("URLOP", fontSize = 10.sp, color = OnFaint, fontWeight = FontWeight.Medium)
+        Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Surface1).padding(14.dp)) {
+            Text("Wymiar roczny", fontSize = 13.sp, color = OnBg)
+            Text("20 dni do 10 lat stażu, 26 powyżej.", fontSize = 10.sp, color = OnFaint)
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                listOf(20, 26).forEach { w ->
+                    val on = s.urlop.wymiar == w
+                    Box(
+                        Modifier.weight(1f).clip(RoundedCornerShape(10.dp))
+                            .background(if (on) Color(0xFF4A3410) else Surface2)
+                            .border(if (on) 2.dp else 0.dp, if (on) Accent else Color.Transparent, RoundedCornerShape(10.dp))
+                            .clickable { vm.saveVacation(s.urlop.copy(wymiar = w)) }
+                            .padding(vertical = 10.dp),
+                        contentAlignment = Alignment.Center
+                    ) { Text("$w dni", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = if (on) Accent else OnMuted) }
+                }
+                Row(
+                    Modifier.weight(1.2f).clip(RoundedCornerShape(10.dp)).background(Surface2),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    IconButton(onClick = { vm.saveVacation(s.urlop.copy(wymiar = s.urlop.wymiar - 1)) },
+                        modifier = Modifier.size(30.dp)) {
+                        Icon(Icons.Default.Remove, "mniej", tint = OnBg, modifier = Modifier.size(15.dp))
+                    }
+                    Text("${s.urlop.wymiar}", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = OnBg)
+                    IconButton(onClick = { vm.saveVacation(s.urlop.copy(wymiar = s.urlop.wymiar + 1)) },
+                        modifier = Modifier.size(30.dp)) {
+                        Icon(Icons.Default.Add, "więcej", tint = OnBg, modifier = Modifier.size(15.dp))
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(14.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Zaległy z poprzedniego roku", fontSize = 13.sp, color = OnBg)
+                    Text("doliczany do wymiaru", fontSize = 10.sp, color = OnFaint)
+                }
+                Row(
+                    Modifier.clip(RoundedCornerShape(10.dp)).background(Surface2),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = { vm.saveVacation(s.urlop.copy(zalegly = s.urlop.zalegly - 1)) },
+                        modifier = Modifier.size(30.dp)) {
+                        Icon(Icons.Default.Remove, "mniej", tint = OnBg, modifier = Modifier.size(15.dp))
+                    }
+                    Text("${s.urlop.zalegly}", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = OnBg)
+                    IconButton(onClick = { vm.saveVacation(s.urlop.copy(zalegly = s.urlop.zalegly + 1)) },
+                        modifier = Modifier.size(30.dp)) {
+                        Icon(Icons.Default.Add, "więcej", tint = OnBg, modifier = Modifier.size(15.dp))
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(14.dp))
+            HorizontalDivider(color = Surface3)
+            Spacer(Modifier.height(12.dp))
+
+            // Prawdziwy stan trzyma kadrowa — tu go przepisujesz, a apka liczy dalej sama.
+            Text("Stan z zakładu", fontSize = 13.sp, color = OnBg)
+            Text(
+                "Jeśli kadrowa poda Ci aktualną liczbę dni, zapisz ją tutaj. " +
+                    "Od tego dnia aplikacja odlicza już sama.",
+                fontSize = 10.sp, color = OnFaint, lineHeight = 14.sp
+            )
+            Spacer(Modifier.height(8.dp))
+            var stan by remember(s.urlop.stanDni) { mutableIntStateOf(s.urlop.stanDni) }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    Modifier.clip(RoundedCornerShape(10.dp)).background(Surface2),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = { if (stan > 0) stan-- }, modifier = Modifier.size(32.dp)) {
+                        Icon(Icons.Default.Remove, "mniej", tint = OnBg, modifier = Modifier.size(16.dp))
+                    }
+                    Text("$stan", Modifier.width(30.dp), fontSize = 15.sp, fontWeight = FontWeight.Bold,
+                        color = OnBg, textAlign = TextAlign.Center)
+                    IconButton(onClick = { stan++ }, modifier = Modifier.size(32.dp)) {
+                        Icon(Icons.Default.Add, "więcej", tint = OnBg, modifier = Modifier.size(16.dp))
+                    }
+                }
+                Button(
+                    onClick = { vm.saveVacation(s.urlop.copy(stanData = java.time.LocalDate.now(), stanDni = stan)) },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = Accent, contentColor = AccentOn)
+                ) { Text("Zapisz na dziś", fontSize = 12.sp) }
+            }
+            s.urlop.stanData?.let { d ->
+                Spacer(Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        "Zapisane: ${s.urlop.stanDni} ${dniSlowo(s.urlop.stanDni)} na ${d.format(DATA_KR)}",
+                        fontSize = 11.sp, color = Accent, modifier = Modifier.weight(1f)
+                    )
+                    TextButton(onClick = { vm.saveVacation(s.urlop.copy(stanData = null)) }) {
+                        Text("Wyczyść", fontSize = 11.sp, color = OnMuted)
+                    }
+                }
+            }
+        }
+
         // --- czyszczenie danych ---
         var pytanie by remember { mutableStateOf(false) }
         Text("DANE", fontSize = 10.sp, color = OnFaint, fontWeight = FontWeight.Medium)
@@ -436,6 +603,9 @@ private val PL_LOC = java.util.Locale.forLanguageTag("pl-PL")
 
 /** 1 dzień, 2-4 dni, 5+ dni — żeby nie pisać „2 dzień". */
 private fun dniSlowo(n: Int): String = if (n == 1) "dzień" else "dni"
+
+private val DATA_KR = java.time.format.DateTimeFormatter.ofPattern("d.MM.yyyy", PL_LOC)
+private val DATA_DZIEN = java.time.format.DateTimeFormatter.ofPattern("EEEE, d MMMM", PL_LOC)
 
 /** Mianownik — „Wrzesień 2026". Do samodzielnego wyświetlenia. */
 private fun miesiacPl(ym: java.time.YearMonth): String =

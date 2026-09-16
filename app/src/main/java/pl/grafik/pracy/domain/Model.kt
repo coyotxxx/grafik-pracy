@@ -37,6 +37,22 @@ data class DayEntry(
     val workedHours: Int get() = (if (shift?.isWork == true) 8 else 0) + otHours
 }
 
+/**
+ * Urlop wypoczynkowy. Punkt odniesienia („na dzień X zostało mi Y") jest ważny,
+ * bo prawdziwy stan trzyma kadrowa, a nie ta aplikacja — dzięki niemu można
+ * zsynchronizować licznik z tym, co pokazuje zakład.
+ */
+data class VacationCfg(
+    /** Wymiar roczny: 20 dni do 10 lat stażu, 26 powyżej. */
+    val wymiar: Int = 26,
+    /** Niewykorzystany z poprzedniego roku. */
+    val zalegly: Int = 0,
+    /** Dzień, na który znamy prawdziwy stan (null = liczymy od początku roku). */
+    val stanData: LocalDate? = null,
+    /** Ile dni zostało na ten dzień. */
+    val stanDni: Int = 0
+)
+
 data class MonthStats(
     val worked: Int = 0,
     val norm: Int = 0,
