@@ -17,24 +17,26 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import pl.grafik.pracy.ui.Vm
 import pl.grafik.pracy.ui.PresenceVm
+import pl.grafik.pracy.ui.UpdateVm
 import pl.grafik.pracy.ui.screens.*
 import pl.grafik.pracy.ui.theme.*
 
 class MainActivity : ComponentActivity() {
     private val vm: Vm by viewModels()
     private val pvm: PresenceVm by viewModels()
+    private val uvm: UpdateVm by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContent { GrafikTheme { App(vm, pvm) } }
+        setContent { GrafikTheme { App(vm, pvm, uvm) } }
     }
 }
 
 private data class Tab(val label: String, val icon: ImageVector)
 
 @Composable
-fun App(vm: Vm, pvm: PresenceVm) {
+fun App(vm: Vm, pvm: PresenceVm, uvm: UpdateVm) {
     var tab by remember { mutableIntStateOf(0) }
     val tabs = listOf(
         Tab("Miesiąc", Icons.Default.CalendarMonth),
@@ -64,13 +66,17 @@ fun App(vm: Vm, pvm: PresenceVm) {
             }
         }
     ) { pad ->
-        Box(Modifier.padding(pad).fillMaxSize().background(Bg)) {
-            when (tab) {
-                0 -> CalendarScreen(vm) { }
-                1 -> SummaryScreen(vm)
-                2 -> SetupScreen(vm)
-                3 -> WorkPlaceScreen(pvm)
-                else -> ColorsScreen(vm)
+        Column(Modifier.padding(pad).fillMaxSize().background(Bg)) {
+            // Pasek aktualizacji nad wszystkim — zobaczysz go niezależnie od zakładki.
+            UpdateBar(uvm)
+            Box(Modifier.weight(1f).fillMaxWidth()) {
+                when (tab) {
+                    0 -> CalendarScreen(vm) { }
+                    1 -> SummaryScreen(vm)
+                    2 -> SetupScreen(vm, uvm)
+                    3 -> WorkPlaceScreen(pvm)
+                    else -> ColorsScreen(vm)
+                }
             }
         }
     }

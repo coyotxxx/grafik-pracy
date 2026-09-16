@@ -111,7 +111,7 @@ private fun Stat(big: String, small: String, c: Color, m: Modifier) {
 }
 
 @Composable
-fun SetupScreen(vm: Vm) {
+fun SetupScreen(vm: Vm, uvm: pl.grafik.pracy.ui.UpdateVm) {
     val s by vm.state.collectAsState()
     Column(Modifier.fillMaxSize().background(Bg).verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -180,6 +180,32 @@ fun SetupScreen(vm: Vm) {
         Button(onClick = { vm.resetMonth() }, modifier = Modifier.fillMaxWidth().height(48.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Surface2), shape = RoundedCornerShape(14.dp)) {
             Text("Przywróć ten miesiąc do cyklu", color = OnBg, fontSize = 13.sp)
+        }
+
+        // --- aktualizacja aplikacji ---
+        val u by uvm.state.collectAsState()
+        Text("APLIKACJA", fontSize = 10.sp, color = OnFaint, fontWeight = FontWeight.Medium)
+        Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Surface1).padding(14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Wersja ${u.current}", fontSize = 14.sp, color = OnBg)
+                    val podpis = when {
+                        u.available != null -> "dostępna ${u.available!!.version} — pasek u góry"
+                        u.upToDateMessage != null -> u.upToDateMessage!!
+                        u.progress is pl.grafik.pracy.update.UpdateProgress.Checking -> "sprawdzam…"
+                        else -> "aktualizacje z GitHuba"
+                    }
+                    Text(
+                        podpis, fontSize = 11.sp,
+                        color = if (u.available != null) Accent else OnMuted
+                    )
+                }
+                Button(
+                    onClick = { uvm.check(manual = true) },
+                    enabled = u.progress !is pl.grafik.pracy.update.UpdateProgress.Checking,
+                    colors = ButtonDefaults.buttonColors(containerColor = Surface2, contentColor = OnBg)
+                ) { Text("Sprawdź", fontSize = 12.sp) }
+            }
         }
         Spacer(Modifier.height(20.dp))
     }
