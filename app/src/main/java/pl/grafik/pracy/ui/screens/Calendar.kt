@@ -49,7 +49,7 @@ fun CalendarScreen(vm: Vm, onOpenDay: (LocalDate) -> Unit) {
             onPrev = { vm.prevMonth() },
             onNext = { vm.nextMonth() }
         )
-        Palette(vm, s, paletaOtwarta) { paletaOtwarta = !paletaOtwarta }
+        Palette(vm, s, paletaOtwarta) { paletaOtwarta = it }
     }
 }
 
@@ -292,7 +292,7 @@ private fun DayCell(
 }
 
 @Composable
-private fun Palette(vm: Vm, s: UiState, otwarta: Boolean, przelacz: () -> Unit) {
+private fun Palette(vm: Vm, s: UiState, otwarta: Boolean, ustawPalete: (Boolean) -> Unit) {
     Column(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp))
             .background(Surface1).padding(start = 8.dp, end = 8.dp, top = 2.dp, bottom = 4.dp),
@@ -300,7 +300,7 @@ private fun Palette(vm: Vm, s: UiState, otwarta: Boolean, przelacz: () -> Unit) 
     ) {
         // Pasek zawsze widoczny: co maluję, sterowanie nadgodzinami i cofanie.
         Row(
-            Modifier.fillMaxWidth().clickable(onClick = przelacz).padding(vertical = 4.dp),
+            Modifier.fillMaxWidth().clickable { ustawPalete(!otwarta) }.padding(vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -329,7 +329,13 @@ private fun Palette(vm: Vm, s: UiState, otwarta: Boolean, przelacz: () -> Unit) 
                         if (s.painting) Accent else Surface3,
                         RoundedCornerShape(11.dp)
                     )
-                    .clickable { vm.setPainting(!s.painting) }
+                    .clickable {
+                        // Włączenie malowania od razu rozwija paletę — bez wyboru narzędzia
+                        // dotknięcie dnia i tak nic sensownego nie zrobi. Blokada ją zwija.
+                        val wlaczam = !s.painting
+                        vm.setPainting(wlaczam)
+                        ustawPalete(wlaczam)
+                    }
                     .padding(horizontal = 10.dp, vertical = 7.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -356,7 +362,7 @@ private fun Palette(vm: Vm, s: UiState, otwarta: Boolean, przelacz: () -> Unit) 
         if (!otwarta) return@Column
 
         // Po wyborze paleta chowa się sama — od razu malujesz na pełnym kalendarzu.
-        val wybierz: (Tool) -> Unit = { t -> vm.pick(t); przelacz() }
+        val wybierz: (Tool) -> Unit = { t -> vm.pick(t); ustawPalete(false) }
 
         Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
             Tool(s, Tool.I, "I", "6–14", Modifier.weight(1f), wybierz)
