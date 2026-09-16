@@ -131,9 +131,9 @@ fun SummaryScreen(vm: Vm) {
                 okr.blokujeRoczny ->
                     "Limit roczny zostawia tu ${okr.otLimitEff} h " +
                         "(sufit okresu to ${okr.otLimitOkresu} h)."
-                okr.blokujeZakladowy ->
-                    "Limit zakładu na ten okres: ${okr.otLimitZakl} h. " +
-                        "Technicznie wolno ${okr.otLimit} h."
+                okr.zakladowyObowiazuje ->
+                    "Limit zakładu na ten okres: ${okr.otLimitZakl} h " +
+                        "(ustawowo ${okr.otLimit} h)."
                 else -> null
             }
             powod?.let {
@@ -802,19 +802,31 @@ fun SetupScreen(vm: Vm, uvm: pl.grafik.pracy.ui.UpdateVm) {
             Text("Limit nadgodzin", fontSize = 13.sp, color = OnBg)
             Spacer(Modifier.height(4.dp))
             Text(
-                "Art. 131 KP daje 8 h na każdy pełny tydzień okresu — to sufit techniczny. " +
-                    "Wpisz limit, który podaje zakład; gdy jest niższy, to on obowiązuje.",
+                "Ustawowy wynika z art. 131 KP — 8 h na każdy pełny tydzień okresu. " +
+                    "Obok wpisz limit swojego zakładu; gdy jest wpisany, obowiązuje zamiast ustawowego.",
                 fontSize = 10.sp, color = OnFaint, lineHeight = 14.sp
             )
             Spacer(Modifier.height(10.dp))
 
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Spacer(Modifier.weight(1f))
+                Text(
+                    "ustawowo", fontSize = 9.sp, color = OnFaint,
+                    modifier = Modifier.width(62.dp), textAlign = TextAlign.End
+                )
+                Text(
+                    "zakład", fontSize = 9.sp, color = OnFaint,
+                    modifier = Modifier.width(118.dp), textAlign = TextAlign.Center
+                )
+            }
+
             Settlement.periodsOfYear(s.ym.year, s.okres).forEach { okr ->
                 val klucz = Settlement.key(okr)
-                val techniczny = Settlement.otLimit(okr)
+                val ustawowy = Settlement.otLimit(okr)
                 val teraz = okr.from == okresTeraz.from
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(vertical = 3.dp)
+                    modifier = Modifier.padding(vertical = 2.dp)
                 ) {
                     Column(Modifier.weight(1f)) {
                         Text(
@@ -822,11 +834,12 @@ fun SetupScreen(vm: Vm, uvm: pl.grafik.pracy.ui.UpdateVm) {
                             color = if (teraz) Accent else OnBg,
                             fontWeight = if (teraz) FontWeight.SemiBold else FontWeight.Normal
                         )
-                        Text(
-                            "technicznie $techniczny h · ${okr.weeks} tyg.",
-                            fontSize = 10.sp, color = OnFaint
-                        )
+                        Text("${okr.weeks} tygodni", fontSize = 10.sp, color = OnFaint)
                     }
+                    Text(
+                        "$ustawowy h", fontSize = 13.sp, fontWeight = FontWeight.Medium,
+                        color = OnMuted, modifier = Modifier.width(62.dp), textAlign = TextAlign.End
+                    )
                     // Klucz remembera to sam okres, nigdy zapisywana wartość — opóźniona
                     // emisja z DataStore przestawiałaby cyfry w trakcie pisania.
                     var wpis by remember(klucz) {
@@ -842,16 +855,20 @@ fun SetupScreen(vm: Vm, uvm: pl.grafik.pracy.ui.UpdateVm) {
                             if (h != null && h > 0) mapa[klucz] = h else mapa.remove(klucz)
                             vm.saveSettlement(s.okres.copy(otLimitPeriods = mapa))
                         },
-                        placeholder = { Text("$techniczny", fontSize = 13.sp, color = OnFaint) },
+                        placeholder = { Text("—", fontSize = 13.sp, color = OnFaint) },
                         suffix = { Text("h", fontSize = 12.sp, color = OnMuted) },
                         singleLine = true,
-                        modifier = Modifier.width(118.dp),
+                        modifier = Modifier.width(118.dp).padding(start = 8.dp),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         colors = poleLiczbowe(),
                         textStyle = androidx.compose.ui.text.TextStyle(color = OnBg, fontSize = 14.sp)
                     )
                 }
             }
+            Text(
+                "Puste pole = obowiązuje limit ustawowy.",
+                fontSize = 10.sp, color = OnFaint, modifier = Modifier.padding(top = 4.dp)
+            )
 
             Spacer(Modifier.height(12.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {

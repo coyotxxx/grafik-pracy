@@ -102,11 +102,9 @@ object Settlement {
     }
 
     /**
-     * Techniczny limit nadgodzin okresu. Art. 131: łącznie z nadgodzinami przeciętnie
+     * Ustawowy limit nadgodzin okresu. Art. 131: łącznie z nadgodzinami przeciętnie
      * 48 h tygodniowo, czyli 8 h nadgodzin na każdy pełny tydzień okresu.
      * Dla kwartałów wychodzi 96 h (I) albo 104 h (pozostałe).
-     *
-     * To sufit czysto techniczny — realnie może go wcześniej zablokować limit roczny.
      */
     fun otLimit(p: Period): Int = (MAX_WEEK_WITH_OT - NORM_WEEK) * p.weeks
 
@@ -139,17 +137,21 @@ data class PeriodStats(
     val normaInna: Boolean get() = norm != normUstawowa
     val zostaloNadgodzinRok: Int get() = (otLimitRok - otRok).coerceAtLeast(0)
 
-    /** Mniejszy z dwóch sufitów okresu: technicznego i tego, co narzucił zakład. */
-    val otLimitOkresu: Int get() = minOf(otLimit, otLimitZakl ?: otLimit)
+    /**
+     * Limit okresu, który obowiązuje: zakładowy, gdy wpisany, inaczej ustawowy.
+     * Zakład zwykle obniża ustawowy o kilka godzin, więc to jego liczba jest wiążąca —
+     * nie bierzemy tu minimum, tylko wprost zastępujemy.
+     */
+    val otLimitOkresu: Int get() = otLimitZakl ?: otLimit
+
+    /** Czy obowiązuje liczba podana przez zakład. */
+    val zakladowyObowiazuje: Boolean get() = otLimitZakl != null
 
     /**
-     * Ile nadgodzin można mieć w tym okresie NAPRAWDĘ. Sufit okresu obowiązuje
+     * Ile nadgodzin można mieć w tym okresie NAPRAWDĘ. Limit okresu obowiązuje
      * tylko wtedy, gdy wcześniej nie wyczerpie się limit roczny.
      */
     val otLimitEff: Int get() = minOf(otLimitOkresu, ot + zostaloNadgodzinRok)
-
-    /** Czy to zakład, a nie art. 131, zawęża limit okresu. */
-    val blokujeZakladowy: Boolean get() = otLimitZakl != null && otLimitZakl < otLimit
 
     /** Czy to limit roczny wyznacza granicę w tym okresie. */
     val blokujeRoczny: Boolean get() = otLimitEff < otLimitOkresu

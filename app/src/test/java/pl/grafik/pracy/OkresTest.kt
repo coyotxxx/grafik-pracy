@@ -112,25 +112,29 @@ class OkresTest {
         assertNull(Settlement.otLimitCompany(okresy[0], zero))
     }
 
-    @Test fun limit_zakladu_zaweza_sufit_techniczny() {
-        val st = PeriodStats(ot = 10, otLimit = 104, otLimitZakl = 60, otRok = 10)
-        assertEquals(60, st.otLimitOkresu)
-        assertEquals(60, st.otLimitEff)
-        assertEquals(50, st.zostaloNadgodzin)
-        assertTrue(st.blokujeZakladowy)
-        assertFalse(st.blokujeRoczny)
-    }
+    @Test fun limit_zakladu_zastepuje_ustawowy() {
+        // Zakład Macieja zwykle obniża ustawowy o kilka godzin.
+        val nizszy = PeriodStats(ot = 10, otLimit = 104, otLimitZakl = 94, otRok = 10)
+        assertEquals(94, nizszy.otLimitOkresu)
+        assertEquals(94, nizszy.otLimitEff)
+        assertEquals(84, nizszy.zostaloNadgodzin)
+        assertTrue(nizszy.zakladowyObowiazuje)
+        assertFalse(nizszy.blokujeRoczny)
 
-    @Test fun limit_zakladu_wyzszy_od_technicznego_niczego_nie_podnosi() {
-        val st = PeriodStats(ot = 0, otLimit = 96, otLimitZakl = 120, otRok = 0)
-        assertEquals(96, st.otLimitOkresu)
-        assertFalse(st.blokujeZakladowy)
+        // Zastępuje, a nie ogranicza — wpisana liczba obowiązuje także wtedy, gdy jest wyższa.
+        val wyzszy = PeriodStats(ot = 0, otLimit = 96, otLimitZakl = 120, otRok = 0)
+        assertEquals(120, wyzszy.otLimitOkresu)
+
+        // Bez wpisu zostaje ustawowy.
+        val bezWpisu = PeriodStats(ot = 0, otLimit = 96, otLimitZakl = null, otRok = 0)
+        assertEquals(96, bezWpisu.otLimitOkresu)
+        assertFalse(bezWpisu.zakladowyObowiazuje)
     }
 
     @Test fun limit_roczny_zamyka_okres_wczesniej_niz_zakladowy() {
         // 145 h nadgodzin w roku przy ustawowych 150 — w okresie zostaje 5 h,
         // choć zakład dopuszcza 60, a technicznie wolno 104.
-        val st = PeriodStats(ot = 10, otLimit = 104, otLimitZakl = 60, otRok = 145)
+        val st = PeriodStats(ot = 10, otLimit = 104, otLimitZakl = 94, otRok = 145)
         assertEquals(5, st.zostaloNadgodzinRok)
         assertEquals(15, st.otLimitEff)
         assertTrue(st.blokujeRoczny)
