@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Automatyczne wykrywanie pracy. Lokalizacja NIE opuszcza telefonu. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-feature android:name="android.hardware.location" android:required="false" />
+
+    <application
+        android:allowBackup="true"
+        android:label="Grafik Pracy"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.GrafikPracy">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="Grafik Pracy"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/Theme.GrafikPracy">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <receiver
+            android:name=".location.GeofenceReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="pl.grafik.pracy.GEOFENCE" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".location.PresenceActionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="pl.grafik.pracy.ACCEPT" />
+                <action android:name="pl.grafik.pracy.REJECT" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".location.BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+    </application>
+</manifest>

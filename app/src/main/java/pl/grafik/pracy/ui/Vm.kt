@@ -1,0 +1,133 @@
+package pl.grafik.pracy.ui
+
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import pl.grafik.pracy.data.*
+import pl.grafik.pracy.domain.*
+import java.time.LocalDate
+import java.time.YearMonth
+
+enum class Tool { I, II, III, W5, WS, DWN, BWN, URLOP, L4, OT, DEV, ERASE }
+
+data class UiState(
+    val ym: YearMonth = YearMonth.now(),
+    val entries: Map<LocalDate, DayEntry> = emptyMap(),
+    val cfg: CycleConfig = CycleConfig(),
+    val colors: Map<String, String> = Palette0.defaults,
+    val tool: Tool = Tool.OT,
+    val otHours: Int = 8,
+    val otRate: OtRate = OtRate.P100,
+    val stats: MonthStats = MonthStats()
+)
+
+private object Palette0 { val defaults = pl.grafik.pracy.ui.theme.Palette.defaults }
+
+class Vm(app: Application) : AndroidViewModel(app) {
+
+    private val dao = AppDb.get(app).dayDao()
+    private val settings = SettingsStore(app)
+
+    private val _ym = MutableStateFlow(YearMonth.now())
+    private val _tool = MutableStateFlow(Tool.OT)
+    private val _otH = MutableStateFlow(8)
+    private val _otR = MutableStateFlow(OtRate.P100)
+    private val undoStack = ArrayDeque<Pair<LocalDate, DayEntry?>>()
+
+    val state: StateFlow<UiState> = combine(
+        _ym, _tool, _otH, _otR, settings.config, settings.colors,
+        _ym.flatMapLatest { ym ->
+            dao.observeRange(ym.atDay(1).toString(), ym.atEndOfMonth().toString())
+        }
+    ) { arr ->
+        @Suppress("UNCHECKED_CAST")
+        val ym = arr[0] as YearMonth
+        val tool = arr[1] as Tool
+        val otH = arr[2] as Int
+        val otR = arr[3] as OtRate
+        val cfg = arr[4] as CycleConfig
+        val cols = (arr[5] as Map<String, String>).ifEmpty { pl.grafik.pracy.ui.theme.Palette.defaults }
+        val rows = arr[6] as List<DayRow>
+
+        val saved = rows.associate { LocalDate.parse(it.date) to it.toEntry() }
+        val gen = CycleGenerator.month(cfg, ym.year, ym.monthValue)
+        val merged = LinkedHashMap<LocalDate, DayEntry>()
+        gen.forEach { (d, s) -> merged[d] = saved[d] ?: DayEntry(date = d, shift = s) }
+        saved.forEach { (d, e) -> if (merged.containsKey(d)) merged[d] = e }
+
+        UiState(ym, merged, cfg, cols, tool, otH, otR, calc(merged, ym))
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState())
+
+    private fun calc(m: Map<LocalDate, DayEntry>, ym: YearMonth): MonthStats {
+        var worked = 0; var ot100 = 0; var ot50 = 0
+        var dw = 0; var df = 0; var sun = 0; var hol = 0; var sat = 0
+        val by = mutableMapOf<Shift, Int>()
+        m.values.forEach { e ->
+            worked += e.workedHours
+            if (e.otRate == OtRate.P100) ot100 += e.otHours else ot50 += e.otHours
+            if (e.shift?.isWork == true) {
+                dw++
+                by[e.shift] = (by[e.shift] ?: 0) + 8
+                when (Holidays.kindOf(e.date)) {
+                    DayKind.NIEDZIELA -> sun++
+                    DayKind.SWIETO -> hol++
+                    DayKind.SOBOTA -> sat++
+                    else -> {}
+                }
+            } else df++
+        }
+        return MonthStats(worked, Holidays.monthlyNorm(ym.year, ym.monthValue),
+            ot100, ot50, dw, df, sun, hol, sat, by)
+    }
+
+    fun setMonth(ym: YearMonth) { _ym.value = ym }
+    fun prevMonth() { _ym.value = _ym.value.minusMonths(1) }
+    fun nextMonth() { _ym.value = _ym.value.plusMonths(1) }
+    fun pick(t: Tool) { _tool.value = t }
+    fun otPlus() { _tool.value = Tool.OT; _otH.value = (_otH.value + 2).coerceAtMost(12) }
+    fun otMinus() { _tool.value = Tool.OT; _otH.value = (_otH.value - 2).coerceAtLeast(2) }
+    fun toggleRate() { _tool.value = Tool.OT; _otR.value = if (_otR.value == OtRate.P100) OtRate.P50 else OtRate.P100 }
+
+    /** Jedno dotknięcie dnia — malowanie wybranym narzędziem. */
+    fun tap(d: LocalDate) = viewModelScope.launch {
+        val cur = state.value.entries[d] ?: DayEntry(date = d)
+        undoStack.addLast(d to dao.get(d.toString())?.toEntry())
+        if (undoStack.size > 60) undoStack.removeFirst()
+
+        val next = when (_tool.value) {
+            Tool.ERASE -> DayEntry(date = d, shift = null)
+            Tool.OT -> {
+                val same = cur.otHours == _otH.value && cur.otRate == _otR.value
+                cur.copy(otHours = if (same) 0 else _otH.value, otRate = _otR.value)
+            }
+            Tool.DEV -> cur.copy(deviation = !cur.deviation)
+            Tool.I -> cur.copy(shift = Shift.I)
+            Tool.II -> cur.copy(shift = Shift.II)
+            Tool.III -> cur.copy(shift = Shift.III)
+            Tool.W5 -> cur.copy(shift = Shift.W5)
+            Tool.WS -> cur.copy(shift = Shift.WS)
+            Tool.DWN -> cur.copy(shift = Shift.DWN)
+            Tool.BWN -> cur.copy(shift = Shift.BWN)
+            Tool.URLOP -> cur.copy(shift = Shift.URLOP)
+            Tool.L4 -> cur.copy(shift = Shift.L4)
+        }
+        dao.upsert(DayRow.from(next))
+    }
+
+    fun undo() = viewModelScope.launch {
+        val last = undoStack.removeLastOrNull() ?: return@launch
+        val (d, prev) = last
+        if (prev == null) dao.delete(d.toString()) else dao.upsert(DayRow.from(prev))
+    }
+
+    /** Przywraca cały miesiąc do grafiku wyliczonego z cyklu. */
+    fun resetMonth() = viewModelScope.launch {
+        val ym = _ym.value
+        dao.clearRange(ym.atDay(1).toString(), ym.atEndOfMonth().toString())
+    }
+
+    fun saveConfig(c: CycleConfig) = viewModelScope.launch { settings.saveConfig(c) }
+    fun saveColors(m: Map<String, String>) = viewModelScope.launch { settings.saveColors(m) }
+}
