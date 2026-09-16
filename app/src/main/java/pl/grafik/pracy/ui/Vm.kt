@@ -28,7 +28,9 @@ data class UiState(
     val otRate: OtRate = OtRate.P100,
     val stats: MonthStats = MonthStats(),
     val remindOn: Boolean = true,
-    val remindHour: Int = 18
+    val remindHour: Int = 18,
+    /** Czy dotknięcie dnia zmienia grafik. Domyślnie NIE — żeby nie malować przez przypadek. */
+    val painting: Boolean = false
 )
 
 private object Palette0 { val defaults = pl.grafik.pracy.ui.theme.Palette.defaults }
@@ -43,6 +45,7 @@ class Vm(app: Application) : AndroidViewModel(app) {
     private val _tool = MutableStateFlow(Tool.OT)
     private val _otH = MutableStateFlow(8)
     private val _otR = MutableStateFlow(OtRate.P100)
+    private val _maluj = MutableStateFlow(false)
     private val undoStack = ArrayDeque<Pair<LocalDate, DayEntry?>>()
 
     init {
@@ -71,7 +74,8 @@ class Vm(app: Application) : AndroidViewModel(app) {
             val (a, b) = gridRange(ym)
             events.observeRange(a.toString(), b.toString())
         },
-        settings.reminders
+        settings.reminders,
+        _maluj
     ) { arr ->
         @Suppress("UNCHECKED_CAST")
         val ym = arr[0] as YearMonth
@@ -84,6 +88,7 @@ class Vm(app: Application) : AndroidViewModel(app) {
         val evRows = arr[7] as List<EventRow>
         @Suppress("UNCHECKED_CAST")
         val rem = arr[8] as Pair<Boolean, Int>
+        val maluj = arr[9] as Boolean
 
         val (gStart, gEnd) = gridRange(ym)
         val saved = rows.associate { LocalDate.parse(it.date) to it.toEntry() }
@@ -97,7 +102,7 @@ class Vm(app: Application) : AndroidViewModel(app) {
         // Statystyki liczymy TYLKO z bieżącego miesiąca, mimo że siatka pokazuje więcej.
         val wMiesiacu = merged.filterKeys { YearMonth.from(it) == ym }
 
-        UiState(ym, merged, ev, cfg, cols, tool, otH, otR, calc(wMiesiacu, ym), rem.first, rem.second)
+        UiState(ym, merged, ev, cfg, cols, tool, otH, otR, calc(wMiesiacu, ym), rem.first, rem.second, maluj)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState())
 
     private fun calc(m: Map<LocalDate, DayEntry>, ym: YearMonth): MonthStats {
@@ -127,13 +132,23 @@ class Vm(app: Application) : AndroidViewModel(app) {
     fun setMonth(ym: YearMonth) { _ym.value = ym }
     fun prevMonth() { _ym.value = _ym.value.minusMonths(1) }
     fun nextMonth() { _ym.value = _ym.value.plusMonths(1) }
-    fun pick(t: Tool) { _tool.value = t }
+    /** Wybór narzędzia to jasna intencja — od razu odblokowuje malowanie. */
+    fun pick(t: Tool) { _tool.value = t; _maluj.value = true }
+
+    fun setPainting(on: Boolean) { _maluj.value = on }
+
+    /** Wejście na zakładkę Miesiąc: wracamy do dziś i blokujemy malowanie. */
+    fun onEnterCalendar() {
+        _ym.value = YearMonth.now()
+        _maluj.value = false
+    }
     fun otPlus() { _tool.value = Tool.OT; _otH.value = (_otH.value + 2).coerceAtMost(12) }
     fun otMinus() { _tool.value = Tool.OT; _otH.value = (_otH.value - 2).coerceAtLeast(2) }
     fun toggleRate() { _tool.value = Tool.OT; _otR.value = if (_otR.value == OtRate.P100) OtRate.P50 else OtRate.P100 }
 
-    /** Jedno dotknięcie dnia — malowanie wybranym narzędziem. */
+    /** Jedno dotknięcie dnia — malowanie wybranym narzędziem. Nic nie robi przy blokadzie. */
     fun tap(d: LocalDate) = viewModelScope.launch {
+        if (!_maluj.value) return@launch
         val cur = state.value.entries[d] ?: DayEntry(date = d)
         undoStack.addLast(d to dao.get(d.toString())?.toEntry())
         if (undoStack.size > 60) undoStack.removeFirst()

@@ -239,9 +239,42 @@ private fun Palette(vm: Vm, s: UiState, otwarta: Boolean, przelacz: () -> Unit) 
             )
             Spacer(Modifier.width(6.dp))
             Column(Modifier.weight(1f)) {
-                Text(toolName(s), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = OnBg, maxLines = 1)
-                if (!otwarta) Text("dotknij, by zmienić", fontSize = 8.sp, color = OnFaint)
+                Text(
+                    toolName(s), fontSize = 11.sp, fontWeight = FontWeight.Bold,
+                    color = if (s.painting) OnBg else OnFaint, maxLines = 1
+                )
+                Text(
+                    if (s.painting) "malujesz — dotykaj dni" else "podgląd — dotknięcia nic nie zmieniają",
+                    fontSize = 8.sp, color = if (s.painting) Accent else OnFaint
+                )
             }
+
+            // Blokada przed przypadkową zmianą grafiku.
+            Row(
+                Modifier.clip(RoundedCornerShape(11.dp))
+                    .background(if (s.painting) Color(0xFF4A3410) else Surface2)
+                    .border(
+                        if (s.painting) 2.dp else 1.dp,
+                        if (s.painting) Accent else Surface3,
+                        RoundedCornerShape(11.dp)
+                    )
+                    .clickable { vm.setPainting(!s.painting) }
+                    .padding(horizontal = 10.dp, vertical = 7.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    if (s.painting) Icons.Default.Edit else Icons.Default.Lock,
+                    if (s.painting) "zablokuj malowanie" else "odblokuj malowanie",
+                    tint = if (s.painting) Accent else OnMuted,
+                    modifier = Modifier.size(14.dp)
+                )
+                Spacer(Modifier.width(5.dp))
+                Text(
+                    "MALUJ", fontSize = 11.sp, fontWeight = FontWeight.Bold,
+                    color = if (s.painting) Accent else OnMuted
+                )
+            }
+            Spacer(Modifier.width(4.dp))
 
             TextButton(onClick = { vm.undo() }, contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)) {
                 Icon(Icons.Default.Undo, null, tint = OnMuted, modifier = Modifier.size(14.dp))
