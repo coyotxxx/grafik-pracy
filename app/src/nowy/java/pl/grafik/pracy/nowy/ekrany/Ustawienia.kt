@@ -278,9 +278,11 @@ private fun WierszAplikacji(u: pl.grafik.pracy.ui.UpdateUi, uvm: UpdateVm) {
         }
 
         u.available?.let { info ->
+            // Notatek wydania nie pokazujemy — są pisane w markdownie, a tu wyszłyby
+            // z gwiazdkami i odwrotnymi apostrofami.
+            val rozmiar = if (info.sizeBytes > 0) " · %.1f MB".format(info.sizeBytes / 1_048_576.0) else ""
             Text(
-                "Paczka ${info.version}${if (info.notes.isNotBlank()) " · " + info.notes.lineSequence().first() else ""}" +
-                    " — dotknij, aby pobrać i zainstalować",
+                "Paczka ${info.version}$rozmiar — dotknij, aby pobrać i zainstalować",
                 fontSize = 11.sp, fontFamily = Jakarta, color = DarkTokens.accent,
                 maxLines = 2, overflow = TextOverflow.Ellipsis
             )

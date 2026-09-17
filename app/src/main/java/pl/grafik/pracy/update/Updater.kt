@@ -86,24 +86,38 @@ object Updater {
      * @return nowsze wydanie albo null
      */
     suspend fun checkChannel(prefix: String, currentBuild: Int): UpdateInfo? = withContext(Dispatchers.IO) {
-        val body = runCatching { get("https://api.github.com/repos/$REPO/releases?per_page=20") }.getOrElse {
+        val body = runCatching { get("https://api.github.com/repos/$REPO/releases?per_page=100") }.getOrElse {
             Log.w(TAG, "nie udało się sprawdzić wydań kanału $prefix: ${it.message}")
             return@withContext null
         } ?: return@withContext null
 
         val lista = runCatching { JSONArray(body) }.getOrNull() ?: return@withContext null
+
+        // GitHub NIE zwraca wydań w kolejności numerów — lista jest ułożona po dacie
+        // commita, na który wskazuje tag, więc wydanie nowego wyglądu potrafi wylądować
+        // w środku listy wydań klasycznej aplikacji. Dlatego szukamy najwyższego numeru,
+        // a nie pierwszego pasującego tagu.
+        var wydanie: JSONObject? = null
+        var numer = -1
         for (i in 0 until lista.length()) {
-            val wydanie = lista.optJSONObject(i) ?: continue
-            val tag = wydanie.optString("tag_name")
-            if (!tag.startsWith(prefix)) continue
+            val kandydat = lista.optJSONObject(i) ?: continue
+            val tagKandydata = kandydat.optString("tag_name")
+            if (!tagKandydata.startsWith(prefix)) continue
+            val n = numerPaczki(tagKandydata, prefix) ?: continue
+            if (n > numer) { numer = n; wydanie = kandydat }
+        }
+        if (wydanie == null) {
+            Log.i(TAG, "kanał $prefix: brak wydań")
+            return@withContext null
+        }
+        val tag = wydanie.optString("tag_name")
+        if (numer <= currentBuild) {
+            Log.i(TAG, "kanał $prefix: wersja aktualna (paczka $currentBuild, najnowsza $numer)")
+            return@withContext null
+        }
 
-            val numer = numerPaczki(tag, prefix) ?: continue
-            if (numer <= currentBuild) {
-                Log.i(TAG, "kanał $prefix: wersja aktualna (paczka $currentBuild, najnowsza $numer)")
-                return@withContext null
-            }
-
-            val assets = wydanie.optJSONArray("assets") ?: continue
+        run {
+            val assets = wydanie.optJSONArray("assets") ?: return@withContext null
             for (j in 0 until assets.length()) {
                 val a = assets.optJSONObject(j) ?: continue
                 if (a.optString("name").endsWith(".apk", ignoreCase = true)) {
@@ -117,10 +131,15 @@ object Updater {
                 }
             }
             Log.w(TAG, "kanał $prefix: wydanie $tag nie ma pliku APK")
-            return@withContext null
+            null
         }
-        null
     }
+
+    /** Tag z najwyższym numerem paczki — kolejność z API nie jest wiarygodna. */
+    fun najnowszyTag(tagi: List<String>, prefix: String): String? =
+        tagi.filter { it.startsWith(prefix) }
+            .mapNotNull { t -> numerPaczki(t, prefix)?.let { it to t } }
+            .maxByOrNull { it.first }?.second
 
     /** `nowy-v45` → 45. Null, gdy tag nie ma numeru. */
     fun numerPaczki(tag: String, prefix: String): Int? =
