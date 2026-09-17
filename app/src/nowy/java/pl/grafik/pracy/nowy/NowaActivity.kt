@@ -5,6 +5,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -73,6 +76,7 @@ class NowaActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        schowajPasekNawigacji()
         // Powiadomienia warunkowe zna tylko nowy wygląd — klasyczna aplikacja ich nie planuje.
         lifecycleScope.launch {
             val cfg = SettingsStore(applicationContext).powiadomienia.first()
@@ -83,6 +87,25 @@ class NowaActivity : ComponentActivity() {
             OdswiezanieWidzetow.zaplanuj(applicationContext)
         }
         setContent { MotywAplikacji { NowaApp(vm, pvm, uvm) } }
+    }
+
+    /**
+     * Chowa dolny pasek nawigacji Androida — decyzja Macieja z 17.09.2026.
+     *
+     * Pasek wraca na chwilę po przeciągnięciu palcem od dołu i sam znika, gdy
+     * przestanie być potrzebny. Pasek stanu (zegar, bateria) zostaje na miejscu.
+     */
+    private fun schowajPasekNawigacji() {
+        val kontroler = WindowCompat.getInsetsController(window, window.decorView)
+        kontroler.systemBarsBehavior =
+            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        kontroler.hide(WindowInsetsCompat.Type.navigationBars())
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        // Po powrocie z innej aplikacji albo z rolety pasek lubi wrócić — chowamy go znowu.
+        if (hasFocus) schowajPasekNawigacji()
     }
 
     override fun onResume() {
