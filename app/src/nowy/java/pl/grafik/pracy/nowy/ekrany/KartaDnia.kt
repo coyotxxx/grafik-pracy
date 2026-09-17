@@ -9,7 +9,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -172,7 +171,7 @@ private fun KartaTypuDnia(s: UiState, dzien: LocalDate, vm: Vm) {
                     Modifier.weight(1f).height(42.dp).clip(RoundedCornerShape(12.dp))
                         .background(if (wybrany) kol.fill else DarkTokens.surfaceInput)
                         .border(1.dp, if (wybrany) kol.line else DarkTokens.lineInput, RoundedCornerShape(12.dp))
-                        .clickable { vm.pick(narzedzie); vm.tap(dzien) },
+                        .clickable { vm.setShift(dzien, shiftZNarzedzia(narzedzie)) },
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -189,8 +188,6 @@ private fun KartaTypuDnia(s: UiState, dzien: LocalDate, vm: Vm) {
 
 @Composable
 private fun WierszNadgodzin(s: UiState, dzien: LocalDate, vm: Vm) {
-    val ctx = androidx.compose.ui.platform.LocalContext.current
-    val zakres = rememberCoroutineScope()
     val e = s.entries[dzien]
     val ile = e?.otHours ?: 0
     val stawka = e?.otRate ?: OtRate.P100
@@ -212,7 +209,7 @@ private fun WierszNadgodzin(s: UiState, dzien: LocalDate, vm: Vm) {
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
             PrzyciskKwadrat(IkonaMinus, "Mniej nadgodzin") {
-                zakres.launch { AkcjeDnia.nadgodziny(ctx, dzien, ile - 1, stawka) }
+                vm.setOvertime(dzien, ile - 1, stawka)
             }
             Text(
                 "$ile",
@@ -224,7 +221,7 @@ private fun WierszNadgodzin(s: UiState, dzien: LocalDate, vm: Vm) {
                 color = DarkTokens.ink, textAlign = TextAlign.Center
             )
             PrzyciskKwadrat(IkonaPlus, "Więcej nadgodzin") {
-                zakres.launch { AkcjeDnia.nadgodziny(ctx, dzien, ile + 1, stawka) }
+                vm.setOvertime(dzien, ile + 1, stawka)
             }
             val setka = stawka == OtRate.P100
             Box(
@@ -232,9 +229,7 @@ private fun WierszNadgodzin(s: UiState, dzien: LocalDate, vm: Vm) {
                     .background(if (setka) ShiftPaletteDark.I.fill else DarkTokens.surfaceInput)
                     .border(1.dp, if (setka) ShiftPaletteDark.I.line else DarkTokens.lineInput, RoundedCornerShape(12.dp))
                     .clickable {
-                        zakres.launch {
-                            AkcjeDnia.nadgodziny(ctx, dzien, ile, if (setka) OtRate.P50 else OtRate.P100)
-                        }
+                        vm.setOvertime(dzien, ile, if (setka) OtRate.P50 else OtRate.P100)
                     }
                     .padding(horizontal = 8.dp),
                 contentAlignment = Alignment.Center

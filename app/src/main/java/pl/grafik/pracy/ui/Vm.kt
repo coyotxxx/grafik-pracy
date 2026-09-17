@@ -406,6 +406,34 @@ class Vm(app: Application) : AndroidViewModel(app) {
         dao.upsert(DayRow.from(next))
     }
 
+    /**
+     * Ustawia zmianę wprost na wskazanym dniu — bez wybierania narzędzia i malowania.
+     * Tego potrzebuje karta dnia w nowym wyglądzie: segmenty I/II/III/Urlop/Wolne
+     * działają na jeden dotyk, a nie „wybierz pędzel, potem maluj".
+     */
+    fun setShift(d: LocalDate, shift: Shift?) = viewModelScope.launch {
+        val cur = state.value.entries[d] ?: DayEntry(date = d)
+        zapamietajDoCofniecia(d)
+        dao.upsert(DayRow.from(cur.copy(shift = shift)))
+    }
+
+    /**
+     * Ustawia dokładną liczbę nadgodzin i stawkę na dniu.
+     * Stepper narzędzia chodzi co 2 h w zakresie 2–12, a karta dnia potrzebuje
+     * kroku 1 od zera — stąd osobna funkcja zamiast obchodzenia tamtej.
+     */
+    fun setOvertime(d: LocalDate, godziny: Int, stawka: OtRate) = viewModelScope.launch {
+        val cur = state.value.entries[d] ?: DayEntry(date = d)
+        zapamietajDoCofniecia(d)
+        dao.upsert(DayRow.from(cur.copy(otHours = godziny.coerceIn(0, 12), otRate = stawka)))
+    }
+
+    /** Wspólny zapis stanu sprzed zmiany — żeby „Cofnij" działało tak samo dla każdej drogi. */
+    private suspend fun zapamietajDoCofniecia(d: LocalDate) {
+        undoStack.addLast(d to dao.get(d.toString())?.toEntry())
+        if (undoStack.size > 60) undoStack.removeFirst()
+    }
+
     fun undo() = viewModelScope.launch {
         val last = undoStack.removeLastOrNull() ?: return@launch
         val (d, prev) = last

@@ -14,10 +14,20 @@ Na gałęzi `nowy-wyglad` są **dwa warianty aplikacji**:
 
 Budowanie: `./gradlew assembleNowyDebug` albo `assembleKlasycznyDebug`.
 
-**Nie ruszaj `app/src/main/` przy pracy nad nowym wyglądem.** Nowe ekrany piszesz
-w `app/src/nowy/`. Modele widoku (`Vm`, `PresenceVm`, `UpdateVm`), domena, baza
-i wykrywanie pracy są wspólne i zostają bez zmian — nowy wygląd pokazuje ten sam stan
-inaczej, nie liczy go inaczej.
+**Nowe ekrany piszesz w `app/src/nowy/`.** Modele widoku (`Vm`, `PresenceVm`, `UpdateVm`),
+domena, baza i wykrywanie pracy są wspólne — nowy wygląd pokazuje ten sam stan inaczej,
+nie liczy go inaczej.
+
+Do wspólnego kodu w `app/src/main/` **wolno dodawać nowe funkcje**, gdy nowy wygląd
+potrzebuje czegoś, czego dotąd nie było (zgoda Macieja z 17.09.2026). Obowiązują dwa warunki:
+
+1. **Dodawaj, nie zmieniaj.** Istniejące zachowanie klasycznej aplikacji ma zostać
+   dokładnie takie samo. Nie przerabiaj istniejących funkcji „przy okazji".
+2. **Po każdej takiej zmianie uruchom pełne testy** — jednostkowe i instrumentacyjne
+   na wariancie klasycznym. Klasyczna aplikacja jest w codziennym użyciu.
+
+Obejście przez zapis wprost do bazy z `src/nowy` jest gorsze niż dodanie funkcji do `Vm`:
+omija historię cofania i dubluje logikę.
 
 ---
 
