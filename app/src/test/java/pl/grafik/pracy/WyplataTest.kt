@@ -42,6 +42,49 @@ class WyplataTest {
     }
 
     @Test
+    fun setki_czekaja_do_konca_kwartalu_a_polowki_ida_od_razu() {
+        // przykład Macieja: styczeń 8 h po 100 %, luty 16 h, marzec 0 —
+        // wszystkie 24 h wchodzą do wypłaty za marzec, czyli za ostatni miesiąc kwartału
+        val marzec = (1..20).map { dzien(it, Shift.I, miesiac = 3) }
+
+        val wStyczniu = KalkulatorWyplaty.policz(
+            marzec, stawki, YearMonth.of(2026, 1), ot100Okresu = 8, ostatniMiesiacOkresu = false
+        )
+        assertEquals(0, wStyczniu.nadgodziny100.godziny)
+        assertEquals(8, wStyczniu.nadgodziny100Czekaja.godziny)
+
+        val wMarcu = KalkulatorWyplaty.policz(
+            marzec, stawki, YearMonth.of(2026, 3), ot100Okresu = 24, ostatniMiesiacOkresu = true
+        )
+        assertEquals(24, wMarcu.nadgodziny100.godziny)
+        assertEquals(0, wMarcu.nadgodziny100Czekaja.godziny)
+        // 24 h × stawka × 2 dochodzi do wypłaty marcowej
+        assertEquals(
+            wMarcu.zasadnicza.kwota + 24 * wMarcu.stawkaGodzinowa * 2,
+            wMarcu.razem, 0.01
+        )
+    }
+
+    @Test
+    fun polowki_wchodza_do_wyplaty_za_swoj_miesiac() {
+        val dni = (1..20).map { dzien(it, Shift.I) } +
+            listOf(dzien(21, Shift.I, ot = 6, rate = OtRate.P50))
+        val w = KalkulatorWyplaty.policz(dni, stawki, YearMonth.of(2026, 8))
+        assertEquals(6, w.nadgodziny50.godziny)
+        assertTrue(w.nadgodziny50.kwota > 0.0)
+    }
+
+    @Test
+    fun godziny_sto_procent_licza_sie_z_dni_okresu() {
+        val dni = listOf(
+            dzien(1, Shift.W5, ot = 8, rate = OtRate.P100),
+            dzien(2, Shift.I, ot = 4, rate = OtRate.P50),
+            dzien(3, Shift.WS, ot = 8, rate = OtRate.P100)
+        )
+        assertEquals(16, KalkulatorWyplaty.godziny100(dni))
+    }
+
+    @Test
     fun sierpien_2026_zgadza_sie_z_odcinkiem() {
         // z odcinka: 56 h nocek, nadgodziny 12 h po 50 % i 8 h po 100 %
         // 15 dni pracy i 5 dni urlopu = 160 h planu, tyle co na odcinku
@@ -52,7 +95,9 @@ class WyplataTest {
             repeat(6) { add(dzien(12 + it, Shift.II)) }
             repeat(5) { add(dzien(20 + it, Shift.URLOP)) }
         }
-        val w = KalkulatorWyplaty.policz(dni, stawki, YearMonth.of(2026, 8))
+        val w = KalkulatorWyplaty.policz(
+            dni, stawki, YearMonth.of(2026, 8), ot100Okresu = 8, ostatniMiesiacOkresu = true
+        )
 
         assertEquals(160, w.normaMiesiaca)
         assertEquals(7950.0, w.zasadnicza.kwota, 0.01)
@@ -84,9 +129,12 @@ class WyplataTest {
     }
 
     @Test
-    fun bez_zaplanowanych_dni_nie_ma_stawki() {
+    fun bez_wpisanego_grafiku_dzielimy_przez_wymiar_ustawowy() {
+        // pusty miesiąc: stawka liczona z wymiaru z art. 130 KP, nie zerowa —
+        // inaczej nadgodziny wychodziłyby za darmo
         val w = KalkulatorWyplaty.policz(emptyList(), stawki, YearMonth.of(2026, 8))
-        assertEquals(0.0, w.stawkaGodzinowa, 0.01)
+        assertEquals(160, w.normaMiesiaca)                  // sierpień 2026
+        assertEquals(49.69, w.stawkaGodzinowa, 0.01)
     }
 
     @Test
@@ -101,9 +149,11 @@ class WyplataTest {
     fun nadgodziny_sto_procent_sa_dwa_razy_drozsze_niz_normalna_godzina() {
         val dni = (1..20).map { dzien(it, Shift.I) } +
             listOf(dzien(21, Shift.I, ot = 4, rate = OtRate.P100))
-        val w = KalkulatorWyplaty.policz(dni, stawki, YearMonth.of(2026, 8))
+        val w = KalkulatorWyplaty.policz(
+            dni, stawki, YearMonth.of(2026, 8), ot100Okresu = 4, ostatniMiesiacOkresu = true
+        )
         assertEquals(4, w.nadgodziny100.godziny)
-        // 21 dni planu = 168 h, stawka 47,32
+        // 21 dni planu = 168 h
         assertEquals(4 * (7950.0 / 168) * 2, w.nadgodziny100.kwota, 0.01)
     }
 

@@ -11,7 +11,10 @@ import java.time.YearMonth
  *   zaplanowany w grafiku** na ten miesiąc. W ruchu ciągłym plan bywa inny niż wymiar
  *   ustawowy: sierpień 2026 ma 160 h planu, lipiec 184 h, a stawki z odcinków
  *   (49,69 i 43,21 zł) wychodzą właśnie z tych liczb, nie z wymiaru z art. 130 KP;
- * - nadgodziny płatne są jak 1,5 albo 2 stawki godzinowej z zasadniczej;
+ * - nadgodziny płatne są jak 1,5 albo 2 stawki godzinowej z zasadniczej, ale w różnych
+ *   terminach: **50 % wpływa z wypłatą za ten sam miesiąc, a 100 % zbiorczo za cały
+ *   okres rozliczeniowy, w wypłacie za jego ostatni miesiąc**. Potwierdzone odcinkami:
+ *   pozycja „2545 NadlSred" pojawia się wyłącznie w grudniu, marcu i czerwcu;
  * - dodatek za III zmianę to **stała kwota za godzinę** z regulaminu, nie procent z Kodeksu.
  *
  * Świadomie NIE liczymy: premii uznaniowej, dodatku urlopowego ze średniej i nadgodzin
@@ -43,13 +46,20 @@ data class SkladnikWyplaty(
 data class Wyplata(
     val zasadnicza: SkladnikWyplaty,
     val nadgodziny50: SkladnikWyplaty,
+    /** Setki z całego okresu — wchodzą tylko w wypłacie za ostatni miesiąc okresu. */
     val nadgodziny100: SkladnikWyplaty,
     val nocny: SkladnikWyplaty,
+    /**
+     * Setki uzbierane do tej pory w okresie, które czekają na rozliczenie.
+     * W ostatnim miesiącu okresu jest tu zero, bo wtedy wchodzą do wypłaty.
+     */
+    val nadgodziny100Czekaja: SkladnikWyplaty,
     /** Stawka za godzinę wyliczona z zasadniczej i planu — pokazujemy ją wprost. */
     val stawkaGodzinowa: Double,
     /** Czas zaplanowany w miesiącu, czyli dzielnik stawki. */
     val normaMiesiaca: Int
 ) {
+    /** To, co wchodzi do tej wypłaty. Godziny czekające na koniec okresu są osobno. */
     val skladniki: List<SkladnikWyplaty>
         get() = listOf(zasadnicza, nadgodziny50, nadgodziny100, nocny).filter { it.kwota > 0.0 }
 
@@ -86,20 +96,34 @@ object KalkulatorWyplaty {
      * Zasadnicza wchodzi w całości — urlop jest płatny i już się w niej mieści,
      * dlatego nie liczymy go osobno.
      */
-    fun policz(dni: Collection<DayEntry>, cfg: StawkiCfg, ym: YearMonth): Wyplata {
-        val planowane = godzinyPlanowane(dni)
+    /**
+     * @param dni dni wyświetlanego miesiąca
+     * @param ot100Okresu godziny po 100 % uzbierane w całym okresie rozliczeniowym
+     * @param ostatniMiesiacOkresu czy ten miesiąc zamyka okres — wtedy setki są wypłacane
+     */
+    fun policz(
+        dni: Collection<DayEntry>,
+        cfg: StawkiCfg,
+        ym: YearMonth,
+        ot100Okresu: Int = 0,
+        ostatniMiesiacOkresu: Boolean = false
+    ): Wyplata {
+        // Gdy miesiąc nie ma jeszcze wpisanego grafiku, bierzemy wymiar ustawowy —
+        // inaczej stawka wychodziłaby zerowa i nadgodziny nic by nie kosztowały.
+        val zGrafiku = godzinyPlanowane(dni)
+        val planowane = if (zGrafiku > 0) zGrafiku else Settlement.statutoryNorm(ym)
         val stawka = stawkaGodzinowa(cfg.zasadnicza, planowane)
 
         var hNoc = 0
         var hOt50 = 0
-        var hOt100 = 0
 
         dni.forEach { e ->
             if (e.shift?.isWork == true) hNoc += godzinyNocne(e.shift)
-            if (e.otHours > 0) {
-                if (e.otRate == OtRate.P50) hOt50 += e.otHours else hOt100 += e.otHours
-            }
+            if (e.otHours > 0 && e.otRate == OtRate.P50) hOt50 += e.otHours
         }
+
+        val hWyplacane = if (ostatniMiesiacOkresu) ot100Okresu else 0
+        val hCzekajace = if (ostatniMiesiacOkresu) 0 else ot100Okresu
 
         return Wyplata(
             zasadnicza = SkladnikWyplaty("Zasadnicza", planowane, stawka, cfg.zasadnicza),
@@ -107,15 +131,24 @@ object KalkulatorWyplaty {
                 "Nadgodziny 50 %", hOt50, stawka * MNOZNIK_50, hOt50 * stawka * MNOZNIK_50
             ),
             nadgodziny100 = SkladnikWyplaty(
-                "Nadgodziny 100 %", hOt100, stawka * MNOZNIK_100, hOt100 * stawka * MNOZNIK_100
+                "Nadgodziny 100 % za okres", hWyplacane, stawka * MNOZNIK_100,
+                hWyplacane * stawka * MNOZNIK_100
             ),
             nocny = SkladnikWyplaty(
                 "Dodatek za nocki", hNoc, cfg.dodatekNocny, hNoc * cfg.dodatekNocny
+            ),
+            nadgodziny100Czekaja = SkladnikWyplaty(
+                "Nadgodziny 100 % — czekają na koniec okresu", hCzekajace, stawka * MNOZNIK_100,
+                hCzekajace * stawka * MNOZNIK_100
             ),
             stawkaGodzinowa = stawka,
             normaMiesiaca = planowane
         )
     }
+
+    /** Godziny po 100 % w podanych dniach — do zsumowania z całego okresu. */
+    fun godziny100(dni: Collection<DayEntry>): Int =
+        dni.filter { it.otHours > 0 && it.otRate == OtRate.P100 }.sumOf { it.otHours }
 
     /** „5 667,00" — kwota po polsku, ze spacją co trzy cyfry i przecinkiem. */
     fun zlote(kwota: Double): String {

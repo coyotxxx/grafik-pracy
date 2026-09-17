@@ -50,9 +50,10 @@ private val PL_PAY = Locale.forLanguageTag("pl-PL")
 fun EkranWyplata(vm: Vm, naPowrot: () -> Unit) {
     val s by vm.state.collectAsState()
     val cfg = s.stawki
-    val wyplata = remember(s.entries, s.ym, cfg) {
+    val wyplata = remember(s.entries, s.ym, cfg, s.ot100Okresu, s.ostatniMiesiacOkresu) {
         KalkulatorWyplaty.policz(
-            s.entries.filterKeys { YearMonth.from(it) == s.ym }.values, cfg, s.ym
+            s.entries.filterKeys { YearMonth.from(it) == s.ym }.values, cfg, s.ym,
+            s.ot100Okresu, s.ostatniMiesiacOkresu
         )
     }
 
@@ -72,6 +73,7 @@ fun EkranWyplata(vm: Vm, naPowrot: () -> Unit) {
             Naglowek(s)
             KartaKwoty(wyplata, cfg)
             if (cfg.ustawiona) KartaSkladnikow(wyplata)
+            if (cfg.ustawiona) KartaCzekajacych(wyplata, s)
             KartaStawek(wyplata, cfg) { vm.saveStawki(it) }
             KartaOdcinkow(s.ym)
             KartaCzegoNieLiczymy()
@@ -314,6 +316,59 @@ private fun KartaStawek(w: Wyplata, cfg: StawkiCfg, zapisz: (StawkiCfg) -> Unit)
         }
     }
 }
+
+/**
+ * Nadgodziny po 100 % czekające na zamknięcie okresu. Zakład wypłaca je zbiorczo
+ * w wypłacie za ostatni miesiąc kwartału, więc w pozostałych miesiącach pokazujemy
+ * je osobno — żeby nie wyglądało, że przepadły.
+ */
+@Composable
+private fun KartaCzekajacych(w: Wyplata, s: UiState) {
+    val czekaja = w.nadgodziny100Czekaja
+    if (czekaja.godziny <= 0) return
+    val p by postepWejscia(Motion.RISE_MS, 110)
+    val okres = s.okresy.firstOrNull { it.biezacy }
+
+    Row(
+        Modifier.wejscie(p).fillMaxWidth()
+            .clip(RoundedCornerShape(Dim.rCard))
+            .background(Color(0x127ABDFF))
+            .border(1.dp, Color(0x387ABDFF), RoundedCornerShape(Dim.rCard))
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        Box(
+            Modifier.size(42.dp).clip(RoundedCornerShape(14.dp))
+                .background(Color(0x297ABDFF)),
+            contentAlignment = Alignment.Center
+        ) { Icon(IkonaCzasPracy, null, Modifier.size(20.dp), tint = ShiftPaletteDark.III.ink) }
+
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Czeka na koniec okresu", fontSize = 14.sp, fontWeight = FontWeight.Bold,
+                    fontFamily = Jakarta, color = DarkTokens.ink,
+                    modifier = Modifier.weight(1f).alignByBaseline())
+                Text(
+                    "${KalkulatorWyplaty.zlote(czekaja.kwota)} zł",
+                    style = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Bold,
+                        fontFamily = Jakarta, fontFeatureSettings = TNUM),
+                    color = ShiftPaletteDark.III.ink, modifier = Modifier.alignByBaseline()
+                )
+            }
+            Text(
+                "${czekaja.godziny} h po 100 % za dni wolne, w które przyszedłeś do pracy. " +
+                    "Zakład wypłaca je zbiorczo" +
+                    (okres?.let { " w wypłacie za ${ostatniMiesiacOkresu(it)}" } ?: "") + ".",
+                fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta,
+                color = DarkTokens.ink3
+            )
+        }
+    }
+}
+
+/** „wrzesień", nie „września" — po przyimku „za" idzie biernik. */
+private fun ostatniMiesiacOkresu(o: pl.grafik.pracy.domain.PeriodStats): String =
+    o.period.to.month.getDisplayName(JavaTextStyle.FULL_STANDALONE, PL_PAY).lowercase(PL_PAY)
 
 /**
  * Archiwum odcinków. Plik kopiujemy do pamięci aplikacji — zostaje nawet wtedy, gdy

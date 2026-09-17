@@ -275,7 +275,8 @@ private fun KartaWyplaty(s: UiState, naWyplate: () -> Unit) {
     val zolty = ShiftPaletteDark.I.ink
     val w = remember(s.entries, s.ym, s.stawki) {
         pl.grafik.pracy.domain.KalkulatorWyplaty.policz(
-            s.entries.filterKeys { java.time.YearMonth.from(it) == s.ym }.values, s.stawki, s.ym
+            s.entries.filterKeys { java.time.YearMonth.from(it) == s.ym }.values, s.stawki, s.ym,
+            s.ot100Okresu, s.ostatniMiesiacOkresu
         )
     }
 

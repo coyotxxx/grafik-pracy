@@ -77,7 +77,14 @@ data class UiState(
     /** Ustawienia powiadomień. */
     val powiadomienia: PowiadomieniaCfg = PowiadomieniaCfg(),
     /** Stawki do szacunku wypłaty. */
-    val stawki: StawkiCfg = StawkiCfg()
+    val stawki: StawkiCfg = StawkiCfg(),
+    /**
+     * Godziny po 100 % uzbierane w bieżącym okresie rozliczeniowym. Zakład wypłaca je
+     * zbiorczo w wypłacie za ostatni miesiąc okresu, więc szacunek musi je znać.
+     */
+    val ot100Okresu: Int = 0,
+    /** Czy wyświetlany miesiąc zamyka okres rozliczeniowy. */
+    val ostatniMiesiacOkresu: Boolean = false
 ) {
     /**
      * Bilans urlopu w roku wyświetlanego miesiąca.
@@ -224,8 +231,25 @@ class Vm(app: Application) : AndroidViewModel(app) {
             Settlement.yearLimit(ym.year, okres),
             Odpoczynek.kolizjeDobowe(merged),
             Odpoczynek.tygodnie(merged, ym.atDay(1), ym.atEndOfMonth()),
-            rest.first, rest.second, notif, stawki)
+            rest.first, rest.second, notif, stawki,
+            ot100wOkresie(rokRows, ym, okres), Settlement.periodOf(ym, okres).to == ym)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState())
+
+    /**
+     * Godziny po 100 % w całym okresie rozliczeniowym, do którego należy wyświetlany
+     * miesiąc — z samych wpisów, bo cykl nie generuje nadgodzin.
+     */
+    private fun ot100wOkresie(
+        rokRows: List<DayRow>,
+        ym: YearMonth,
+        cfg: SettlementCfg
+    ): Int {
+        val okres = Settlement.periodOf(ym, cfg)
+        return rokRows
+            .map { it.toEntry() }
+            .filter { YearMonth.from(it.date) in okres.months }
+            .let { KalkulatorWyplaty.godziny100(it) }
+    }
 
     private fun calc(m: Map<LocalDate, DayEntry>, ym: YearMonth): MonthStats {
         var worked = 0; var ot100 = 0; var ot50 = 0
