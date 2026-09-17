@@ -99,7 +99,8 @@ fun EkranUstawienia(vm: Vm, pvm: PresenceVm, uvm: UpdateVm, naPodstrone: (Podstr
             Grupa("APLIKACJA", 240) {
                 Wiersz(
                     IkonaPaleta, DarkTokens.ink2, "Wygląd i kolory",
-                    "ciemny · zestaw „${s.motyw.label}”", gotowe = false,
+                    "ciemny · zestaw „${s.motyw.label}”", gotowe = true,
+                    akcja = { naPodstrone(Podstrona.WYGLAD) },
                     probki = listOf(ShiftPaletteDark.I.ink, ShiftPaletteDark.II.ink, ShiftPaletteDark.III.ink)
                 )
                 Wiersz(
