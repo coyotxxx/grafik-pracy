@@ -1,0 +1,206 @@
+{
+  "v": 3,
+  "attachments": {},
+  "createdOnFiles": {
+    "at": "2026-09-17T11:03:40.552Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "pages": [],
+  "title": "Grafik pracy — aplikacja",
+  "boards": {
+    "Home.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "title": "Teraz",
+      "w": 390,
+      "x": 0,
+      "y": 0
+    },
+    "Main.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "title": "Grafik · miesiąc",
+      "w": 390,
+      "x": 470,
+      "y": 0
+    },
+    "Edit.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "title": "Grafik · tryb edycji",
+      "w": 390,
+      "x": 940,
+      "y": 0
+    },
+    "Day.dc.html": {
+      "h": 960,
+      "is_interactive": true,
+      "title": "Dzień",
+      "w": 390,
+      "x": 1410,
+      "y": 0
+    },
+    "Month-Light.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Grafik · motyw jasny",
+      "w": 390,
+      "x": 1880,
+      "y": 0
+    },
+    "Widget.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "title": "Widżety i powiadomienie",
+      "w": 390,
+      "x": 2350,
+      "y": 0
+    },
+    "Summary.dc.html": {
+      "h": 1240,
+      "is_interactive": true,
+      "title": "Bilans",
+      "w": 390,
+      "x": 0,
+      "y": 1340
+    },
+    "Pay.dc.html": {
+      "h": 1200,
+      "is_interactive": true,
+      "title": "Wypłata",
+      "w": 390,
+      "x": 470,
+      "y": 1340
+    },
+    "Vacation.dc.html": {
+      "h": 1060,
+      "is_interactive": true,
+      "title": "Planer urlopu",
+      "w": 390,
+      "x": 940,
+      "y": 1340
+    },
+    "Rest.dc.html": {
+      "h": 1060,
+      "is_interactive": true,
+      "title": "Odpoczynek",
+      "w": 390,
+      "x": 1410,
+      "y": 1340
+    },
+    "Settings.dc.html": {
+      "h": 1160,
+      "is_interactive": true,
+      "title": "Ustawienia",
+      "w": 390,
+      "x": 0,
+      "y": 2980
+    },
+    "Cycle.dc.html": {
+      "h": 1200,
+      "is_interactive": true,
+      "title": "Mój cykl",
+      "w": 390,
+      "x": 470,
+      "y": 2980
+    },
+    "Worktime.dc.html": {
+      "h": 1120,
+      "is_interactive": true,
+      "title": "Czas pracy i nadgodziny",
+      "w": 390,
+      "x": 940,
+      "y": 2980
+    },
+    "Leave.dc.html": {
+      "h": 1120,
+      "is_interactive": true,
+      "title": "Urlop",
+      "w": 390,
+      "x": 1410,
+      "y": 2980
+    },
+    "Detect.dc.html": {
+      "h": 1180,
+      "is_interactive": true,
+      "title": "Wykrywanie pracy",
+      "w": 390,
+      "x": 1880,
+      "y": 2980
+    },
+    "Notify.dc.html": {
+      "h": 1080,
+      "is_interactive": true,
+      "title": "Powiadomienia",
+      "w": 390,
+      "x": 2350,
+      "y": 2980
+    },
+    "Look.dc.html": {
+      "h": 1160,
+      "is_interactive": true,
+      "title": "Wygląd i kolory",
+      "w": 390,
+      "x": 2820,
+      "y": 2980
+    },
+    "Data.dc.html": {
+      "h": 1040,
+      "is_interactive": true,
+      "title": "Dane i kopia",
+      "w": 390,
+      "x": 3290,
+      "y": 2980
+    }
+  },
+  "order": [
+    "Home.dc.html",
+    "Main.dc.html",
+    "Edit.dc.html",
+    "Day.dc.html",
+    "Month-Light.dc.html",
+    "Widget.dc.html",
+    "Summary.dc.html",
+    "Pay.dc.html",
+    "Vacation.dc.html",
+    "Rest.dc.html",
+    "Settings.dc.html",
+    "Cycle.dc.html",
+    "Worktime.dc.html",
+    "Leave.dc.html",
+    "Detect.dc.html",
+    "Notify.dc.html",
+    "Look.dc.html",
+    "Data.dc.html"
+  ],
+  "notes": {
+    "tytul": {
+      "kind": "title1",
+      "maxW": 2740,
+      "text": "1 · Codziennie",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "sekcja2": {
+      "kind": "title1",
+      "maxW": 1800,
+      "text": "2 · Bilans, wypłata, urlop",
+      "w": 240,
+      "x": 0,
+      "y": 1040
+    },
+    "sekcja3": {
+      "kind": "title1",
+      "maxW": 3680,
+      "text": "3 · Ustawienia",
+      "w": 240,
+      "x": 0,
+      "y": 2680
+    }
+  }
+}

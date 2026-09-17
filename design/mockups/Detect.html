@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; background: #0A0D0F; color-scheme: dark; }
+    a { color: #52D0B3; }
+    a:hover { color: #7FE0C8; }
+    button { font-family: inherit; }
+    input { font-family: inherit; }
+    @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+    @keyframes ping { 0% { transform: scale(0.55); opacity: 0.85; } 80% { transform: scale(1.25); opacity: 0; } 100% { opacity: 0; } }
+    @keyframes drift { from { transform: translate3d(0,0,0) scale(1); } to { transform: translate3d(0,-16px,0) scale(1.07); } }
+    .rise { animation: rise .6s cubic-bezier(.22,1,.36,1) both; }
+    .halo { animation: drift 24s ease-in-out infinite alternate; }
+    .ping { transform-origin: 90px 90px; animation: ping 3.4s ease-out infinite; }
+    .ping2 { transform-origin: 90px 90px; animation: ping 3.4s ease-out 1.15s infinite; }
+    .ping3 { transform-origin: 90px 90px; animation: ping 3.4s ease-out 2.3s infinite; }
+    .tap { transition: transform .15s ease, background .16s ease, border-color .16s ease, color .16s ease; }
+    .tap:active { transform: scale(0.97); }
+    .sw { position: relative; display: inline-flex; width: 46px; height: 28px; flex-shrink: 0; }
+    .sw input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; z-index: 1; }
+    .sw > span { width: 100%; height: 100%; border-radius: 999px; background: #262B30; border: 1px solid #333A40; }
+    .sw > span::after { content: ""; position: absolute; top: 4px; left: 4px; width: 20px; height: 20px; border-radius: 999px; background: #8A939B; transition: transform .16s ease, background .16s ease; }
+    .sw input:checked + span { background: rgba(82,208,179,0.22); border-color: rgba(82,208,179,0.5); }
+    .sw input:checked + span::after { transform: translateX(18px); background: #52D0B3; }
+    .rng { width: 100%; height: 28px; accent-color: #52D0B3; background: transparent; cursor: pointer; }
+    @media (prefers-reduced-motion: reduce) { .rise, .halo, .ping, .ping2, .ping3 { animation: none !important; } }
+  </style>
+</helmet>
+<div style="position: relative; width: 390px; height: 1180px; box-sizing: border-box; background: #0A0D0F; color: #F1F3F4; font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif; overflow: hidden;">
+
+  <div style="position: absolute; top: 0; left: 0; width: 390px; height: 1180px; overflow: hidden; pointer-events: none;">
+    <div class="halo" style="position: absolute; top: -200px; right: -140px; width: 470px; height: 470px; border-radius: 50%; background: radial-gradient(circle, rgba(122,189,255,0.18) 0%, rgba(122,189,255,0) 70%);"></div>
+  </div>
+
+  <div style="position: relative; width: 390px; height: 1180px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px; padding: 44px 16px 22px;">
+
+    <a href="Settings.dc.html" class="tap" style="display: inline-flex; align-items: center; gap: 6px; height: 40px; margin-left: -6px; padding: 0 6px; font-size: 13px; font-weight: 600; text-decoration: none; color: #97A0A7; align-self: flex-start;">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+      Ustawienia
+    </a>
+
+    <div class="rise" style="display: flex; flex-direction: column; gap: 6px;">
+      <h1 style="margin: 0; font-family: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif; font-size: 26px; font-weight: 700; letter-spacing: -0.03em; line-height: 1;">Wykrywanie pracy</h1>
+      <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #97A0A7;">Telefon sam rozpozna, że jesteś w zakładzie. Lokalizacja nie opuszcza telefonu.</p>
+    </div>
+
+    <div class="rise" style="display: flex; flex-direction: column; gap: 14px; padding: 16px 14px; border-radius: 22px; background: rgba(122,189,255,0.06); border: 1px solid rgba(122,189,255,0.22); animation-delay: .05s;">
+      <div style="display: flex; justify-content: center; padding: 4px 0 2px;">
+        <svg width="180" height="180" viewBox="0 0 180 180" aria-hidden="true" style="display: block;">
+          <circle class="ping" cx="90" cy="90" r="76" fill="none" stroke="#7ABDFF" stroke-width="1.5"></circle>
+          <circle class="ping2" cx="90" cy="90" r="76" fill="none" stroke="#7ABDFF" stroke-width="1.5"></circle>
+          <circle class="ping3" cx="90" cy="90" r="76" fill="none" stroke="#7ABDFF" stroke-width="1.5"></circle>
+          <circle cx="90" cy="90" r="76" fill="rgba(122,189,255,0.05)" stroke="rgba(122,189,255,0.28)" stroke-width="1" stroke-dasharray="4 6"></circle>
+          <circle cx="90" cy="90" r="50" fill="rgba(122,189,255,0.07)" stroke="rgba(122,189,255,0.22)" stroke-width="1"></circle>
+          <circle cx="90" cy="90" r="24" fill="rgba(122,189,255,0.12)" stroke="rgba(122,189,255,0.35)" stroke-width="1"></circle>
+          <path d="M90 100c0 0-9-7.2-9-14a9 9 0 1 1 18 0c0 6.8-9 14-9 14z" fill="#7ABDFF"></path>
+          <circle cx="90" cy="85.5" r="3.2" fill="#0A0D0F"></circle>
+        </svg>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+        <span style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+          <span style="font-size: 15px; font-weight: 700;">Automatyczne wykrywanie</span>
+          <span style="font-size: 11px; color: #9EC9F0;">włączone · promień {{radius}} m · jesteś 16 km od pracy</span>
+        </span>
+        <span class="sw"><input type="checkbox" checked><span></span></span>
+      </div>
+      <div style="height: 1px; background: rgba(122,189,255,0.16);"></div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+        <span style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+          <span style="font-size: 14px; font-weight: 600;">Zapisuj automatycznie</span>
+          <span style="font-size: 11px; line-height: 1.5; color: #97A0A7;">wykryty dzień wchodzi do grafiku sam, powiadomienie pozwala cofnąć</span>
+        </span>
+        <span class="sw"><input type="checkbox" checked><span></span></span>
+      </div>
+    </div>
+
+    <div class="rise" style="display: flex; flex-direction: column; gap: 12px; padding: 14px; border-radius: 20px; background: rgba(255,255,255,0.035); border: 1px solid #1F2428; animation-delay: .09s;">
+      <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6E777E;">GDZIE JEST TWOJA PRACA</span>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; flex-grow: 1;">52,42882 · 16,97935</span>
+        <span style="flex-shrink: 0; display: inline-flex; align-items: center; height: 24px; padding: 0 9px; border-radius: 999px; background: rgba(82,208,179,0.12); border: 1px solid rgba(82,208,179,0.3); font-size: 10px; font-weight: 700; color: #52D0B3;">zapisane</span>
+      </div>
+      <button type="button" class="tap" style="display: flex; align-items: center; justify-content: center; gap: 8px; height: 48px; border: none; border-radius: 15px; background: #52D0B3; color: #06231D; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 10px 26px rgba(82,208,179,0.2);">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><circle cx="12" cy="12" r="8"></circle><path d="M12 2v2M12 20v2M2 12h2M20 12h2"></path></svg>
+        Jestem teraz w pracy — zapisz miejsce
+      </button>
+      <div style="height: 1px; background: #1F2428;"></div>
+      <label for="radius" style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px;">
+        <span style="font-size: 13px; font-weight: 600;">Promień strefy</span>
+        <span style="font-size: 13px; font-weight: 700; color: #7ABDFF; font-variant-numeric: tabular-nums;">{{radius}} m</span>
+      </label>
+      <input id="radius" class="rng" type="range" min="100" max="1000" step="50" value="250" onInput="{{setRadius}}">
+      <span style="font-size: 11px; line-height: 1.5; color: #6E777E;">Poniżej 100 m Android zaczyna gubić zdarzenia. Duży zakład — większy promień.</span>
+    </div>
+
+    <div class="rise" style="display: flex; flex-direction: column; gap: 12px; padding: 14px; border-radius: 20px; background: rgba(255,255,255,0.035); border: 1px solid #1F2428; animation-delay: .13s;">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px;">
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6E777E;">WI-FI W PRACY</span>
+        <span style="font-size: 10px; color: #6E777E;">opcjonalnie</span>
+      </div>
+      <p style="margin: 0; font-size: 11px; line-height: 1.5; color: #97A0A7;">Pewniejsze niż GPS w hali i nie zużywa baterii. Gdy telefon wisi na tej sieci, nie uznamy przypadkowego wyjścia ze strefy.</p>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: rgba(63,169,143,0.08); border: 1px solid rgba(63,169,143,0.25);">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3FA98F" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M4.5 9.5a11 11 0 0 1 15 0"></path><path d="M7.5 13a7 7 0 0 1 9 0"></path><path d="M10.5 16.5a3 3 0 0 1 3 0"></path><path d="M12 20h.01"></path></svg>
+        <span style="flex-grow: 1; font-size: 14px; font-weight: 600;">AgileWiFi</span>
+        <button type="button" class="tap" style="flex-shrink: 0; height: 32px; padding: 0 10px; border-radius: 10px; background: transparent; border: 1px solid #2A3036; color: #97A0A7; font-size: 11px; font-weight: 600; cursor: pointer;">Usuń</button>
+      </div>
+      <button type="button" class="tap" style="display: flex; align-items: center; justify-content: center; gap: 8px; height: 44px; border-radius: 14px; background: rgba(255,255,255,0.04); border: 1px dashed #2A3036; color: #C5CCD1; font-size: 12px; font-weight: 600; cursor: pointer;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+        Dodaj sieć, na której jesteś teraz
+      </button>
+    </div>
+
+    <div class="rise" style="display: flex; flex-direction: column; gap: 14px; padding: 14px; border-radius: 20px; background: rgba(255,255,255,0.035); border: 1px solid #1F2428; animation-delay: .17s;">
+      <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6E777E;">CZUŁOŚĆ</span>
+
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <label for="minstay" style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px;">
+          <span style="font-size: 13px;">Minimalny pobyt uznawany za pracę</span>
+          <span style="font-size: 13px; font-weight: 700; color: #52D0B3; font-variant-numeric: tabular-nums;">{{stay}} min</span>
+        </label>
+        <input id="minstay" class="rng" type="range" min="10" max="120" step="10" value="30" onInput="{{setStay}}">
+        <span style="font-size: 11px; color: #6E777E;">Przejazd obok zakładu nie zrobi dnia pracy.</span>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <label for="glue" style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px;">
+          <span style="font-size: 13px;">Krótkie wyjście sklejane do</span>
+          <span style="font-size: 13px; font-weight: 700; color: #52D0B3; font-variant-numeric: tabular-nums;">{{glue}} min</span>
+        </label>
+        <input id="glue" class="rng" type="range" min="5" max="90" step="5" value="30" onInput="{{setGlue}}">
+        <span style="font-size: 11px; color: #6E777E;">Skok do sklepu nie potnie dnia na dwie obecności.</span>
+      </div>
+    </div>
+
+    <div class="rise" style="display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 20px; background: rgba(255,255,255,0.035); border: 1px solid #1F2428; animation-delay: .21s;">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px;">
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6E777E;">OSTATNIE WYKRYCIA</span>
+        <span style="font-size: 10px; color: #6E777E;">10 zapisanych</span>
+      </div>
+      <sc-for list="{{log}}" as="l" hint-placeholder-count="3">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="width: 7px; height: 7px; flex-shrink: 0; border-radius: 50%; background: #3FA98F;"></span>
+          <span style="width: 44px; flex-shrink: 0; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums;">{{l.date}}</span>
+          <span style="flex-grow: 1; font-size: 12px; color: #B7BEC3; font-variant-numeric: tabular-nums;">{{l.time}}</span>
+          <span style="flex-shrink: 0; font-size: 12px; font-weight: 700; color: {{l.ink}};">{{l.shift}}</span>
+        </div>
+      </sc-for>
+      <button type="button" class="tap" style="height: 40px; border-radius: 13px; background: transparent; border: 1px solid #2A3036; color: #97A0A7; font-size: 12px; font-weight: 600; cursor: pointer;">Pokaż całą historię</button>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":390,"height":1180}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { radius: 250, stay: 30, glue: 30 };
+  }
+
+  renderVals() {
+    var self = this;
+    var log = [
+      { date: '16.09', time: '03:32 – 06:04', shift: 'III', ink: '#7ABDFF' },
+      { date: '15.09', time: '22:00 – 06:00', shift: 'III', ink: '#7ABDFF' },
+      { date: '10.09', time: '06:00 – 14:00', shift: 'I', ink: '#DAC559' }
+    ];
+    return {
+      radius: this.state.radius,
+      stay: this.state.stay,
+      glue: this.state.glue,
+      log: log,
+      setRadius: function (e) { self.setState({ radius: Number(e.target.value) }); },
+      setStay: function (e) { self.setState({ stay: Number(e.target.value) }); },
+      setGlue: function (e) { self.setState({ glue: Number(e.target.value) }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

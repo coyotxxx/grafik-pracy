@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; background: #0A0D0F; color-scheme: dark; }
+    a { color: #52D0B3; }
+    a:hover { color: #7FE0C8; }
+    button { font-family: inherit; }
+    @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+    @keyframes drift { from { transform: translate3d(0,0,0) scale(1); } to { transform: translate3d(0,-16px,0) scale(1.07); } }
+    .rise { animation: rise .6s cubic-bezier(.22,1,.36,1) both; }
+    .halo { animation: drift 24s ease-in-out infinite alternate; }
+    .tap { transition: transform .15s ease, background .16s ease, border-color .16s ease, color .16s ease, box-shadow .16s ease; }
+    .tap:active { transform: scale(0.96); }
+    @media (prefers-reduced-motion: reduce) { .rise, .halo { animation: none !important; } }
+  </style>
+</helmet>
+<div style="position: relative; width: 390px; height: 1160px; box-sizing: border-box; background: #0A0D0F; color: #F1F3F4; font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif; overflow: hidden;">
+
+  <div style="position: absolute; top: 0; left: 0; width: 390px; height: 1160px; overflow: hidden; pointer-events: none;">
+    <div class="halo" style="position: absolute; top: -210px; left: -130px; width: 470px; height: 470px; border-radius: 50%; background: radial-gradient(circle, rgba(244,144,217,0.14) 0%, rgba(244,144,217,0) 70%);"></div>
+  </div>
+
+  <div style="position: relative; width: 390px; height: 1160px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px; padding: 44px 16px 22px;">
+
+    <a href="Settings.dc.html" class="tap" style="display: inline-flex; align-items: center; gap: 6px; height: 40px; margin-left: -6px; padding: 0 6px; font-size: 13px; font-weight: 600; text-decoration: none; color: #97A0A7; align-self: flex-start;">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+      Ustawienia
+    </a>
+
+    <div class="rise" style="display: flex; flex-direction: column; gap: 6px;">
+      <h1 style="margin: 0; font-family: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif; font-size: 26px; font-weight: 700; letter-spacing: -0.03em; line-height: 1;">Wygląd i kolory</h1>
+      <p style="margin: 0; font-size: 12px; color: #97A0A7;">Zmiany widzisz od razu na podglądzie tygodnia.</p>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <span class="rise" style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6E777E; animation-delay: .04s;">MOTYW</span>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;">
+        <sc-for list="{{themes}}" as="t" hint-placeholder-count="3">
+          <button type="button" class="tap" onClick="{{t.pick}}" style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px 8px; cursor: pointer; border-radius: 18px; background: {{t.bg}}; border: 1px solid {{t.line}};">
+            <span style="width: 100%; height: 52px; border-radius: 12px; background: {{t.pv}}; border: 1px solid {{t.pvLine}}; display: flex; flex-direction: column; justify-content: space-between; padding: 6px; box-sizing: border-box;">
+              <span style="width: 60%; height: 5px; border-radius: 999px; background: {{t.pvInk}};"></span>
+              <span style="display: flex; gap: 3px;">
+                <span style="flex-grow: 1; height: 14px; border-radius: 4px; background: {{t.pvA}};"></span>
+                <span style="flex-grow: 1; height: 14px; border-radius: 4px; background: {{t.pvB}};"></span>
+                <span style="flex-grow: 1; height: 14px; border-radius: 4px; background: {{t.pvC}};"></span>
+              </span>
+            </span>
+            <span style="font-size: 11px; font-weight: 600; color: {{t.ink}};">{{t.label}}</span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <span class="rise" style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6E777E; animation-delay: .08s;">ZESTAW KOLORÓW</span>
+      <sc-for list="{{sets}}" as="s" hint-placeholder-count="4">
+        <button type="button" class="tap" onClick="{{s.pick}}" style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; cursor: pointer; text-align: left; border-radius: 18px; background: {{s.bg}}; border: 1px solid {{s.line}};">
+          <span style="display: flex; flex-direction: column; gap: 3px; flex-grow: 1; min-width: 0;">
+            <span style="font-size: 14px; font-weight: 700; color: {{s.titleInk}};">{{s.title}}</span>
+            <span style="font-size: 11px; color: #97A0A7;">{{s.sub}}</span>
+          </span>
+          <span style="display: flex; gap: 4px; flex-shrink: 0;">
+            <span style="width: 22px; height: 22px; border-radius: 7px; background: {{s.c1}};"></span>
+            <span style="width: 22px; height: 22px; border-radius: 7px; background: {{s.c2}};"></span>
+            <span style="width: 22px; height: 22px; border-radius: 7px; background: {{s.c3}};"></span>
+            <span style="width: 22px; height: 22px; border-radius: 7px; background: {{s.c4}};"></span>
+          </span>
+        </button>
+      </sc-for>
+    </div>
+
+    <div class="rise" style="display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 20px; background: rgba(255,255,255,0.035); border: 1px solid #1F2428; animation-delay: .14s;">
+      <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6E777E;">PODGLĄD TYGODNIA</span>
+      <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px;">
+        <sc-for list="{{week}}" as="w" hint-placeholder-count="7">
+          <span style="height: 52px; box-sizing: border-box; padding: 6px 5px; display: flex; flex-direction: column; justify-content: space-between; border-radius: 11px; background: {{w.bg}}; border: 1px solid {{w.line}};">
+            <span style="font-size: 10px; font-weight: 600; color: #97A0A7; font-variant-numeric: tabular-nums;">{{w.num}}</span>
+            <span style="font-size: 11px; font-weight: 700; color: {{w.ink}};">{{w.label}}</span>
+          </span>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <span class="rise" style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6E777E; animation-delay: .18s;">KOLOR POJEDYNCZEGO DNIA</span>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px;">
+        <sc-for list="{{kinds}}" as="k" hint-placeholder-count="9">
+          <button type="button" class="tap" onClick="{{k.pick}}" style="display: flex; align-items: center; gap: 8px; padding: 9px 10px; cursor: pointer; text-align: left; border-radius: 14px; background: {{k.bg}}; border: 1px solid {{k.line}};">
+            <span style="width: 18px; height: 18px; flex-shrink: 0; border-radius: 6px; background: {{k.dot}};"></span>
+            <span style="font-size: 11px; font-weight: 600; color: {{k.ink}}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{k.label}}</span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+
+    <div class="rise" style="display: flex; flex-direction: column; gap: 12px; padding: 14px; border-radius: 20px; background: rgba(255,255,255,0.045); border: 1px solid #23282D; animation-delay: .22s;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="width: 30px; height: 30px; flex-shrink: 0; border-radius: 10px; background: {{chosen.dot}}; box-shadow: 0 0 18px {{chosen.glow}};"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1; min-width: 0;">
+          <span style="font-size: 13px; font-weight: 700;">{{chosen.label}}</span>
+          <span style="font-size: 11px; color: #97A0A7;">{{chosen.name}}</span>
+        </span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px;">
+        <sc-for list="{{palette}}" as="c" hint-placeholder-count="10">
+          <button type="button" class="tap" onClick="{{c.pick}}" aria-label="{{c.name}}" style="display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 0; background: transparent; border: none; cursor: pointer;">
+            <span style="width: 44px; height: 44px; border-radius: 14px; background: {{c.hex}}; box-shadow: {{c.ring}};"></span>
+            <span style="font-size: 9px; color: #8A939B;">{{c.name}}</span>
+          </button>
+        </sc-for>
+      </div>
+      <button type="button" class="tap" style="height: 42px; border-radius: 13px; background: transparent; border: 1px solid #2A3036; color: #97A0A7; font-size: 12px; font-weight: 600; cursor: pointer;">Przywróć domyślne kolory</button>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":390,"height":1160}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { theme: 'dark', set: 'pory', kind: 'I', colors: { I: '#DAC559', II: '#FF937E', III: '#7ABDFF', W: '#5FB8A0', WS: '#F490D9', DWN: '#8FB4D9', BEZW: '#C9C06A', U: '#C79BF0', ODB: '#9AA6B2' } };
+  }
+
+  renderVals() {
+    var self = this;
+
+    var TH = [
+      { k: 'dark', l: 'Ciemny', pv: '#111417', pvLine: '#23282D', pvInk: '#6E777E', a: '#DAC559', b: '#FF937E', c: '#7ABDFF' },
+      { k: 'light', l: 'Jasny', pv: '#F5F4F0', pvLine: '#E0DED7', pvInk: '#B9B7B0', a: '#AE9400', b: '#C1351E', c: '#3587D3' },
+      { k: 'auto', l: 'Systemowy', pv: 'linear-gradient(115deg, #111417 50%, #F5F4F0 50%)', pvLine: '#3A4046', pvInk: '#8A939B', a: '#DAC559', b: '#C1351E', c: '#7ABDFF' }
+    ];
+    var themes = TH.map(function (t) {
+      var on = t.k === self.state.theme;
+      return {
+        label: t.l,
+        bg: on ? 'rgba(82,208,179,0.10)' : 'rgba(255,255,255,0.035)',
+        line: on ? 'rgba(82,208,179,0.42)' : '#1F2428',
+        ink: on ? '#52D0B3' : '#97A0A7',
+        pv: t.pv, pvLine: t.pvLine, pvInk: t.pvInk, pvA: t.a, pvB: t.b, pvC: t.c,
+        pick: function () { self.setState({ theme: t.k }); }
+      };
+    });
+
+    var SETS = [
+      { k: 'stono', t: 'Stonowana', s: 'ciemne kafelki, spokojne kolory', c: ['#B39338', '#C06A54', '#4E85B8', '#4C8C7A'] },
+      { k: 'wyraz', t: 'Wyrazista', s: 'te same barwy, mocniejsze wypełnienia', c: ['#E4B93C', '#F06A4A', '#4E9BE8', '#3FB08F'] },
+      { k: 'pory', t: 'Pory dnia', s: 'poranek, popołudnie, noc', c: ['#DAC559', '#FF937E', '#7ABDFF', '#5FB8A0'] },
+      { k: 'jasne', t: 'Jasne kafelki', s: 'jasne tła, ciemny napis', c: ['#F3D37A', '#F8A78F', '#A6D2FA', '#93D8C4'] }
+    ];
+    var sets = SETS.map(function (s) {
+      var on = s.k === self.state.set;
+      return {
+        title: s.t, sub: s.s,
+        c1: s.c[0], c2: s.c[1], c3: s.c[2], c4: s.c[3],
+        bg: on ? 'rgba(82,208,179,0.10)' : 'rgba(255,255,255,0.035)',
+        line: on ? 'rgba(82,208,179,0.40)' : '#1F2428',
+        titleInk: on ? '#52D0B3' : '#F1F3F4',
+        pick: function () { self.setState({ set: s.k }); }
+      };
+    });
+
+    var KINDS = [
+      { k: 'I', l: 'Zmiana I', n: 'ranna 06–14' },
+      { k: 'II', l: 'Zmiana II', n: 'popołudniowa 14–22' },
+      { k: 'III', l: 'Zmiana III', n: 'nocna 22–06' },
+      { k: 'W', l: 'Wolne', n: 'dzień wolny w cyklu' },
+      { k: 'WS', l: 'Wolne św.', n: 'wolne za święto' },
+      { k: 'DWN', l: 'Dz. za nd.', n: 'dzień wolny za niedzielę' },
+      { k: 'BEZW', l: 'Bezwzgl. nd.', n: 'bezwzględnie wolna niedziela' },
+      { k: 'U', l: 'Urlop', n: 'urlop wypoczynkowy' },
+      { k: 'ODB', l: 'Odbiór', n: 'odbiór za nadgodziny' }
+    ];
+    var kinds = KINDS.map(function (x) {
+      var on = x.k === self.state.kind;
+      return {
+        label: x.l,
+        dot: self.state.colors[x.k],
+        bg: on ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.03)',
+        line: on ? 'rgba(82,208,179,0.45)' : '#1F2428',
+        ink: on ? '#F1F3F4' : '#B7BEC3',
+        pick: function () { self.setState({ kind: x.k }); }
+      };
+    });
+
+    var chosenKind = KINDS[0];
+    for (var i = 0; i < KINDS.length; i++) { if (KINDS[i].k === this.state.kind) { chosenKind = KINDS[i]; } }
+    var chosenHex = this.state.colors[this.state.kind];
+
+    var PAL = [
+      { h: '#DAC559', n: 'bursztyn' }, { h: '#FF937E', n: 'koral' }, { h: '#C79BF0', n: 'indygo' },
+      { h: '#5FB8A0', n: 'szałwia' }, { h: '#F490D9', n: 'malina' }, { h: '#B79BF5', n: 'fiolet' },
+      { h: '#7ABDFF', n: 'lazur' }, { h: '#63D6B6', n: 'morski' }, { h: '#C9C06A', n: 'oliwka' },
+      { h: '#9AA6B2', n: 'grafit' }
+    ];
+    var palette = PAL.map(function (c) {
+      var on = c.h === chosenHex;
+      return {
+        hex: c.h, name: c.n,
+        ring: on ? '0 0 0 3px #0A0D0F, 0 0 0 5px ' + c.h : 'none',
+        pick: function () {
+          var nc = {};
+          for (var k in self.state.colors) { nc[k] = self.state.colors[k]; }
+          nc[self.state.kind] = c.h;
+          self.setState({ colors: nc });
+        }
+      };
+    });
+
+    var seq = [
+      { n: 14, k: 'U' }, { n: 15, k: 'III' }, { n: 16, k: 'III' }, { n: 17, k: 'III' },
+      { n: 18, k: 'III' }, { n: 19, k: 'W' }, { n: 20, k: 'W' }
+    ];
+    var LAB = { I: 'I', II: 'II', III: 'III', W: 'w5', WS: 'wś', DWN: 'DWN', BEZW: 'bez', U: 'U', ODB: 'odb' };
+    var week = seq.map(function (d) {
+      var hex = self.state.colors[d.k];
+      return {
+        num: d.n,
+        label: LAB[d.k],
+        ink: hex,
+        bg: 'rgba(255,255,255,0.035)',
+        line: 'rgba(255,255,255,0.10)'
+      };
+    });
+
+    return {
+      themes: themes,
+      sets: sets,
+      kinds: kinds,
+      week: week,
+      palette: palette,
+      chosen: { dot: chosenHex, glow: chosenHex + '55', label: chosenKind.l, name: chosenKind.n }
+    };
+  }
+}
+</script>
+</body>
+</html>

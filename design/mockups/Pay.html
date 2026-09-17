@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; background: #0A0D0F; color-scheme: dark; }
+    a { color: #52D0B3; }
+    a:hover { color: #7FE0C8; }
+    button { font-family: inherit; }
+    input { font-family: inherit; }
+    @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+    @keyframes segIn { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+    @keyframes drift { from { transform: translate3d(0,0,0) scale(1); } to { transform: translate3d(0,-16px,0) scale(1.07); } }
+    .rise { animation: rise .6s cubic-bezier(.22,1,.36,1) both; }
+    .seg { transform-origin: left; animation: segIn 1s cubic-bezier(.22,1,.36,1) .25s both; }
+    .halo { animation: drift 24s ease-in-out infinite alternate; }
+    .tap { transition: transform .15s ease, background .16s ease, border-color .16s ease, color .16s ease; }
+    .tap:active { transform: scale(0.96); }
+    .sw { position: relative; display: inline-flex; width: 46px; height: 28px; flex-shrink: 0; }
+    .sw input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; z-index: 1; }
+    .sw > span { width: 100%; height: 100%; border-radius: 999px; background: #262B30; border: 1px solid #333A40; }
+    .sw > span::after { content: ""; position: absolute; top: 4px; left: 4px; width: 20px; height: 20px; border-radius: 999px; background: #8A939B; transition: transform .16s ease, background .16s ease; }
+    .sw input:checked + span { background: rgba(82,208,179,0.22); border-color: rgba(82,208,179,0.5); }
+    .sw input:checked + span::after { transform: translateX(18px); background: #52D0B3; }
+    @media (prefers-reduced-motion: reduce) { .rise, .seg, .halo { animation: none !important; } }
+  </style>
+</helmet>
+<div style="position: relative; width: 390px; height: 1200px; box-sizing: border-box; background: #0A0D0F; color: #F1F3F4; font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif; overflow: hidden;">
+
+  <div style="position: absolute; top: 0; left: 0; width: 390px; height: 1200px; overflow: hidden; pointer-events: none;">
+    <div class="halo" style="position: absolute; top: -200px; right: -130px; width: 480px; height: 480px; border-radius: 50%; background: radial-gradient(circle, rgba(218,197,89,0.16) 0%, rgba(218,197,89,0) 70%);"></div>
+    <div class="halo" style="position: absolute; bottom: -230px; left: -140px; width: 430px; height: 430px; border-radius: 50%; background: radial-gradient(circle, rgba(82,208,179,0.12) 0%, rgba(82,208,179,0) 70%); animation-duration: 27s;"></div>
+  </div>
+
+  <div style="position: relative; width: 390px; height: 1200px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px; padding: 44px 16px 22px;">
+
+    <a href="Summary.dc.html" class="tap" style="display: inline-flex; align-items: center; gap: 6px; height: 40px; margin-left: -6px; padding: 0 6px; font-size: 13px; font-weight: 600; text-decoration: none; color: #97A0A7; align-self: flex-start;">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+      Bilans
+    </a>
+
+    <div class="rise" style="display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;">
+      <span style="display: flex; flex-direction: column; gap: 5px; min-width: 0;">
+        <h1 style="margin: 0; font-family: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif; font-size: 26px; font-weight: 700; letter-spacing: -0.03em; line-height: 1;">Wypłata</h1>
+        <p style="margin: 0; font-size: 12px; color: #97A0A7;">szacunek z grafiku · wrzesień 2026</p>
+      </span>
+      <span style="flex-shrink: 0; display: inline-flex; align-items: center; height: 28px; padding: 0 10px; border-radius: 999px; background: rgba(218,197,89,0.12); border: 1px solid rgba(218,197,89,0.3); font-size: 11px; font-weight: 700; color: #DAC559;">brutto</span>
+    </div>
+
+    <div class="rise" style="display: flex; flex-direction: column; gap: 14px; padding: 18px 16px; border-radius: 22px; background: rgba(218,197,89,0.07); border: 1px solid rgba(218,197,89,0.24); animation-delay: .05s;">
+      <span style="display: flex; align-items: baseline; gap: 8px;">
+        <span style="font-size: 20px; font-weight: 600; color: #97A0A7;">≈</span>
+        <span style="font-family: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif; font-size: 44px; font-weight: 700; line-height: 0.9; letter-spacing: -0.03em; font-variant-numeric: tabular-nums;">{{total}}</span>
+        <span style="font-size: 16px; font-weight: 600; color: #D7DBDE;">zł</span>
+      </span>
+      <div style="display: flex; gap: 2px; height: 12px;">
+        <div class="seg" style="width: {{w.base}}; border-radius: 4px; background: #AE9400; animation-delay: .3s;"></div>
+        <div class="seg" style="width: {{w.vac}}; border-radius: 4px; background: #C04CA5; animation-delay: .38s;"></div>
+        <div class="seg" style="width: {{w.ot}}; border-radius: 4px; background: #C1351E; animation-delay: .46s;"></div>
+        <div class="seg" style="width: {{w.night}}; border-radius: 4px; background: #3587D3; animation-delay: .54s;"></div>
+      </div>
+      <div style="display: flex; align-items: flex-start; gap: 9px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#97A0A7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 1px;"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5"></path><path d="M12 8h.01"></path></svg>
+        <span style="font-size: 11px; line-height: 1.5; color: #97A0A7;">To wyliczenie z grafiku i Twoich stawek. Kwoty do ręki nie policzymy — aplikacja nie zna Twoich składek, ulg ani premii regulaminowej.</span>
+      </div>
+    </div>
+
+    <div class="rise" style="display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: 22px; background: rgba(255,255,255,0.035); border: 1px solid #1F2428; animation-delay: .09s;">
+      <span style="font-size: 14px; font-weight: 600;">Z czego się składa</span>
+
+      <sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="width: 9px; height: 9px; flex-shrink: 0; border-radius: 3px; background: {{r.dot}};"></span>
+          <span style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1; min-width: 0;">
+            <span style="font-size: 13px; color: #E7EAEC;">{{r.name}}</span>
+            <span style="font-size: 10px; color: #6E777E; font-variant-numeric: tabular-nums;">{{r.calc}}</span>
+          </span>
+          <span style="flex-shrink: 0; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; color: {{r.ink}};">{{r.value}}</span>
+        </div>
+      </sc-for>
+
+      <div style="height: 1px; background: #1F2428;"></div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+        <span style="font-size: 13px; font-weight: 700;">Razem brutto</span>
+        <span style="font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums;">{{total}} zł</span>
+      </div>
+    </div>
+
+    <div class="rise" style="display: flex; flex-direction: column; gap: 14px; padding: 16px; border-radius: 22px; background: rgba(255,255,255,0.035); border: 1px solid #1F2428; animation-delay: .13s;">
+      <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6E777E;">TWOJE STAWKI</span>
+
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+        <span style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+          <span style="font-size: 14px; font-weight: 600;">Stawka zasadnicza</span>
+          <span style="font-size: 11px; color: #97A0A7;">brutto za godzinę, z umowy</span>
+        </span>
+        <span style="display: flex; align-items: center; gap: 4px; flex-shrink: 0; padding: 0 6px; border-radius: 14px; background: #13171A; border: 1px solid #262B30;">
+          <button type="button" class="tap" onClick="{{decRate}}" aria-label="Niższa stawka" style="width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border: none; border-radius: 10px; background: transparent; color: #C5CCD1; cursor: pointer;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"></path></svg>
+          </button>
+          <span style="min-width: 58px; text-align: center; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums;">{{rate}}</span>
+          <button type="button" class="tap" onClick="{{incRate}}" aria-label="Wyższa stawka" style="width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border: none; border-radius: 10px; background: transparent; color: #C5CCD1; cursor: pointer;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+          </button>
+        </span>
+      </div>
+
+      <div style="height: 1px; background: #1F2428;"></div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <span style="display: flex; flex-direction: column; gap: 3px;">
+          <span style="font-size: 14px; font-weight: 600;">Dodatek za porę nocną</span>
+          <span style="font-size: 11px; line-height: 1.5; color: #97A0A7;">Kodeks liczy 20% stawki z płacy minimalnej, ale wiele zakładów liczy z Twojej stawki. Ustaw jak na pasku.</span>
+        </span>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px;">
+          <sc-for list="{{bases}}" as="b" hint-placeholder-count="2">
+            <button type="button" class="tap" onClick="{{b.pick}}" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; height: 54px; cursor: pointer; border-radius: 14px; background: {{b.bg}}; border: 1px solid {{b.line}};">
+              <span style="font-size: 12px; font-weight: 700; color: {{b.ink}};">{{b.label}}</span>
+              <span style="font-size: 10px; color: #97A0A7; font-variant-numeric: tabular-nums;">{{b.sub}}</span>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="height: 1px; background: #1F2428;"></div>
+
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+        <span style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+          <span style="font-size: 14px; font-weight: 600;">Premia</span>
+          <span style="font-size: 11px; color: #97A0A7;">procent od podstawy, jeśli dostajesz</span>
+        </span>
+        <span style="display: flex; align-items: center; gap: 4px; flex-shrink: 0; padding: 0 6px; border-radius: 14px; background: #13171A; border: 1px solid #262B30;">
+          <button type="button" class="tap" onClick="{{decBonus}}" aria-label="Mniejsza premia" style="width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border: none; border-radius: 10px; background: transparent; color: #C5CCD1; cursor: pointer;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"></path></svg>
+          </button>
+          <span style="min-width: 44px; text-align: center; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums;">{{bonus}}</span>
+          <button type="button" class="tap" onClick="{{incBonus}}" aria-label="Większa premia" style="width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border: none; border-radius: 10px; background: transparent; color: #C5CCD1; cursor: pointer;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+          </button>
+        </span>
+      </div>
+
+      <div style="height: 1px; background: #1F2428;"></div>
+
+      <label style="display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer;">
+        <span style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+          <span style="font-size: 14px; font-weight: 600;">Pokazuj wypłatę w Bilansie</span>
+          <span style="font-size: 11px; color: #97A0A7;">jeśli wolisz, żeby kwoty nie świeciły się na wierzchu</span>
+        </span>
+        <span class="sw"><input type="checkbox" checked><span></span></span>
+      </label>
+    </div>
+
+    <div class="rise" style="display: flex; align-items: flex-start; gap: 12px; padding: 14px; border-radius: 20px; background: rgba(255,255,255,0.03); border: 1px solid #1F2428; animation-delay: .17s;">
+      <span style="width: 34px; height: 34px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 11px; background: rgba(255,255,255,0.05); color: #C5CCD1;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h9l5 5v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"></path><path d="M14 4v5h5"></path><path d="M8 13h8M8 17h5"></path></svg>
+      </span>
+      <span style="display: flex; flex-direction: column; gap: 3px; flex-grow: 1; min-width: 0;">
+        <span style="font-size: 13px; font-weight: 600;">Porównaj z paskiem</span>
+        <span style="font-size: 11px; line-height: 1.5; color: #97A0A7;">Zapisz, ile faktycznie wpłynęło — aplikacja pokaże różnicę i podpowie, która stawka jest źle ustawiona.</span>
+      </span>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":390,"height":1200}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { rate: 28.5, basis: 'own', bonus: 10 };
+  }
+
+  money(n) {
+    var s = n.toFixed(2);
+    var parts = s.split('.');
+    var int = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    return int + ',' + parts[1];
+  }
+
+  renderVals() {
+    var self = this;
+    var rate = this.state.rate;
+    var MIN_HOUR = 30.5;
+    var nightRate = this.state.basis === 'min' ? MIN_HOUR * 0.2 : rate * 0.2;
+
+    var hBase = 160, hVac = 16, hOt = 8, hNight = 32;
+    var base = rate * hBase;
+    var vac = rate * hVac;
+    var ot = rate * hOt * 2;
+    var night = nightRate * hNight;
+    var bonus = base * (this.state.bonus / 100);
+    var total = base + vac + ot + night + bonus;
+
+    var pct = function (v) { return (total > 0 ? (v / total) * 100 : 0).toFixed(1) + '%'; };
+
+    var rows = [
+      { name: 'Podstawa', calc: hBase + ' h × ' + self.money(rate) + ' zł', value: self.money(base), dot: '#AE9400', ink: '#F1F3F4' },
+      { name: 'Urlop', calc: hVac + ' h · liczony ze stawki', value: self.money(vac), dot: '#C04CA5', ink: '#F1F3F4' },
+      { name: 'Nadgodziny 100%', calc: hOt + ' h × ' + self.money(rate * 2) + ' zł', value: self.money(ot), dot: '#C1351E', ink: '#F1F3F4' },
+      { name: 'Dodatek nocny', calc: hNight + ' h × ' + self.money(nightRate) + ' zł', value: self.money(night), dot: '#3587D3', ink: '#F1F3F4' },
+      { name: 'Premia ' + this.state.bonus + '%', calc: 'od podstawy', value: self.money(bonus), dot: '#5FB8A0', ink: '#F1F3F4' }
+    ];
+
+    var BAS = [
+      { k: 'own', l: 'moja stawka', s: '20% z ' + self.money(rate) + ' zł' },
+      { k: 'min', l: 'minimalna krajowa', s: '20% z ' + self.money(MIN_HOUR) + ' zł' }
+    ];
+    var bases = BAS.map(function (b) {
+      var on = b.k === self.state.basis;
+      return {
+        label: b.l,
+        sub: b.s,
+        bg: on ? 'rgba(53,135,211,0.14)' : '#13171A',
+        line: on ? 'rgba(53,135,211,0.42)' : '#262B30',
+        ink: on ? '#7ABDFF' : '#B7BEC3',
+        pick: function () { self.setState({ basis: b.k }); }
+      };
+    });
+
+    return {
+      total: this.money(total),
+      rate: this.money(rate) + ' zł',
+      bonus: this.state.bonus + '%',
+      rows: rows,
+      bases: bases,
+      w: { base: pct(base + bonus), vac: pct(vac), ot: pct(ot), night: pct(night) },
+      incRate: function () { self.setState({ rate: Math.min(200, self.state.rate + 0.5) }); },
+      decRate: function () { self.setState({ rate: Math.max(1, self.state.rate - 0.5) }); },
+      incBonus: function () { self.setState({ bonus: Math.min(100, self.state.bonus + 5) }); },
+      decBonus: function () { self.setState({ bonus: Math.max(0, self.state.bonus - 5) }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

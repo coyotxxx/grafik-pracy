@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; background: #0A0D0F; color-scheme: dark; }
+    a { color: #52D0B3; }
+    a:hover { color: #7FE0C8; }
+    button { font-family: inherit; }
+    @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+    @keyframes drift { from { transform: translate3d(0,0,0) scale(1); } to { transform: translate3d(0,-16px,0) scale(1.07); } }
+    .rise { animation: rise .6s cubic-bezier(.22,1,.36,1) both; }
+    .halo { animation: drift 24s ease-in-out infinite alternate; }
+    .tap { transition: transform .15s ease, background .16s ease, border-color .16s ease, color .16s ease; }
+    .tap:active { transform: scale(0.97); }
+    .sw { position: relative; display: inline-flex; width: 46px; height: 28px; flex-shrink: 0; }
+    .sw input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; z-index: 1; }
+    .sw > span { width: 100%; height: 100%; border-radius: 999px; background: #262B30; border: 1px solid #333A40; }
+    .sw > span::after { content: ""; position: absolute; top: 4px; left: 4px; width: 20px; height: 20px; border-radius: 999px; background: #8A939B; transition: transform .16s ease, background .16s ease; }
+    .sw input:checked + span { background: rgba(82,208,179,0.22); border-color: rgba(82,208,179,0.5); }
+    .sw input:checked + span::after { transform: translateX(18px); background: #52D0B3; }
+    @media (prefers-reduced-motion: reduce) { .rise, .halo { animation: none !important; } }
+  </style>
+</helmet>
+<div style="position: relative; width: 390px; height: 1200px; box-sizing: border-box; background: #0A0D0F; color: #F1F3F4; font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif; overflow: hidden;">
+
+  <div style="position: absolute; top: 0; left: 0; width: 390px; height: 1200px; overflow: hidden; pointer-events: none;">
+    <div class="halo" style="position: absolute; top: -210px; right: -140px; width: 480px; height: 480px; border-radius: 50%; background: radial-gradient(circle, rgba(82,208,179,0.16) 0%, rgba(82,208,179,0) 70%);"></div>
+  </div>
+
+  <div style="position: relative; width: 390px; height: 1200px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px; padding: 44px 16px 22px;">
+
+    <a href="Settings.dc.html" class="tap" style="display: inline-flex; align-items: center; gap: 6px; height: 40px; margin-left: -6px; padding: 0 6px; font-size: 13px; font-weight: 600; text-decoration: none; color: #97A0A7; align-self: flex-start;">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+      Ustawienia
+    </a>
+
+    <div class="rise" style="display: flex; flex-direction: column; gap: 6px;">
+      <h1 style="margin: 0; font-family: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif; font-size: 26px; font-weight: 700; letter-spacing: -0.03em; line-height: 1;">Mój cykl</h1>
+      <p style="margin: 0; font-size: 12px; color: #97A0A7;">Ustawiasz raz — grafik liczy się sam na każdy miesiąc.</p>
+    </div>
+
+    <div class="rise" style="display: flex; flex-direction: column; gap: 12px; padding: 14px; border-radius: 20px; background: rgba(82,208,179,0.07); border: 1px solid rgba(82,208,179,0.26); animation-delay: .05s;">
+      <label style="display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer;">
+        <span style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+          <span style="font-size: 15px; font-weight: 700;">Wypełniaj grafik z cyklu</span>
+          <span style="font-size: 11px; color: #9FE3D2;">włączone — kalendarz liczy zmiany sam</span>
+        </span>
+        <span class="sw"><input type="checkbox" checked><span></span></span>
+      </label>
+      <p style="margin: 0; font-size: 11px; line-height: 1.5; color: #97A0A7;">Dni wpisane ręcznie zawsze mają pierwszeństwo przed cyklem — nic Ci ich nie nadpisze.</p>
+      <div style="height: 1px; background: rgba(82,208,179,0.18);"></div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+        <span style="font-size: 12px; color: #B7BEC3;">Wypełniaj od</span>
+        <span style="display: flex; align-items: center; gap: 6px;">
+          <button type="button" class="tap" aria-label="Wcześniejszy miesiąc" style="width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 11px; background: rgba(0,0,0,0.3); border: 1px solid #2A3036; color: #C5CCD1; cursor: pointer;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"></path></svg>
+          </button>
+          <span style="min-width: 108px; text-align: center; font-size: 13px; font-weight: 600;">Wrzesień 2026</span>
+          <button type="button" class="tap" aria-label="Późniejszy miesiąc" style="width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 11px; background: rgba(0,0,0,0.3); border: 1px solid #2A3036; color: #C5CCD1; cursor: pointer;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+          </button>
+        </span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px;">
+        <sc-for list="{{spans}}" as="s" hint-placeholder-count="5">
+          <button type="button" class="tap" onClick="{{s.pick}}" style="height: 36px; padding: 0 2px; cursor: pointer; border-radius: 11px; font-size: 11px; font-weight: 600; background: {{s.bg}}; border: 1px solid {{s.line}}; color: {{s.ink}};">{{s.label}}</button>
+        </sc-for>
+      </div>
+      <span style="font-size: 11px; color: #97A0A7;">{{spanHint}}</span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <span class="rise" style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6E777E; animation-delay: .1s;">SYSTEM PRACY</span>
+      <sc-for list="{{systems}}" as="s" hint-placeholder-count="4">
+        <button type="button" class="tap" onClick="{{s.pick}}" style="display: flex; align-items: center; gap: 12px; padding: 13px 14px; cursor: pointer; text-align: left; border-radius: 18px; background: {{s.bg}}; border: 1px solid {{s.line}};">
+          <span style="display: flex; flex-direction: column; gap: 4px; flex-grow: 1; min-width: 0;">
+            <span style="font-size: 14px; font-weight: 700; color: {{s.titleInk}};">{{s.title}}</span>
+            <span style="font-size: 11px; color: #97A0A7;">{{s.pattern}}</span>
+          </span>
+          <span style="flex-shrink: 0; display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 10px; color: #6E777E;">{{s.len}}</span>
+            <span style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: {{s.markBg}}; border: 1px solid {{s.markLine}}; color: #06231D;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="opacity: {{s.markOpacity}};"><path d="M5 12.5l5 5 9-11"></path></svg>
+            </span>
+          </span>
+        </button>
+      </sc-for>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <span class="rise" style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6E777E; animation-delay: .14s;">KIERUNEK ROTACJI</span>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px;">
+        <sc-for list="{{dirs}}" as="d" hint-placeholder-count="2">
+          <button type="button" class="tap" onClick="{{d.pick}}" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; height: 58px; cursor: pointer; border-radius: 16px; background: {{d.bg}}; border: 1px solid {{d.line}};">
+            <span style="font-size: 14px; font-weight: 700; letter-spacing: 0.02em; color: {{d.ink}};">{{d.label}}</span>
+            <span style="font-size: 10px; color: #97A0A7;">{{d.sub}}</span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <span class="rise" style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6E777E; animation-delay: .18s;">MOJA BRYGADA</span>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px;">
+        <sc-for list="{{brigades}}" as="b" hint-placeholder-count="4">
+          <button type="button" class="tap" onClick="{{b.pick}}" style="height: 52px; cursor: pointer; border-radius: 16px; font-size: 17px; font-weight: 700; background: {{b.bg}}; border: 1px solid {{b.line}}; color: {{b.ink}};">{{b.label}}</button>
+        </sc-for>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; border-radius: 14px; background: rgba(255,255,255,0.035); border: 1px solid #1F2428;">
+        <button type="button" class="tap" onClick="{{shiftPrev}}" style="height: 34px; padding: 0 12px; border-radius: 11px; background: #13171A; border: 1px solid #262B30; color: #C5CCD1; font-size: 12px; font-weight: 600; cursor: pointer;">−1 tydzień</button>
+        <span style="font-size: 12px; font-weight: 600; color: #B7BEC3;">{{shiftLabel}}</span>
+        <button type="button" class="tap" onClick="{{shiftNext}}" style="height: 34px; padding: 0 12px; border-radius: 11px; background: #13171A; border: 1px solid #262B30; color: #C5CCD1; font-size: 12px; font-weight: 600; cursor: pointer;">+1 tydzień</button>
+      </div>
+      <p style="margin: 0; font-size: 11px; line-height: 1.5; color: #6E777E;">Nie wiesz, które przesunięcie jest Twoje? Ustaw takie, przy którym podgląd poniżej zgadza się z tym tygodniem.</p>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <span class="rise" style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6E777E; animation-delay: .22s;">PODGLĄD — 21 DNI OD DZIŚ</span>
+      <div style="display: flex; gap: 3px; padding: 12px 10px; border-radius: 18px; background: rgba(255,255,255,0.035); border: 1px solid #1F2428;">
+        <sc-for list="{{preview}}" as="p" hint-placeholder-count="21">
+          <span style="flex-grow: 1; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 7px; font-size: 8px; font-weight: 700; letter-spacing: 0.02em; background: {{p.bg}}; border: 1px solid {{p.line}}; color: {{p.ink}};">{{p.label}}</span>
+        </sc-for>
+      </div>
+    </div>
+
+    <button type="button" class="tap" style="height: 48px; width: 100%; cursor: pointer; border-radius: 15px; background: transparent; border: 1px solid #2A3036; color: #C5CCD1; font-size: 13px; font-weight: 600;">Przywróć ten miesiąc do cyklu</button>
+
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":390,"height":1200}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { system: '3z', dir: 'rev', brigade: 'A', span: 'rok', week: 3 };
+  }
+
+  renderVals() {
+    var self = this;
+    var on = { bg: 'rgba(82,208,179,0.14)', line: 'rgba(82,208,179,0.45)', ink: '#52D0B3' };
+    var off = { bg: 'rgba(255,255,255,0.035)', line: '#1F2428', ink: '#97A0A7' };
+
+    var SP = [
+      { k: '1m', l: '1 mies.' }, { k: '3m', l: '3 mies.' }, { k: '6m', l: '6 mies.' },
+      { k: 'rok', l: 'rok' }, { k: 'inf', l: 'bez końca' }
+    ];
+    var HINTS = {
+      '1m': 'Cykl wypełni wrzesień 2026.',
+      '3m': 'Cykl wypełni wrzesień – listopad 2026.',
+      '6m': 'Cykl wypełni wrzesień 2026 – luty 2027.',
+      'rok': 'Cykl wypełni wrzesień 2026 – sierpień 2027.',
+      'inf': 'Cykl wypełnia kalendarz bez końca.'
+    };
+    var spans = SP.map(function (s) {
+      var sel = s.k === self.state.span;
+      var c = sel ? on : off;
+      return { label: s.l, bg: sel ? 'rgba(82,208,179,0.16)' : 'rgba(0,0,0,0.3)', line: sel ? c.line : '#2A3036', ink: c.ink, pick: function () { self.setState({ span: s.k }); } };
+    });
+
+    var SYS = [
+      { k: '4b16', t: '4-brygadowy, cykl 16-dniowy', p: '4×I → 1 wolne → 4×III → 2 wolne → 4×II → 1 wolne', l: '16 dni' },
+      { k: '3z',   t: '3-zmianowy, rotacja tygodniowa', p: '5 dni na zmianie, weekend wolny, co tydzień inna zmiana', l: '21 dni' },
+      { k: '4bc',  t: '4-brygadowy ciągły', p: '2×I → 2×II → 2×III → 2 wolne (także weekendy)', l: '8 dni' },
+      { k: '3zc',  t: '3-zmianowy ciągły', p: '4×I → 4×II → 4×III → 4 wolne', l: '16 dni' }
+    ];
+    var systems = SYS.map(function (s) {
+      var sel = s.k === self.state.system;
+      return {
+        title: s.t, pattern: s.p, len: s.l,
+        bg: sel ? 'rgba(82,208,179,0.10)' : 'rgba(255,255,255,0.035)',
+        line: sel ? 'rgba(82,208,179,0.4)' : '#1F2428',
+        titleInk: sel ? '#52D0B3' : '#F1F3F4',
+        markBg: sel ? '#52D0B3' : 'transparent',
+        markLine: sel ? '#52D0B3' : '#2A3036',
+        markOpacity: sel ? '1' : '0',
+        pick: function () { self.setState({ system: s.k }); }
+      };
+    });
+
+    var DIR = [
+      { k: 'fwd', l: 'I → II → III', s: 'normalnie' },
+      { k: 'rev', l: 'III → II → I', s: 'odwrotnie' }
+    ];
+    var dirs = DIR.map(function (d) {
+      var sel = d.k === self.state.dir;
+      var c = sel ? on : off;
+      return { label: d.l, sub: d.s, bg: c.bg, line: c.line, ink: sel ? '#52D0B3' : '#C5CCD1', pick: function () { self.setState({ dir: d.k }); } };
+    });
+
+    var brigades = ['A', 'B', 'C', 'D'].map(function (k) {
+      var sel = k === self.state.brigade;
+      var c = sel ? on : off;
+      return { label: k, bg: c.bg, line: c.line, ink: sel ? '#52D0B3' : '#97A0A7', pick: function () { self.setState({ brigade: k }); } };
+    });
+
+    var T = {
+      I:   { bg: 'rgba(218,197,89,0.16)',  line: 'rgba(218,197,89,0.32)',  ink: '#DAC559' },
+      II:  { bg: 'rgba(255,147,126,0.15)', line: 'rgba(255,147,126,0.30)', ink: '#FF937E' },
+      III: { bg: 'rgba(122,189,255,0.15)', line: 'rgba(122,189,255,0.30)', ink: '#7ABDFF' },
+      W:   { bg: 'rgba(255,255,255,0.05)', line: '#252A2F',                ink: '#6E777E' }
+    };
+    var order = this.state.dir === 'rev' ? ['III', 'II', 'I'] : ['I', 'II', 'III'];
+    var seq = [];
+    for (var b = 0; b < 3; b++) {
+      for (var d2 = 0; d2 < 5; d2++) { seq.push(order[b]); }
+      seq.push('W'); seq.push('W');
+    }
+    var preview = seq.map(function (k) {
+      var t = T[k];
+      return { label: k === 'W' ? '·' : k, bg: t.bg, line: t.line, ink: t.ink };
+    });
+
+    return {
+      spans: spans,
+      spanHint: HINTS[this.state.span],
+      systems: systems,
+      dirs: dirs,
+      brigades: brigades,
+      preview: preview,
+      shiftLabel: 'tydzień ' + this.state.week + ' z 3',
+      shiftPrev: function () { self.setState({ week: self.state.week === 1 ? 3 : self.state.week - 1 }); },
+      shiftNext: function () { self.setState({ week: self.state.week === 3 ? 1 : self.state.week + 1 }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application>
+        <!--
+            Klasyczny ekran startowy zostaje w pakiecie, ale przestaje być tym, który
+            uruchamia system. Plik w src/main nie jest ruszany — regułę scalania
+            zapisujemy wyłącznie tutaj.
+        -->
+        <activity android:name=".MainActivity" tools:node="merge">
+            <intent-filter tools:node="removeAll" />
+        </activity>
+
+        <activity
+            android:name=".nowy.NowaActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/Theme.GrafikPracy">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

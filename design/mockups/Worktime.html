@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; background: #0A0D0F; color-scheme: dark; }
+    a { color: #52D0B3; }
+    a:hover { color: #7FE0C8; }
+    button { font-family: inherit; }
+    input { font-family: inherit; }
+    @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+    @keyframes drift { from { transform: translate3d(0,0,0) scale(1); } to { transform: translate3d(0,-16px,0) scale(1.07); } }
+    .rise { animation: rise .6s cubic-bezier(.22,1,.36,1) both; }
+    .halo { animation: drift 24s ease-in-out infinite alternate; }
+    .tap { transition: transform .15s ease, background .16s ease, border-color .16s ease, color .16s ease; }
+    .tap:active { transform: scale(0.97); }
+    .sw { position: relative; display: inline-flex; width: 46px; height: 28px; flex-shrink: 0; }
+    .sw input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; z-index: 1; }
+    .sw > span { width: 100%; height: 100%; border-radius: 999px; background: #262B30; border: 1px solid #333A40; }
+    .sw > span::after { content: ""; position: absolute; top: 4px; left: 4px; width: 20px; height: 20px; border-radius: 999px; background: #8A939B; transition: transform .16s ease, background .16s ease; }
+    .sw input:checked + span { background: rgba(82,208,179,0.22); border-color: rgba(82,208,179,0.5); }
+    .sw input:checked + span::after { transform: translateX(18px); background: #52D0B3; }
+    .num { box-sizing: border-box; width: 74px; height: 40px; padding: 0 10px; text-align: right; border-radius: 12px; background: #13171A; border: 1px solid #262B30; color: #F1F3F4; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .num::placeholder { color: #4E565C; }
+    .num:focus { outline: 2px solid rgba(82,208,179,0.55); outline-offset: 1px; }
+    @media (prefers-reduced-motion: reduce) { .rise, .halo { animation: none !important; } }
+  </style>
+</helmet>
+<div style="position: relative; width: 390px; height: 1120px; box-sizing: border-box; background: #0A0D0F; color: #F1F3F4; font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif; overflow: hidden;">
+
+  <div style="position: absolute; top: 0; left: 0; width: 390px; height: 1120px; overflow: hidden; pointer-events: none;">
+    <div class="halo" style="position: absolute; top: -220px; left: -140px; width: 480px; height: 480px; border-radius: 50%; background: radial-gradient(circle, rgba(218,197,89,0.14) 0%, rgba(218,197,89,0) 70%);"></div>
+  </div>
+
+  <div style="position: relative; width: 390px; height: 1120px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px; padding: 44px 16px 22px;">
+
+    <a href="Settings.dc.html" class="tap" style="display: inline-flex; align-items: center; gap: 6px; height: 40px; margin-left: -6px; padding: 0 6px; font-size: 13px; font-weight: 600; text-decoration: none; color: #97A0A7; align-self: flex-start;">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+      Ustawienia
+    </a>
+
+    <div class="rise" style="display: flex; flex-direction: column; gap: 6px;">
+      <h1 style="margin: 0; font-family: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif; font-size: 26px; font-weight: 700; letter-spacing: -0.03em; line-height: 1;">Czas pracy i nadgodziny</h1>
+      <p style="margin: 0; font-size: 12px; color: #97A0A7;">Tak liczymy Twoją normę i limity. Ustaw zgodnie z tym, co robi kadrowa.</p>
+    </div>
+
+    <div class="rise" style="display: flex; flex-direction: column; gap: 12px; padding: 14px; border-radius: 20px; background: rgba(255,255,255,0.035); border: 1px solid #1F2428; animation-delay: .05s;">
+      <span style="font-size: 14px; font-weight: 600;">Okres rozliczeniowy</span>
+      <p style="margin: 0; font-size: 11px; line-height: 1.5; color: #97A0A7;">Zakład rozlicza godziny w całym okresie, nie w pojedynczym miesiącu — niedobór z jednego miesiąca odrabiasz w kolejnym.</p>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px;">
+        <sc-for list="{{periods}}" as="p" hint-placeholder-count="5">
+          <button type="button" class="tap" onClick="{{p.pick}}" style="height: 42px; padding: 0 4px; cursor: pointer; border-radius: 13px; font-size: 12px; font-weight: 600; background: {{p.bg}}; border: 1px solid {{p.line}}; color: {{p.ink}};">{{p.label}}</button>
+        </sc-for>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 13px; background: rgba(82,208,179,0.08); border: 1px solid rgba(82,208,179,0.24);">
+        <span style="width: 7px; height: 7px; border-radius: 50%; background: #52D0B3; flex-shrink: 0;"></span>
+        <span style="font-size: 12px; color: #9FE3D2;">Bieżący okres: {{currentPeriod}}</span>
+      </div>
+    </div>
+
+    <div class="rise" style="display: flex; flex-direction: column; gap: 12px; padding: 14px; border-radius: 20px; background: rgba(255,255,255,0.035); border: 1px solid #1F2428; animation-delay: .09s;">
+      <label style="display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer;">
+        <span style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+          <span style="font-size: 14px; font-weight: 600;">Norma z kalendarza</span>
+          <span style="font-size: 11px; color: #97A0A7;">liczona z dni roboczych i świąt · wrzesień 2026: 176 h</span>
+        </span>
+        <span class="sw"><input type="checkbox" checked><span></span></span>
+      </label>
+      <div style="height: 1px; background: #1F2428;"></div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+        <span style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+          <span style="font-size: 14px; font-weight: 600;">Domyślna stawka nadgodzin</span>
+          <span style="font-size: 11px; color: #97A0A7;">podpowiadana przy malowaniu i w dniu</span>
+        </span>
+        <span style="display: flex; gap: 5px; flex-shrink: 0;">
+          <sc-for list="{{rates}}" as="r" hint-placeholder-count="3">
+            <button type="button" class="tap" onClick="{{r.pick}}" style="height: 38px; padding: 0 11px; cursor: pointer; border-radius: 12px; font-size: 12px; font-weight: 700; background: {{r.bg}}; border: 1px solid {{r.line}}; color: {{r.ink}};">{{r.label}}</button>
+          </sc-for>
+        </span>
+      </div>
+    </div>
+
+    <div class="rise" style="display: flex; flex-direction: column; gap: 12px; padding: 14px; border-radius: 20px; background: rgba(255,255,255,0.035); border: 1px solid #1F2428; animation-delay: .13s;">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px;">
+        <span style="font-size: 14px; font-weight: 600;">Limit nadgodzin</span>
+        <span style="font-size: 10px; color: #6E777E;">art. 131 KP</span>
+      </div>
+      <p style="margin: 0; font-size: 11px; line-height: 1.5; color: #97A0A7;">Ustawowy to 8 h na każdy pełny tydzień okresu. Jeśli Twój zakład ma własny limit, wpisz go obok — wtedy obowiązuje zamiast ustawowego.</p>
+
+      <div style="display: flex; align-items: center; gap: 10px; padding-bottom: 2px;">
+        <span style="flex-grow: 1;"></span>
+        <span style="width: 64px; flex-shrink: 0; text-align: right; font-size: 10px; font-weight: 600; letter-spacing: 0.04em; color: #6E777E;">USTAWOWO</span>
+        <span style="width: 74px; flex-shrink: 0; text-align: right; font-size: 10px; font-weight: 600; letter-spacing: 0.04em; color: #6E777E;">ZAKŁAD</span>
+      </div>
+
+      <sc-for list="{{quarters}}" as="q" hint-placeholder-count="4">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1; min-width: 0;">
+            <span style="font-size: 13px; font-weight: 600; color: {{q.ink}};">{{q.name}}</span>
+            <span style="font-size: 10px; color: #6E777E;">{{q.weeks}}</span>
+          </span>
+          <span style="width: 64px; flex-shrink: 0; text-align: right; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; color: #B7BEC3;">{{q.legal}}</span>
+          <input class="num" type="text" inputmode="numeric" placeholder="—" aria-label="{{q.aria}}">
+        </div>
+      </sc-for>
+
+      <div style="height: 1px; background: #1F2428;"></div>
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;">
+        <span style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+          <span style="font-size: 13px; font-weight: 600;">W roku razem</span>
+          <span style="font-size: 10px; line-height: 1.4; color: #6E777E;">suma limitów okresów · art. 131 KP dopuszcza w 2026 najwyżej 416 h</span>
+        </span>
+        <span style="flex-shrink: 0; font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; color: #DAC559;">408 h</span>
+      </div>
+    </div>
+
+    <div class="rise" style="display: flex; align-items: flex-start; gap: 12px; padding: 14px; border-radius: 20px; background: rgba(122,189,255,0.07); border: 1px solid rgba(122,189,255,0.22); animation-delay: .17s;">
+      <span style="width: 34px; height: 34px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 11px; background: rgba(122,189,255,0.16); color: #7ABDFF;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5"></path><path d="M12 8h.01"></path></svg>
+      </span>
+      <span style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+        <span style="font-size: 13px; font-weight: 600;">Puste pole = limit ustawowy</span>
+        <span style="font-size: 11px; line-height: 1.5; color: #B7BEC3;">Bilans i ostrzeżenia w zakładce Bilans liczą się zawsze z tego, co masz ustawione tutaj.</span>
+      </span>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":390,"height":1120}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { period: 'kwartal', rate: '100%' };
+  }
+
+  renderVals() {
+    var self = this;
+    var P = [
+      { k: 'miesiac', l: 'miesiąc', c: 'wrzesień 2026' },
+      { k: 'kwartal', l: 'kwartał', c: '3. kwartał 2026' },
+      { k: '4mies', l: '4 miesiące', c: 'lipiec – październik 2026' },
+      { k: 'pol', l: 'pół roku', c: 'lipiec – grudzień 2026' },
+      { k: 'rok', l: 'rok', c: 'rok 2026' }
+    ];
+    var periods = P.map(function (p) {
+      var on = p.k === self.state.period;
+      return {
+        label: p.l,
+        bg: on ? 'rgba(82,208,179,0.16)' : '#13171A',
+        line: on ? 'rgba(82,208,179,0.45)' : '#20252A',
+        ink: on ? '#52D0B3' : '#97A0A7',
+        pick: function () { self.setState({ period: p.k }); }
+      };
+    });
+    var cp = P[1].c;
+    for (var i = 0; i < P.length; i++) { if (P[i].k === this.state.period) { cp = P[i].c; } }
+
+    var rates = ['50%', '100%', 'odbiór'].map(function (r) {
+      var on = r === self.state.rate;
+      return {
+        label: r,
+        bg: on ? 'rgba(218,197,89,0.16)' : '#13171A',
+        line: on ? 'rgba(218,197,89,0.42)' : '#262B30',
+        ink: on ? '#DAC559' : '#97A0A7',
+        pick: function () { self.setState({ rate: r }); }
+      };
+    });
+
+    var Q = [
+      { n: '1. kwartał 2026', w: '12 tygodni', l: '96 h', cur: false },
+      { n: '2. kwartał 2026', w: '13 tygodni', l: '104 h', cur: false },
+      { n: '3. kwartał 2026', w: '13 tygodni', l: '104 h', cur: true },
+      { n: '4. kwartał 2026', w: '13 tygodni', l: '104 h', cur: false }
+    ];
+    var quarters = Q.map(function (q) {
+      return {
+        name: q.n, weeks: q.w, legal: q.l,
+        ink: q.cur ? '#DAC559' : '#E7EAEC',
+        aria: 'Limit zakładowy, ' + q.n
+      };
+    });
+
+    return { periods: periods, currentPeriod: cp, rates: rates, quarters: quarters };
+  }
+}
+</script>
+</body>
+</html>

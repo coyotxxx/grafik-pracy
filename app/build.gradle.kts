@@ -21,6 +21,27 @@ android {
     buildTypes {
         release { isMinifyEnabled = false }
     }
+
+    /**
+     * Dwa warianty aplikacji.
+     *
+     * „klasyczny" buduje się dokładnie z tego, co w src/main — bit w bit tak jak dotąd.
+     * „nowy" dokłada src/nowy (własny ekran startowy, tokeny, fonty) i instaluje się
+     * OBOK na telefonie, pod innym identyfikatorem. Dzięki temu działająca aplikacja
+     * Macieja zostaje nietknięta, cokolwiek stanie się z nowym wyglądem.
+     */
+    flavorDimensions += "wyglad"
+    productFlavors {
+        create("klasyczny") {
+            dimension = "wyglad"
+            isDefault = true
+        }
+        create("nowy") {
+            dimension = "wyglad"
+            applicationIdSuffix = ".nowy"
+            versionNameSuffix = "-nowy"
+        }
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; background: #0A0D0F; color-scheme: dark; }
+    a { color: #52D0B3; }
+    a:hover { color: #7FE0C8; }
+    button { font-family: inherit; }
+    @keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+    @keyframes drift { from { transform: translate3d(0,0,0) scale(1); } to { transform: translate3d(0,-16px,0) scale(1.07); } }
+    .rise { animation: rise .65s cubic-bezier(.22,1,.36,1) both; }
+    .halo { animation: drift 22s ease-in-out infinite alternate; }
+    .tap { transition: transform .16s ease, background .16s ease, border-color .16s ease; }
+    .tap:active { transform: scale(0.97); }
+    @media (prefers-reduced-motion: reduce) { .rise, .halo { animation: none !important; } }
+  </style>
+</helmet>
+<div style="position: relative; width: 390px; height: 1060px; box-sizing: border-box; background: #0A0D0F; color: #F1F3F4; font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif; overflow: hidden;">
+
+  <div style="position: absolute; top: 0; left: 0; width: 390px; height: 1060px; overflow: hidden; pointer-events: none;">
+    <div class="halo" style="position: absolute; top: -200px; left: -120px; width: 480px; height: 480px; border-radius: 50%; background: radial-gradient(circle, rgba(244,144,217,0.20) 0%, rgba(244,144,217,0) 70%);"></div>
+  </div>
+
+  <div style="position: relative; width: 390px; height: 1060px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px; padding: 44px 16px 22px;">
+
+    <a href="Summary.dc.html" class="tap" style="display: inline-flex; align-items: center; gap: 6px; height: 40px; margin-left: -6px; padding: 0 6px; font-size: 13px; font-weight: 600; text-decoration: none; color: #97A0A7; align-self: flex-start;">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+      Bilans
+    </a>
+
+    <div class="rise" style="display: flex; flex-direction: column;">
+      <h1 style="margin: 0; font-family: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif; font-size: 27px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.05;">Kiedy wziąć urlop</h1>
+      <p style="margin: 8px 0 0; font-size: 12px; line-height: 1.5; color: #97A0A7;">Miejsca, w których kilka dni urlopu daje najdłuższy ciąg wolnego. Liczone rok do przodu z Twojego cyklu i kalendarza świąt.</p>
+    </div>
+
+    <div class="rise" style="display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 18px; background: rgba(255,255,255,0.035); border: 1px solid #1F2428; animation-delay: .05s;">
+      <span style="width: 34px; height: 34px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 11px; background: rgba(244,144,217,0.14); color: #F490D9;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a8 8 0 0 1 13.7-5.6L21 8M21 4v4h-4M20 13a8 8 0 0 1-13.7 5.6L3 16M3 20v-4h4"></path></svg>
+      </span>
+      <span style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1; min-width: 0;">
+        <span style="font-size: 13px; font-weight: 600;">3-zmianowy, rotacja tygodniowa</span>
+        <span style="font-size: 11px; color: #97A0A7;">brygada A · III → II → I · przesunięcie 2</span>
+      </span>
+      <span style="flex-shrink: 0; display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 999px; background: rgba(244,144,217,0.14); border: 1px solid rgba(244,144,217,0.32); font-size: 11px; font-weight: 700; color: #F490D9;">14 dni</span>
+    </div>
+
+    <div class="rise" style="display: flex; gap: 6px; animation-delay: .08s;">
+      <sc-for list="{{filters}}" as="f" hint-placeholder-count="3">
+        <button type="button" class="tap" onClick="{{f.pick}}" style="flex-grow: 1; height: 38px; cursor: pointer; border-radius: 12px; font-size: 12px; font-weight: 600; background: {{f.bg}}; border: 1px solid {{f.line}}; color: {{f.ink}};">{{f.label}}</button>
+      </sc-for>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px; overflow: hidden;">
+      <sc-for list="{{items}}" as="it" hint-placeholder-count="4">
+        <div class="rise" style="display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 20px; background: {{it.bg}}; border: 1px solid {{it.line}}; animation-delay: {{it.delay}};">
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;">
+            <span style="display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+              <span style="display: flex; align-items: baseline; gap: 6px;">
+                <span style="font-family: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif; font-size: 28px; font-weight: 700; line-height: 0.9; color: {{it.numInk}}; font-variant-numeric: tabular-nums;">{{it.free}}</span>
+                <span style="font-size: 12px; font-weight: 600; color: #B7BEC3;">dni wolnego pod rząd</span>
+              </span>
+              <span style="font-size: 14px; font-weight: 600;">{{it.range}}</span>
+            </span>
+            <span style="flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; width: 58px; height: 52px; border-radius: 15px; background: rgba(244,144,217,0.12); border: 1px solid rgba(244,144,217,0.28);">
+              <span style="font-size: 18px; font-weight: 700; line-height: 1; color: #F490D9; font-variant-numeric: tabular-nums;">{{it.cost}}</span>
+              <span style="font-size: 9px; color: #97A0A7;">dni urlopu</span>
+            </span>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 7px; font-size: 11px; color: #C5CCD1;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#F490D9" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-8"></path><path d="M3 13a9 9 0 0 1 18 0z"></path></svg>
+            urlop: {{it.days}}
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 7px; font-size: 11px; color: {{it.holidayInk}};">
+            <span style="width: 6px; height: 6px; border-radius: 50%; background: {{it.holidayDot}};"></span>
+            {{it.holidays}}
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 2px;">
+            <span style="display: flex; align-items: center; gap: 8px; flex-grow: 1; min-width: 0;">
+              <span style="flex-grow: 1; height: 5px; border-radius: 999px; background: #1E2327; display: flex; overflow: hidden;">
+                <span style="width: {{it.ratioBar}}; border-radius: 999px; background: {{it.numInk}};"></span>
+              </span>
+              <span style="flex-shrink: 0; font-size: 10px; color: #97A0A7; font-variant-numeric: tabular-nums;">{{it.ratio}}</span>
+            </span>
+            <button type="button" class="tap" style="flex-shrink: 0; height: 34px; padding: 0 12px; border-radius: 11px; background: rgba(255,255,255,0.05); border: 1px solid #2A3036; color: #E7EAEC; font-size: 11px; font-weight: 700; cursor: pointer;">Wpisz w grafik</button>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":390,"height":1060}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { filter: 'ratio' };
+  }
+
+  renderVals() {
+    var self = this;
+    var FL = [
+      { k: 'ratio', l: 'Najlepszy zysk' },
+      { k: 'long', l: 'Najdłuższe' },
+      { k: 'soon', l: 'Najbliższe' }
+    ];
+    var filters = FL.map(function (f) {
+      var on = f.k === self.state.filter;
+      return {
+        label: f.l,
+        bg: on ? 'rgba(82,208,179,0.14)' : 'rgba(255,255,255,0.04)',
+        line: on ? 'rgba(82,208,179,0.4)' : '#23282D',
+        ink: on ? '#52D0B3' : '#97A0A7',
+        pick: function () { self.setState({ filter: f.k }); }
+      };
+    });
+
+    var raw = [
+      { free: 4, range: '17 – 20 września', cost: 2, days: '17.09, 18.09', holidays: 'weekend po zmianie nocnej', hol: false, ratio: '2,0 dnia za 1 dzień urlopu', bar: '100%', ink: '#52D0B3', bg: 'rgba(82,208,179,0.06)', line: 'rgba(82,208,179,0.24)' },
+      { free: 9, range: '19 – 27 grudnia', cost: 5, days: '21.12 – 25.12', holidays: 'w środku: Boże Narodzenie, Drugi dzień Świąt', hol: true, ratio: '1,8 dnia za 1 dzień urlopu', bar: '90%', ink: '#7ABDFF', bg: 'rgba(255,255,255,0.035)', line: '#1F2428' },
+      { free: 9, range: '27 marca – 4 kwietnia', cost: 5, days: '29.03 – 2.04', holidays: 'w środku: Wielkanoc, Poniedziałek Wielkanocny', hol: true, ratio: '1,8 dnia za 1 dzień urlopu', bar: '90%', ink: '#7ABDFF', bg: 'rgba(255,255,255,0.035)', line: '#1F2428' },
+      { free: 9, range: '1 – 9 maja', cost: 5, days: '3.05 – 7.05', holidays: 'w środku: Święto Pracy, 3 Maja', hol: true, ratio: '1,8 dnia za 1 dzień urlopu', bar: '90%', ink: '#7ABDFF', bg: 'rgba(255,255,255,0.035)', line: '#1F2428' }
+    ];
+
+    var items = raw.map(function (r, i) {
+      return {
+        free: r.free,
+        range: r.range,
+        cost: r.cost,
+        days: r.days,
+        holidays: r.holidays,
+        holidayInk: r.hol ? '#8FD7A8' : '#97A0A7',
+        holidayDot: r.hol ? '#8FD7A8' : '#4E565C',
+        ratio: r.ratio,
+        ratioBar: r.bar,
+        numInk: r.ink,
+        bg: r.bg,
+        line: r.line,
+        delay: (0.12 + i * 0.07).toFixed(2) + 's'
+      };
+    });
+
+    return { filters: filters, items: items };
+  }
+}
+</script>
+</body>
+</html>

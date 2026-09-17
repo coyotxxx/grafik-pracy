@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; background: #0A0D0F; color-scheme: dark; }
+    a { color: #52D0B3; }
+    a:hover { color: #7FE0C8; }
+    button { font-family: inherit; }
+    @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+    @keyframes drift { from { transform: translate3d(0,0,0) scale(1); } to { transform: translate3d(0,-16px,0) scale(1.07); } }
+    .rise { animation: rise .6s cubic-bezier(.22,1,.36,1) both; }
+    .halo { animation: drift 24s ease-in-out infinite alternate; }
+    .tap { transition: transform .15s ease, background .16s ease, border-color .16s ease, color .16s ease; }
+    .tap:active { transform: scale(0.96); }
+    @media (prefers-reduced-motion: reduce) { .rise, .halo { animation: none !important; } }
+  </style>
+</helmet>
+<div style="position: relative; width: 390px; height: 1120px; box-sizing: border-box; background: #0A0D0F; color: #F1F3F4; font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif; overflow: hidden;">
+
+  <div style="position: absolute; top: 0; left: 0; width: 390px; height: 1120px; overflow: hidden; pointer-events: none;">
+    <div class="halo" style="position: absolute; top: -200px; left: -130px; width: 470px; height: 470px; border-radius: 50%; background: radial-gradient(circle, rgba(244,144,217,0.18) 0%, rgba(244,144,217,0) 70%);"></div>
+  </div>
+
+  <div style="position: relative; width: 390px; height: 1120px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px; padding: 44px 16px 22px;">
+
+    <a href="Settings.dc.html" class="tap" style="display: inline-flex; align-items: center; gap: 6px; height: 40px; margin-left: -6px; padding: 0 6px; font-size: 13px; font-weight: 600; text-decoration: none; color: #97A0A7; align-self: flex-start;">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+      Ustawienia
+    </a>
+
+    <div class="rise" style="display: flex; flex-direction: column; gap: 6px;">
+      <h1 style="margin: 0; font-family: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif; font-size: 26px; font-weight: 700; letter-spacing: -0.03em; line-height: 1;">Urlop</h1>
+      <p style="margin: 0; font-size: 12px; color: #97A0A7;">Ustaw raz w roku — dalej aplikacja odlicza sama.</p>
+    </div>
+
+    <div class="rise" style="display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 22px; background: rgba(244,144,217,0.07); border: 1px solid rgba(244,144,217,0.24); animation-delay: .05s;">
+      <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #97A0A7;">ZOSTAŁO NA 2026</span>
+      <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 12px;">
+        <span style="display: flex; align-items: baseline; gap: 7px;">
+          <span style="font-family: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif; font-size: 42px; font-weight: 700; line-height: 0.9; color: #F490D9; font-variant-numeric: tabular-nums;">{{left}}</span>
+          <span style="font-size: 14px; font-weight: 600; color: #D7DBDE;">dni</span>
+        </span>
+        <span style="font-size: 11px; color: #97A0A7; text-align: right;">z {{total}} dni wymiaru<br>{{used}} wykorzystane</span>
+      </div>
+      <div style="height: 8px; border-radius: 999px; background: rgba(0,0,0,0.3); display: flex; overflow: hidden;">
+        <div style="width: {{usedBar}}; border-radius: 999px; background: #F490D9;"></div>
+      </div>
+    </div>
+
+    <div class="rise" style="display: flex; flex-direction: column; gap: 12px; padding: 14px; border-radius: 20px; background: rgba(255,255,255,0.035); border: 1px solid #1F2428; animation-delay: .09s;">
+      <span style="display: flex; flex-direction: column; gap: 3px;">
+        <span style="font-size: 14px; font-weight: 600;">Wymiar roczny</span>
+        <span style="font-size: 11px; color: #97A0A7;">20 dni do 10 lat stażu, 26 powyżej</span>
+      </span>
+      <div style="display: flex; gap: 6px;">
+        <button type="button" class="tap" onClick="{{set20}}" style="flex-grow: 1; height: 46px; cursor: pointer; border-radius: 14px; font-size: 14px; font-weight: 700; background: {{b20.bg}}; border: 1px solid {{b20.line}}; color: {{b20.ink}};">20 dni</button>
+        <button type="button" class="tap" onClick="{{set26}}" style="flex-grow: 1; height: 46px; cursor: pointer; border-radius: 14px; font-size: 14px; font-weight: 700; background: {{b26.bg}}; border: 1px solid {{b26.line}}; color: {{b26.ink}};">26 dni</button>
+        <span style="display: flex; align-items: center; gap: 4px; flex-shrink: 0; padding: 0 6px; border-radius: 14px; background: #13171A; border: 1px solid #262B30;">
+          <button type="button" class="tap" onClick="{{decBase}}" aria-label="Mniej dni wymiaru" style="width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border: none; border-radius: 10px; background: transparent; color: #C5CCD1; cursor: pointer;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"></path></svg>
+          </button>
+          <span style="min-width: 26px; text-align: center; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums;">{{base}}</span>
+          <button type="button" class="tap" onClick="{{incBase}}" aria-label="Więcej dni wymiaru" style="width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border: none; border-radius: 10px; background: transparent; color: #C5CCD1; cursor: pointer;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+          </button>
+        </span>
+      </div>
+
+      <div style="height: 1px; background: #1F2428;"></div>
+
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+        <span style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+          <span style="font-size: 14px; font-weight: 600;">Zaległy z 2025</span>
+          <span style="font-size: 11px; color: #97A0A7;">doliczany do wymiaru</span>
+        </span>
+        <span style="display: flex; align-items: center; gap: 4px; flex-shrink: 0; padding: 0 6px; border-radius: 14px; background: #13171A; border: 1px solid #262B30;">
+          <button type="button" class="tap" onClick="{{decOld}}" aria-label="Mniej dni zaległych" style="width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border: none; border-radius: 10px; background: transparent; color: #C5CCD1; cursor: pointer;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"></path></svg>
+          </button>
+          <span style="min-width: 26px; text-align: center; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums;">{{old}}</span>
+          <button type="button" class="tap" onClick="{{incOld}}" aria-label="Więcej dni zaległych" style="width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border: none; border-radius: 10px; background: transparent; color: #C5CCD1; cursor: pointer;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+          </button>
+        </span>
+      </div>
+
+      <div style="display: flex; align-items: flex-start; gap: 10px; padding: 11px 12px; border-radius: 14px; background: {{warn.bg}}; border: 1px solid {{warn.line}};">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{warn.ink}}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 1px;"><path d="M12 9v5"></path><path d="M12 17h.01"></path><path d="M10.3 4.2 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 0z"></path></svg>
+        <span style="font-size: 11px; line-height: 1.5; color: {{warn.ink}};">{{warn.text}}</span>
+      </div>
+    </div>
+
+    <div class="rise" style="display: flex; flex-direction: column; gap: 12px; padding: 14px; border-radius: 20px; background: rgba(255,255,255,0.035); border: 1px solid #1F2428; animation-delay: .13s;">
+      <span style="display: flex; flex-direction: column; gap: 3px;">
+        <span style="font-size: 14px; font-weight: 600;">Stan z zakładu</span>
+        <span style="font-size: 11px; line-height: 1.5; color: #97A0A7;">Jeśli kadrowa poda Ci aktualne liczby, zapisz je tutaj. Od tego dnia aplikacja odlicza sama, zdejmując najpierw urlop zaległy.</span>
+      </span>
+
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+        <span style="font-size: 13px; color: #B7BEC3;">bieżący</span>
+        <span style="display: flex; align-items: center; gap: 4px; flex-shrink: 0; padding: 0 6px; border-radius: 14px; background: #13171A; border: 1px solid #262B30;">
+          <button type="button" class="tap" onClick="{{decCur}}" aria-label="Mniej dni bieżących" style="width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border: none; border-radius: 10px; background: transparent; color: #C5CCD1; cursor: pointer;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"></path></svg>
+          </button>
+          <span style="min-width: 26px; text-align: center; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums;">{{cur}}</span>
+          <button type="button" class="tap" onClick="{{incCur}}" aria-label="Więcej dni bieżących" style="width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border: none; border-radius: 10px; background: transparent; color: #C5CCD1; cursor: pointer;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+          </button>
+        </span>
+      </div>
+
+      <button type="button" class="tap" style="height: 48px; border: none; border-radius: 15px; background: #F490D9; color: #2A0B24; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 10px 26px rgba(244,144,217,0.18);">Zapisz stan na dziś</button>
+
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+        <span style="font-size: 11px; color: #97A0A7;">Zapisane 17.09.2026: {{cur}} bieżącego, {{old}} zaległego</span>
+        <button type="button" class="tap" style="flex-shrink: 0; height: 30px; padding: 0 10px; border-radius: 10px; background: transparent; border: 1px solid #2A3036; color: #97A0A7; font-size: 11px; font-weight: 600; cursor: pointer;">Wyczyść</button>
+      </div>
+    </div>
+
+    <div class="rise" style="display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 20px; background: rgba(255,255,255,0.03); border: 1px solid #1F2428; animation-delay: .17s;">
+      <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6E777E;">JAK TO LICZYMY</span>
+      <div style="display: flex; align-items: flex-start; gap: 9px;">
+        <span style="width: 5px; height: 5px; margin-top: 6px; flex-shrink: 0; border-radius: 50%; background: #F490D9;"></span>
+        <span style="font-size: 12px; line-height: 1.5; color: #B7BEC3;">Dzień urlopu = 8 h i wlicza się do normy miesiąca.</span>
+      </div>
+      <div style="display: flex; align-items: flex-start; gap: 9px;">
+        <span style="width: 5px; height: 5px; margin-top: 6px; flex-shrink: 0; border-radius: 50%; background: #F490D9;"></span>
+        <span style="font-size: 12px; line-height: 1.5; color: #B7BEC3;">Najpierw zdejmujemy zaległy, dopiero potem bieżący.</span>
+      </div>
+      <div style="display: flex; align-items: flex-start; gap: 9px;">
+        <span style="width: 5px; height: 5px; margin-top: 6px; flex-shrink: 0; border-radius: 50%; background: #F490D9;"></span>
+        <span style="font-size: 12px; line-height: 1.5; color: #B7BEC3;">Liczymy dni oznaczone w grafiku jako U — także te w przyszłości.</span>
+      </div>
+    </div>
+
+    <a href="Vacation.dc.html" class="tap" style="display: flex; align-items: center; justify-content: center; gap: 8px; height: 48px; border-radius: 15px; background: rgba(244,144,217,0.12); border: 1px solid rgba(244,144,217,0.32); color: #F490D9; font-size: 13px; font-weight: 700; text-decoration: none;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-8"></path><path d="M3 13a9 9 0 0 1 18 0z"></path></svg>
+      Kiedy najlepiej wziąć urlop
+    </a>
+
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":390,"height":1120}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { base: 26, old: 0, cur: 14 };
+  }
+
+  renderVals() {
+    var self = this;
+    var total = this.state.base + this.state.old;
+    var left = Math.min(this.state.cur + this.state.old, total);
+    var used = total - left;
+    var pct = total > 0 ? Math.round((used / total) * 100) : 0;
+
+    var pill = function (on) {
+      return on
+        ? { bg: 'rgba(244,144,217,0.16)', line: 'rgba(244,144,217,0.42)', ink: '#F490D9' }
+        : { bg: '#13171A', line: '#262B30', ink: '#97A0A7' };
+    };
+
+    var warn = this.state.old > 0
+      ? { bg: 'rgba(218,197,89,0.08)', line: 'rgba(218,197,89,0.26)', ink: '#DAC559', text: 'Zaległy urlop trzeba wykorzystać do 30 września. Przypomnimy w sierpniu.' }
+      : { bg: 'rgba(255,255,255,0.03)', line: '#1F2428', ink: '#8A939B', text: 'Brak zaległego urlopu — nic nie przepada.' };
+
+    return {
+      base: this.state.base,
+      old: this.state.old,
+      cur: this.state.cur,
+      total: total,
+      left: left,
+      used: used,
+      usedBar: pct + '%',
+      b20: pill(this.state.base === 20),
+      b26: pill(this.state.base === 26),
+      warn: warn,
+      set20: function () { self.setState({ base: 20 }); },
+      set26: function () { self.setState({ base: 26 }); },
+      incBase: function () { self.setState({ base: Math.min(40, self.state.base + 1) }); },
+      decBase: function () { self.setState({ base: Math.max(0, self.state.base - 1) }); },
+      incOld: function () { self.setState({ old: Math.min(40, self.state.old + 1) }); },
+      decOld: function () { self.setState({ old: Math.max(0, self.state.old - 1) }); },
+      incCur: function () { self.setState({ cur: Math.min(60, self.state.cur + 1) }); },
+      decCur: function () { self.setState({ cur: Math.max(0, self.state.cur - 1) }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; background: #0A0D0F; color-scheme: dark; }
+    a { color: #52D0B3; }
+    a:hover { color: #7FE0C8; }
+    button { font-family: inherit; }
+    @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+    @keyframes drift { from { transform: translate3d(0,0,0) scale(1); } to { transform: translate3d(0,-16px,0) scale(1.07); } }
+    .rise { animation: rise .6s cubic-bezier(.22,1,.36,1) both; }
+    .halo { animation: drift 24s ease-in-out infinite alternate; }
+    .row { transition: transform .15s ease, background .16s ease, border-color .16s ease; }
+    .row:active { transform: scale(0.985); background: rgba(255,255,255,0.06); }
+    @media (prefers-reduced-motion: reduce) { .rise, .halo { animation: none !important; } }
+  </style>
+</helmet>
+<div style="position: relative; width: 390px; height: 1160px; box-sizing: border-box; background: #0A0D0F; color: #F1F3F4; font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif; overflow: hidden;">
+
+  <div style="position: absolute; top: 0; left: 0; width: 390px; height: 1160px; overflow: hidden; pointer-events: none;">
+    <div class="halo" style="position: absolute; top: -220px; right: -140px; width: 480px; height: 480px; border-radius: 50%; background: radial-gradient(circle, rgba(82,208,179,0.14) 0%, rgba(82,208,179,0) 70%);"></div>
+  </div>
+
+  <div style="position: relative; width: 390px; height: 1160px; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px; padding: 44px 0 0 0;">
+
+    <h1 class="rise" style="margin: 0; padding: 0 16px; font-family: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif; font-size: 27px; font-weight: 700; letter-spacing: -0.03em; line-height: 1;">Ustawienia</h1>
+
+    <a href="Cycle.dc.html" class="rise row" style="display: flex; align-items: center; gap: 14px; margin: 0 16px; padding: 16px; border-radius: 22px; background: linear-gradient(140deg, rgba(82,208,179,0.10), rgba(122,189,255,0.06)); border: 1px solid rgba(82,208,179,0.25); text-decoration: none; color: inherit; animation-delay: .04s;">
+      <span style="width: 46px; height: 46px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 15px; background: rgba(82,208,179,0.16); color: #52D0B3;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a8 8 0 0 1 13.7-5.6L21 8M21 4v4h-4M20 13a8 8 0 0 1-13.7 5.6L3 16M3 20v-4h4"></path></svg>
+      </span>
+      <span style="display: flex; flex-direction: column; gap: 4px; flex-grow: 1; min-width: 0;">
+        <span style="font-size: 15px; font-weight: 700;">Mój cykl</span>
+        <span style="font-size: 11px; color: #B7BEC3;">Brygada A · 3-zmianowy · rotacja tygodniowa</span>
+        <span style="font-size: 11px; color: #52D0B3;">grafik wypełnia się sam do sierpnia 2027</span>
+      </span>
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#8A939B" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M9 5l7 7-7 7"></path></svg>
+    </a>
+
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 0 16px;">
+      <span class="rise" style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6E777E; animation-delay: .08s;">ROZLICZANIE</span>
+
+      <a href="Worktime.dc.html" class="rise row" style="display: flex; align-items: center; gap: 14px; padding: 14px; border-radius: 18px; background: rgba(255,255,255,0.035); border: 1px solid #1F2428; text-decoration: none; color: inherit; animation-delay: .1s;">
+        <span style="width: 40px; height: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 13px; background: rgba(218,197,89,0.12); color: #DAC559;">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3.5 2"></path></svg>
+        </span>
+        <span style="display: flex; flex-direction: column; gap: 3px; flex-grow: 1; min-width: 0;">
+          <span style="font-size: 14px; font-weight: 600;">Czas pracy i nadgodziny</span>
+          <span style="font-size: 11px; color: #97A0A7;">okres: kwartał · limit 104 h · norma z kalendarza</span>
+        </span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A939B" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M9 5l7 7-7 7"></path></svg>
+      </a>
+
+      <a href="Pay.dc.html" class="rise row" style="display: flex; align-items: center; gap: 14px; padding: 14px; border-radius: 18px; background: rgba(255,255,255,0.035); border: 1px solid #1F2428; text-decoration: none; color: inherit; animation-delay: .115s;">
+        <span style="width: 40px; height: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 13px; background: rgba(218,197,89,0.12); color: #DAC559;">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5A2.5 2.5 0 0 1 5.5 6H19a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5.5A2.5 2.5 0 0 1 3 16.5z"></path><path d="M3 9h18"></path><circle cx="16.5" cy="13.5" r="1.3"></circle></svg>
+        </span>
+        <span style="display: flex; flex-direction: column; gap: 3px; flex-grow: 1; min-width: 0;">
+          <span style="font-size: 14px; font-weight: 600;">Stawki i wypłata</span>
+          <span style="font-size: 11px; color: #97A0A7;">28,50 zł/h · dodatek nocny z mojej stawki · premia 10%</span>
+        </span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A939B" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M9 5l7 7-7 7"></path></svg>
+      </a>
+
+      <a href="Rest.dc.html" class="rise row" style="display: flex; align-items: center; gap: 14px; padding: 14px; border-radius: 18px; background: rgba(255,255,255,0.035); border: 1px solid #1F2428; text-decoration: none; color: inherit; animation-delay: .125s;">
+        <span style="width: 40px; height: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 13px; background: rgba(255,147,126,0.12); color: #FF937E;">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 14.5A7 7 0 0 1 9.5 6.5a7 7 0 1 0 8 8z"></path></svg>
+        </span>
+        <span style="display: flex; flex-direction: column; gap: 3px; flex-grow: 1; min-width: 0;">
+          <span style="font-size: 14px; font-weight: 600;">Odpoczynek</span>
+          <span style="font-size: 11px; color: #97A0A7;">11 h na dobę, 35 h w tygodniu · ostrzeżenia</span>
+        </span>
+        <span style="flex-shrink: 0; display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; background: rgba(255,147,126,0.14); border: 1px solid rgba(255,147,126,0.3); font-size: 10px; font-weight: 700; color: #FF937E;">1</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A939B" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M9 5l7 7-7 7"></path></svg>
+      </a>
+
+      <a href="Leave.dc.html" class="rise row" style="display: flex; align-items: center; gap: 14px; padding: 14px; border-radius: 18px; background: rgba(255,255,255,0.035); border: 1px solid #1F2428; text-decoration: none; color: inherit; animation-delay: .13s;">
+        <span style="width: 40px; height: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 13px; background: rgba(244,144,217,0.12); color: #F490D9;">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-8"></path><path d="M3 13a9 9 0 0 1 18 0z"></path></svg>
+        </span>
+        <span style="display: flex; flex-direction: column; gap: 3px; flex-grow: 1; min-width: 0;">
+          <span style="font-size: 14px; font-weight: 600;">Urlop</span>
+          <span style="font-size: 11px; color: #97A0A7;">26 dni wymiaru · 0 zaległych · stan z 17.09</span>
+        </span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A939B" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M9 5l7 7-7 7"></path></svg>
+      </a>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 0 16px;">
+      <span class="rise" style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6E777E; animation-delay: .16s;">AUTOMATYKA</span>
+
+      <a href="Detect.dc.html" class="rise row" style="display: flex; align-items: center; gap: 14px; padding: 14px; border-radius: 18px; background: rgba(255,255,255,0.035); border: 1px solid #1F2428; text-decoration: none; color: inherit; animation-delay: .18s;">
+        <span style="width: 40px; height: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 13px; background: rgba(122,189,255,0.12); color: #7ABDFF;">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11z"></path><circle cx="12" cy="10" r="2.6"></circle></svg>
+        </span>
+        <span style="display: flex; flex-direction: column; gap: 3px; flex-grow: 1; min-width: 0;">
+          <span style="font-size: 14px; font-weight: 600;">Wykrywanie pracy</span>
+          <span style="font-size: 11px; color: #97A0A7;">włączone · 250 m · AgileWiFi · auto-zapis</span>
+        </span>
+        <span style="width: 8px; height: 8px; flex-shrink: 0; border-radius: 50%; background: #3FA98F; box-shadow: 0 0 10px rgba(63,169,143,0.7);"></span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A939B" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M9 5l7 7-7 7"></path></svg>
+      </a>
+
+      <a href="Notify.dc.html" class="rise row" style="display: flex; align-items: center; gap: 14px; padding: 14px; border-radius: 18px; background: rgba(255,255,255,0.035); border: 1px solid #1F2428; text-decoration: none; color: inherit; animation-delay: .21s;">
+        <span style="width: 40px; height: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 13px; background: rgba(255,147,126,0.12); color: #FF937E;">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 6-2 7-2 7h16s-2-1-2-7z"></path><path d="M10.5 20a2 2 0 0 0 3 0"></path></svg>
+        </span>
+        <span style="display: flex; flex-direction: column; gap: 3px; flex-grow: 1; min-width: 0;">
+          <span style="font-size: 14px; font-weight: 600;">Powiadomienia</span>
+          <span style="font-size: 11px; color: #97A0A7;">wydarzenia: dzień wcześniej 18:00 · zmiana: 1 h przed</span>
+        </span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A939B" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M9 5l7 7-7 7"></path></svg>
+      </a>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 0 16px;">
+      <span class="rise" style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6E777E; animation-delay: .24s;">APLIKACJA</span>
+
+      <a href="Look.dc.html" class="rise row" style="display: flex; align-items: center; gap: 14px; padding: 14px; border-radius: 18px; background: rgba(255,255,255,0.035); border: 1px solid #1F2428; text-decoration: none; color: inherit; animation-delay: .26s;">
+        <span style="width: 40px; height: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 13px; background: rgba(255,255,255,0.06); color: #C5CCD1;">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5a8.5 8.5 0 1 0 0 17c1.1 0 1.9-.9 1.9-1.9 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-1 .8-1.8 1.8-1.8h1.1a4.7 4.7 0 0 0 4.7-4.7c0-3.4-3.8-6.2-8.5-6.2z"></path><circle cx="7.8" cy="11.2" r="1.1"></circle><circle cx="11" cy="7.8" r="1.1"></circle><circle cx="15.2" cy="8.6" r="1.1"></circle></svg>
+        </span>
+        <span style="display: flex; flex-direction: column; gap: 3px; flex-grow: 1; min-width: 0;">
+          <span style="font-size: 14px; font-weight: 600;">Wygląd i kolory</span>
+          <span style="font-size: 11px; color: #97A0A7;">ciemny · zestaw „Pory dnia”</span>
+        </span>
+        <span style="display: flex; gap: 3px; flex-shrink: 0;">
+          <span style="width: 12px; height: 12px; border-radius: 4px; background: #DAC559;"></span>
+          <span style="width: 12px; height: 12px; border-radius: 4px; background: #FF937E;"></span>
+          <span style="width: 12px; height: 12px; border-radius: 4px; background: #7ABDFF;"></span>
+        </span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A939B" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M9 5l7 7-7 7"></path></svg>
+      </a>
+
+      <a href="Data.dc.html" class="rise row" style="display: flex; align-items: center; gap: 14px; padding: 14px; border-radius: 18px; background: rgba(255,255,255,0.035); border: 1px solid #1F2428; text-decoration: none; color: inherit; animation-delay: .29s;">
+        <span style="width: 40px; height: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 13px; background: rgba(255,255,255,0.06); color: #C5CCD1;">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3z"></path><path d="M4 7v10c0 1.7 3.6 3 8 3s8-1.3 8-3V7"></path><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"></path></svg>
+        </span>
+        <span style="display: flex; flex-direction: column; gap: 3px; flex-grow: 1; min-width: 0;">
+          <span style="font-size: 14px; font-weight: 600;">Dane i kopia</span>
+          <span style="font-size: 11px; color: #97A0A7;">eksport, import, czyszczenie ręcznych zmian</span>
+        </span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A939B" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M9 5l7 7-7 7"></path></svg>
+      </a>
+
+      <a href="Data.dc.html" class="rise row" style="display: flex; align-items: center; gap: 14px; padding: 14px; border-radius: 18px; background: rgba(255,255,255,0.035); border: 1px solid #1F2428; text-decoration: none; color: inherit; animation-delay: .32s;">
+        <span style="width: 40px; height: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 13px; background: rgba(255,255,255,0.06); color: #C5CCD1;">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5"></path><path d="M12 8h.01"></path></svg>
+        </span>
+        <span style="display: flex; flex-direction: column; gap: 3px; flex-grow: 1; min-width: 0;">
+          <span style="font-size: 14px; font-weight: 600;">O aplikacji</span>
+          <span style="font-size: 11px; color: #97A0A7;">wersja 1.29.0 · aktualizacje z GitHuba</span>
+        </span>
+        <span style="flex-shrink: 0; display: inline-flex; align-items: center; height: 24px; padding: 0 9px; border-radius: 999px; background: rgba(82,208,179,0.14); border: 1px solid rgba(82,208,179,0.3); font-size: 10px; font-weight: 700; color: #52D0B3;">aktualna</span>
+      </a>
+    </div>
+
+    <nav style="margin-top: auto; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding: 8px 10px 18px; background: rgba(13,16,18,0.92); border-top: 1px solid #1B1F23;">
+      <a href="Home.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-height: 48px; padding: 6px 0; border-radius: 13px; text-decoration: none; color: #97A0A7;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5V12l3 2"></path></svg>
+        <span style="font-size: 10px; font-weight: 600;">Teraz</span>
+      </a>
+      <a href="Main.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-height: 48px; padding: 6px 0; border-radius: 13px; text-decoration: none; color: #97A0A7;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="3"></rect><path d="M8 2.5v4M16 2.5v4M3 9.5h18"></path></svg>
+        <span style="font-size: 10px; font-weight: 600;">Grafik</span>
+      </a>
+      <a href="Summary.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-height: 48px; padding: 6px 0; border-radius: 13px; text-decoration: none; color: #97A0A7;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18M7 20v-6M12 20V7M17 20v-9"></path></svg>
+        <span style="font-size: 10px; font-weight: 600;">Bilans</span>
+      </a>
+      <a href="Settings.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-height: 48px; padding: 6px 0; border-radius: 13px; text-decoration: none; background: #17211F; color: #52D0B3;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14M6 16h14"></path><circle cx="9" cy="8" r="2.6"></circle><circle cx="16" cy="16" r="2.6"></circle></svg>
+        <span style="font-size: 10px; font-weight: 600;">Ustawienia</span>
+      </a>
+    </nav>
+
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":390,"height":1160}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

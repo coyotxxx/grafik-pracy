@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; background: #0A0D0F; color-scheme: dark; }
+    a { color: #52D0B3; }
+    a:hover { color: #7FE0C8; }
+    button { font-family: inherit; }
+    @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: none; } }
+    @keyframes cellIn { from { opacity: 0; transform: translateY(8px) scale(0.95); } to { opacity: 1; transform: none; } }
+    @keyframes drift { from { transform: translate3d(0, 0, 0) scale(1); } to { transform: translate3d(0, -16px, 0) scale(1.07); } }
+    .rise { animation: rise .6s cubic-bezier(.22,1,.36,1) both; }
+    .panel { animation: slideUp .5s cubic-bezier(.22,1,.36,1) .1s both; }
+    .cell { animation: cellIn .4s cubic-bezier(.22,1,.36,1) both; transition: transform .14s ease, background .16s ease, border-color .16s ease, box-shadow .16s ease; }
+    .cell:active { transform: scale(0.9); }
+    .tap { transition: transform .14s ease, background .16s ease, border-color .16s ease, color .16s ease; }
+    .tap:active { transform: scale(0.94); }
+    .halo { animation: drift 20s ease-in-out infinite alternate; }
+    @media (prefers-reduced-motion: reduce) { .rise, .panel, .cell, .halo { animation: none !important; } }
+  </style>
+</helmet>
+<div style="position: relative; width: 390px; height: 900px; box-sizing: border-box; background: #0A0D0F; color: #F1F3F4; font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif; overflow: hidden;">
+
+  <div style="position: absolute; top: 0; left: 0; width: 390px; height: 900px; overflow: hidden; pointer-events: none;">
+    <div class="halo" style="position: absolute; bottom: -260px; left: -120px; width: 520px; height: 520px; border-radius: 50%; background: radial-gradient(circle, {{tool.halo}} 0%, rgba(0,0,0,0) 70%);"></div>
+  </div>
+
+  <div style="position: relative; width: 390px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; padding: 44px 0 0 0;">
+
+    <div class="rise" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 12px 0 16px;">
+      <span style="display: flex; flex-direction: column; gap: 2px;">
+        <span style="font-size: 15px; font-weight: 700;">Tryb edycji</span>
+        <span style="font-size: 11px; color: #97A0A7;">Wrzesień 2026 · zmiany zapisują się od razu</span>
+      </span>
+      <span style="display: flex; align-items: center; gap: 6px;">
+        <button type="button" class="tap" onClick="{{undo}}" aria-label="Cofnij ostatnią zmianę" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 13px; background: rgba(255,255,255,0.05); border: 1px solid #23282D; color: #C5CCD1; cursor: pointer;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14l-5-5 5-5"></path><path d="M4 9h9a7 7 0 0 1 0 14h-3"></path></svg>
+        </button>
+        <a href="Main.dc.html" class="tap" style="display: flex; align-items: center; height: 40px; padding: 0 16px; border-radius: 13px; background: #52D0B3; color: #06231D; font-size: 13px; font-weight: 700; text-decoration: none;">Gotowe</a>
+      </span>
+    </div>
+
+    <div class="rise" style="display: flex; align-items: center; gap: 12px; margin: 0 16px; padding: 10px 14px; border-radius: 16px; background: {{tool.bg}}; border: 1px solid {{tool.line}}; animation-delay: .05s;">
+      <span style="width: 38px; height: 38px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: #0A0D0F; border: 1px solid {{tool.line}}; font-size: 13px; font-weight: 700; letter-spacing: 0.04em; color: {{tool.ink}};">{{tool.badge}}</span>
+      <span style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1; min-width: 0;">
+        <span style="font-size: 13px; font-weight: 600;">{{tool.name}}</span>
+        <span style="font-size: 11px; color: #97A0A7;">{{tool.hint}}</span>
+      </span>
+      <span style="font-size: 11px; font-weight: 600; color: {{tool.ink}}; font-variant-numeric: tabular-nums;">{{tool.meta}}</span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px; padding: 0 16px;">
+      <div class="rise" style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; animation-delay: .1s;">
+        <span style="text-align: center; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; color: #97A0A7;">PN</span>
+        <span style="text-align: center; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; color: #97A0A7;">WT</span>
+        <span style="text-align: center; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; color: #97A0A7;">ŚR</span>
+        <span style="text-align: center; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; color: #97A0A7;">CZ</span>
+        <span style="text-align: center; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; color: #97A0A7;">PT</span>
+        <span style="text-align: center; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; color: #6E777E;">SO</span>
+        <span style="text-align: center; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; color: #6E777E;">ND</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px;">
+        <sc-for list="{{days}}" as="day" hint-placeholder-count="42">
+          <button type="button" class="cell" onClick="{{day.paint}}" aria-label="{{day.aria}}" style="height: 60px; box-sizing: border-box; padding: 6px; display: flex; flex-direction: column; justify-content: space-between; align-items: stretch; text-align: left; cursor: pointer; border-radius: 13px; background: {{day.bg}}; border: 1px solid {{day.line}}; box-shadow: {{day.ring}}; animation-delay: {{day.delay}};">
+            <span style="display: flex; align-items: baseline; justify-content: space-between; gap: 2px;">
+              <span style="font-size: 12px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; color: {{day.numInk}};">{{day.num}}</span>
+              <span style="font-size: 9px; font-weight: 700; line-height: 1; color: #DAC559;">{{day.ot}}</span>
+            </span>
+            <span style="font-size: 12px; font-weight: 700; line-height: 1; letter-spacing: 0.06em; color: {{day.ink}};">{{day.label}}</span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top: auto; display: flex; flex-direction: column; gap: 12px; padding: 14px 16px 20px; background: rgba(15,18,20,0.96); border-top: 1px solid #1F2428; border-radius: 22px 22px 0 0; box-shadow: 0 -20px 50px rgba(0,0,0,0.45);">
+
+      <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px;">
+        <sc-for list="{{tools}}" as="t" hint-placeholder-count="6">
+          <button type="button" class="tap" onClick="{{t.pick}}" aria-label="{{t.aria}}" style="height: 56px; padding: 4px 2px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; border-radius: 15px; background: {{t.bg}}; border: 1px solid {{t.line}}; box-shadow: {{t.ring}};">
+            <span style="font-size: 14px; font-weight: 700; line-height: 1; letter-spacing: 0.04em; color: {{t.ink}};">{{t.label}}</span>
+            <span style="font-size: 8px; font-weight: 500; line-height: 1; color: #8A939B;">{{t.sub}}</span>
+          </button>
+        </sc-for>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 16px; background: {{ot.bg}}; border: 1px solid {{ot.line}};">
+        <button type="button" class="tap" onClick="{{otToggle}}" aria-pressed="{{ot.pressed}}" style="display: flex; align-items: center; gap: 8px; flex-grow: 1; min-width: 0; padding: 0; background: transparent; border: none; cursor: pointer; text-align: left;">
+          <span style="width: 34px; height: 34px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 11px; background: {{ot.iconBg}}; color: {{ot.ink}};">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6v6l4 2"></path><circle cx="12" cy="12" r="9"></circle></svg>
+          </span>
+          <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+            <span style="font-size: 13px; font-weight: 600; color: {{ot.title}};">Nadgodziny</span>
+            <span style="font-size: 10px; color: #97A0A7;">{{ot.hint}}</span>
+          </span>
+        </button>
+        <span style="display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
+          <button type="button" class="tap" onClick="{{otDec}}" aria-label="Mniej godzin" style="width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 11px; background: #13171A; border: 1px solid #262B30; color: #C5CCD1; cursor: pointer;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"></path></svg>
+          </button>
+          <span style="min-width: 34px; text-align: center; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; color: {{ot.title}};">{{ot.hours}}</span>
+          <button type="button" class="tap" onClick="{{otInc}}" aria-label="Więcej godzin" style="width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 11px; background: #13171A; border: 1px solid #262B30; color: #C5CCD1; cursor: pointer;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+          </button>
+          <button type="button" class="tap" onClick="{{otRate}}" aria-label="Zmień stawkę nadgodzin" style="height: 34px; min-width: 46px; padding: 0 8px; border-radius: 11px; background: {{ot.rateBg}}; border: 1px solid {{ot.rateLine}}; color: {{ot.rateInk}}; font-size: 12px; font-weight: 700; cursor: pointer;">{{ot.rate}}</button>
+        </span>
+      </div>
+
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+        <span style="font-size: 11px; color: #6E777E;">Malowanie nadpisuje dni z cyklu. Cofnij przywraca poprzedni stan.</span>
+        <button type="button" class="tap" onClick="{{clearAll}}" style="flex-shrink: 0; height: 34px; padding: 0 12px; border-radius: 11px; background: transparent; border: 1px solid #2A3036; color: #97A0A7; font-size: 11px; font-weight: 600; cursor: pointer;">Przywróć cykl</button>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":390,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.base = {
+      1: 'II', 2: 'II', 3: 'II', 4: 'II', 5: 'W', 6: 'W',
+      7: 'I', 8: 'I', 9: 'I', 10: 'I', 11: 'U', 12: 'W', 13: 'W',
+      14: 'U', 15: 'III', 16: 'III', 17: 'III', 18: 'III', 19: 'W', 20: 'W',
+      21: 'II', 22: 'II', 23: 'II', 24: 'II', 25: 'II', 26: 'W', 27: 'W',
+      28: 'I', 29: 'I', 30: 'I'
+    };
+    this.state = { tool: 'I', painted: {}, ot: {}, otOn: false, otHours: 8, otRate: '100%' };
+  }
+
+  renderVals() {
+    var self = this;
+    var T = {
+      I:   { bg: 'rgba(218,197,89,0.13)',  line: 'rgba(218,197,89,0.30)',  ink: '#DAC559', name: 'Zmiana I · ranna',        meta: '06–14', halo: 'rgba(218,197,89,0.10)' },
+      II:  { bg: 'rgba(255,147,126,0.12)', line: 'rgba(255,147,126,0.28)', ink: '#FF937E', name: 'Zmiana II · popołudniowa', meta: '14–22', halo: 'rgba(255,147,126,0.10)' },
+      III: { bg: 'rgba(122,189,255,0.12)', line: 'rgba(122,189,255,0.28)', ink: '#7ABDFF', name: 'Zmiana III · nocna',       meta: '22–06', halo: 'rgba(122,189,255,0.12)' },
+      W:   { bg: 'rgba(255,255,255,0.04)', line: '#252A2F',                ink: '#B7BEC3', name: 'Dzień wolny',             meta: 'w5',    halo: 'rgba(122,189,255,0.05)' },
+      U:   { bg: 'rgba(244,144,217,0.12)', line: 'rgba(244,144,217,0.28)', ink: '#F490D9', name: 'Urlop wypoczynkowy',      meta: 'U',     halo: 'rgba(244,144,217,0.10)' },
+      MORE:{ bg: 'rgba(255,255,255,0.04)', line: '#252A2F',                ink: '#C5CCD1', name: 'Pozostałe oznaczenia',    meta: '5',     halo: 'rgba(255,255,255,0.04)' }
+    };
+    var LIST = [
+      { k: 'I',    label: 'I',   sub: '6–14' },
+      { k: 'II',   label: 'II',  sub: '14–22' },
+      { k: 'III',  label: 'III', sub: '22–6' },
+      { k: 'W',    label: 'w5',  sub: 'wolne' },
+      { k: 'U',    label: 'U',   sub: 'urlop' },
+      { k: 'MORE', label: '···', sub: 'więcej' }
+    ];
+
+    var tools = LIST.map(function (t) {
+      var on = t.k === self.state.tool;
+      var c = T[t.k];
+      return {
+        label: t.label,
+        sub: t.sub,
+        aria: c.name,
+        bg: on ? c.bg : '#13171A',
+        line: on ? c.line : '#20252A',
+        ink: on ? c.ink : '#B7BEC3',
+        ring: on ? 'inset 0 0 0 1px ' + c.line + ', 0 6px 18px rgba(0,0,0,0.3)' : 'none',
+        pick: function () { self.setState({ tool: t.k }); }
+      };
+    });
+
+    var cur = T[this.state.tool];
+    var otOn = this.state.otOn;
+
+    var plan = [
+      { d: 31, out: true },
+      { d: 1 }, { d: 2 }, { d: 3 }, { d: 4 }, { d: 5 }, { d: 6 },
+      { d: 7 }, { d: 8 }, { d: 9 }, { d: 10 }, { d: 11 }, { d: 12 }, { d: 13 },
+      { d: 14 }, { d: 15 }, { d: 16 }, { d: 17 }, { d: 18 }, { d: 19 }, { d: 20 },
+      { d: 21 }, { d: 22 }, { d: 23 }, { d: 24 }, { d: 25 }, { d: 26 }, { d: 27 },
+      { d: 28 }, { d: 29 }, { d: 30 }, { d: 1, out: true }, { d: 2, out: true }, { d: 3, out: true }, { d: 4, out: true }
+    ];
+
+    var days = plan.map(function (p, i) {
+      var kind = p.out ? null : (self.state.painted[p.d] || self.base[p.d]);
+      var t = T[kind] || { bg: 'transparent', line: '#171B1E', ink: '#4E565C' };
+      var edited = !p.out && self.state.painted[p.d] !== undefined;
+      var otv = self.state.ot[p.d];
+      return {
+        num: p.d,
+        label: p.out ? '' : (kind === 'W' ? 'w5' : kind),
+        ot: otv ? '+' + otv : '',
+        aria: p.d + ' — ' + (kind ? T[kind].name : 'inny miesiąc'),
+        bg: p.out ? 'transparent' : t.bg,
+        line: p.out ? '#171B1E' : t.line,
+        ink: p.out ? '#4E565C' : t.ink,
+        numInk: p.out ? '#4E565C' : (kind === 'W' ? '#97A0A7' : '#E7EAEC'),
+        ring: edited ? 'inset 0 0 0 1.5px rgba(82,208,179,0.55)' : 'none',
+        delay: (0.12 + i * 0.01).toFixed(3) + 's',
+        paint: function () {
+          if (p.out || self.state.tool === 'MORE') { return; }
+          var np = {};
+          for (var k in self.state.painted) { np[k] = self.state.painted[k]; }
+          np[p.d] = self.state.tool;
+          var no = {};
+          for (var m in self.state.ot) { no[m] = self.state.ot[m]; }
+          if (self.state.otOn) { no[p.d] = self.state.otHours + 'h'; }
+          self.setState({ painted: np, ot: no });
+        }
+      };
+    });
+
+    return {
+      tools: tools,
+      days: days,
+      tool: {
+        badge: this.state.tool === 'W' ? 'w5' : (this.state.tool === 'MORE' ? '···' : this.state.tool),
+        bg: cur.bg,
+        line: cur.line,
+        ink: cur.ink,
+        halo: cur.halo,
+        name: cur.name,
+        meta: cur.meta,
+        hint: this.state.tool === 'MORE'
+          ? 'wś · DWN · bezwzgl. wolna nd. · odbiór · wyczyść'
+          : (otOn ? 'dotykaj dni — dopiszę też ' + this.state.otHours + ' h nadgodzin' : 'dotykaj dni, aby ustawić')
+      },
+      ot: {
+        pressed: otOn ? 'true' : 'false',
+        bg: otOn ? 'rgba(218,197,89,0.12)' : 'rgba(255,255,255,0.03)',
+        line: otOn ? 'rgba(218,197,89,0.35)' : '#1F2428',
+        iconBg: otOn ? 'rgba(218,197,89,0.18)' : '#13171A',
+        ink: otOn ? '#DAC559' : '#8A939B',
+        title: otOn ? '#F1F3F4' : '#B7BEC3',
+        hours: this.state.otHours + ' h',
+        rate: this.state.otRate,
+        rateBg: otOn ? 'rgba(218,197,89,0.18)' : '#13171A',
+        rateLine: otOn ? 'rgba(218,197,89,0.4)' : '#262B30',
+        rateInk: otOn ? '#DAC559' : '#97A0A7',
+        hint: otOn ? 'dopisywane do malowanych dni' : 'wyłączone — dotknij, aby dopisywać'
+      },
+      otToggle: function () { self.setState({ otOn: !self.state.otOn }); },
+      otInc: function () { self.setState({ otHours: Math.min(12, self.state.otHours + 1) }); },
+      otDec: function () { self.setState({ otHours: Math.max(1, self.state.otHours - 1) }); },
+      otRate: function () { self.setState({ otRate: self.state.otRate === '100%' ? '50%' : '100%' }); },
+      undo: function () { self.setState({ painted: {}, ot: {} }); },
+      clearAll: function () { self.setState({ painted: {}, ot: {} }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

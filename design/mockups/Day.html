@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; background: #0A0D0F; color-scheme: dark; }
+    a { color: #52D0B3; }
+    a:hover { color: #7FE0C8; }
+    button { font-family: inherit; }
+    input { font-family: inherit; }
+    @keyframes sheetUp { from { opacity: 0; transform: translateY(56px); } to { opacity: 1; transform: none; } }
+    @keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+    .sheet { animation: sheetUp .55s cubic-bezier(.22,1,.36,1) both; }
+    .rise { animation: rise .55s cubic-bezier(.22,1,.36,1) both; }
+    .tap { transition: transform .15s ease, background .16s ease, border-color .16s ease, color .16s ease; }
+    .tap:active { transform: scale(0.95); }
+    .sw { position: relative; display: inline-flex; width: 46px; height: 28px; flex-shrink: 0; }
+    .sw input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; z-index: 1; }
+    .sw > span { width: 100%; height: 100%; border-radius: 999px; background: #262B30; border: 1px solid #333A40; }
+    .sw > span::after { content: ""; position: absolute; top: 4px; left: 4px; width: 20px; height: 20px; border-radius: 999px; background: #8A939B; transition: transform .16s ease, background .16s ease; }
+    .sw input:checked + span { background: rgba(82,208,179,0.22); border-color: rgba(82,208,179,0.5); }
+    .sw input:checked + span::after { transform: translateX(18px); background: #52D0B3; }
+    .fld { box-sizing: border-box; height: 44px; padding: 0 12px; border-radius: 12px; background: #13171A; border: 1px solid #262B30; color: #F1F3F4; font-size: 14px; }
+    .fld::placeholder { color: #6E777E; }
+    .fld:focus { outline: 2px solid rgba(82,208,179,0.55); outline-offset: 1px; }
+    .cbx { width: 20px; height: 20px; accent-color: #52D0B3; flex-shrink: 0; }
+    @media (prefers-reduced-motion: reduce) { .sheet, .rise { animation: none !important; } }
+  </style>
+</helmet>
+<div style="position: relative; width: 390px; height: 960px; box-sizing: border-box; background: #0A0D0F; color: #F1F3F4; font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif; overflow: hidden; display: flex; flex-direction: column;">
+
+  <div style="padding: 44px 16px 0; opacity: 0.35;">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding-bottom: 10px;">
+      <span style="font-family: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif; font-size: 22px; font-weight: 700; letter-spacing: -0.02em;">Wrzesień 2026</span>
+      <span style="font-size: 11px; color: #97A0A7;">104 / 176 h</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px;">
+      <span style="height: 52px; border-radius: 12px; background: rgba(244,144,217,0.10); border: 1px solid rgba(244,144,217,0.22);"></span>
+      <span style="height: 52px; border-radius: 12px; background: rgba(122,189,255,0.10); border: 1px solid rgba(122,189,255,0.22);"></span>
+      <span style="height: 52px; border-radius: 12px; background: rgba(122,189,255,0.10); border: 1px solid rgba(122,189,255,0.22);"></span>
+      <span style="height: 52px; border-radius: 12px; background: rgba(122,189,255,0.16); border: 1px solid rgba(82,208,179,0.55);"></span>
+      <span style="height: 52px; border-radius: 12px; background: rgba(122,189,255,0.10); border: 1px solid rgba(122,189,255,0.22);"></span>
+      <span style="height: 52px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid #1F2428;"></span>
+      <span style="height: 52px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid #1F2428;"></span>
+    </div>
+  </div>
+
+  <div class="sheet" style="margin-top: auto; display: flex; flex-direction: column; gap: 16px; padding: 10px 16px 22px; background: #111417; border: 1px solid #1F2428; border-bottom: none; border-radius: 26px 26px 0 0; box-shadow: 0 -24px 60px rgba(0,0,0,0.55);">
+
+    <span style="width: 40px; height: 4px; border-radius: 999px; background: #2A3036; align-self: center;"></span>
+
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;">
+      <span style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+        <span style="font-family: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif; font-size: 21px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1;">Czwartek, 17 września</span>
+        <span style="font-size: 11px; color: #97A0A7;">tydzień 38 · dziś</span>
+      </span>
+      <button type="button" class="tap" aria-label="Zamknij" style="width: 36px; height: 36px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid #23282D; color: #C5CCD1; cursor: pointer;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+      </button>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px; padding: 14px; border-radius: 20px; background: {{cur.bg}}; border: 1px solid {{cur.line}}; box-shadow: {{cur.glow}};">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="width: 48px; height: 48px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 15px; background: #0E1113; border: 1px solid {{cur.line}}; font-family: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif; font-size: 18px; font-weight: 700; letter-spacing: 0.04em; color: {{cur.ink}};">{{cur.badge}}</span>
+        <span style="display: flex; flex-direction: column; gap: 3px; flex-grow: 1; min-width: 0;">
+          <span style="font-size: 15px; font-weight: 600;">{{cur.name}}</span>
+          <span style="font-size: 12px; color: #B7BEC3; font-variant-numeric: tabular-nums;">{{cur.time}}</span>
+        </span>
+        <span style="flex-shrink: 0; display: inline-flex; align-items: center; height: 28px; padding: 0 10px; border-radius: 999px; background: #0E1113; border: 1px solid #2A3036; font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums;">{{cur.hours}}</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px;">
+        <sc-for list="{{types}}" as="t" hint-placeholder-count="5">
+          <button type="button" class="tap" onClick="{{t.pick}}" style="height: 42px; padding: 0 2px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 12px; font-size: 12px; font-weight: 700; letter-spacing: 0.03em; background: {{t.bg}}; border: 1px solid {{t.line}}; color: {{t.ink}};">{{t.label}}</button>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border-radius: 18px; background: rgba(255,255,255,0.035); border: 1px solid #1F2428;">
+      <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 600;">Nadgodziny</span>
+        <span style="font-size: 11px; color: #97A0A7;">{{otHint}}</span>
+      </span>
+      <span style="display: flex; align-items: center; gap: 5px; flex-shrink: 0;">
+        <button type="button" class="tap" onClick="{{dec}}" aria-label="Mniej nadgodzin" style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: #13171A; border: 1px solid #262B30; color: #C5CCD1; cursor: pointer;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"></path></svg>
+        </button>
+        <span style="min-width: 36px; text-align: center; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums;">{{ot}}</span>
+        <button type="button" class="tap" onClick="{{inc}}" aria-label="Więcej nadgodzin" style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: #13171A; border: 1px solid #262B30; color: #C5CCD1; cursor: pointer;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+        </button>
+        <button type="button" class="tap" onClick="{{rate}}" aria-label="Stawka nadgodzin" style="height: 36px; min-width: 48px; padding: 0 8px; border-radius: 12px; background: {{rateBg}}; border: 1px solid {{rateLine}}; color: {{rateInk}}; font-size: 12px; font-weight: 700; cursor: pointer;">{{rateLabel}}</button>
+      </span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6E777E;">OBECNOŚĆ</span>
+      <div style="display: flex; flex-direction: column; gap: 12px; padding: 12px 14px; border-radius: 18px; background: rgba(255,255,255,0.035); border: 1px solid #1F2428;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: #3FA98F; flex-shrink: 0;"></span>
+          <span style="font-size: 13px; color: #D7DBDE; flex-grow: 1;">Wykryto 22:04 – 06:02</span>
+          <span style="font-size: 11px; color: #97A0A7;">auto</span>
+        </div>
+        <div style="height: 1px; background: #1F2428;"></div>
+        <label style="display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer;">
+          <span style="display: flex; flex-direction: column; gap: 2px;">
+            <span style="font-size: 14px; font-weight: 600;">Byłem w pracy</span>
+            <span style="font-size: 11px; color: #97A0A7;">godziny bierzemy ze zmiany</span>
+          </span>
+          <span class="sw"><input type="checkbox" checked><span></span></span>
+        </label>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6E777E;">WYDARZENIA</span>
+        <span style="font-size: 11px; color: #6E777E;">przypomnienia działają też przy zmianie nocnej</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 18px; background: rgba(255,255,255,0.035); border: 1px solid #1F2428;">
+        <span style="width: 44px; flex-shrink: 0; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; color: #7ABDFF;">9:20</span>
+        <span style="display: flex; flex-direction: column; gap: 3px; flex-grow: 1; min-width: 0;">
+          <span style="font-size: 14px; font-weight: 600;">Fryzjer</span>
+          <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: #97A0A7;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 6-2 7-2 7h16s-2-1-2-7z"></path><path d="M10.5 21a2 2 0 0 0 3 0"></path></svg>
+            przypomnienie dzień wcześniej, 18:00
+          </span>
+        </span>
+        <button type="button" class="tap" aria-label="Usuń wydarzenie" style="width: 36px; height: 36px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: transparent; border: 1px solid #23282D; color: #8A939B; cursor: pointer;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5h6v2M7 7l1 13h8l1-13"></path></svg>
+        </button>
+      </div>
+
+      <sc-if value="{{adding}}" hint-placeholder-val="{{ true }}">
+        <div style="display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border-radius: 18px; background: rgba(82,208,179,0.06); border: 1px solid rgba(82,208,179,0.28);">
+          <div style="display: flex; gap: 8px;">
+            <span style="display: flex; flex-direction: column; gap: 5px; width: 92px; flex-shrink: 0;">
+              <label for="ev-time" style="font-size: 10px; color: #97A0A7;">godzina</label>
+              <input id="ev-time" class="fld" type="time" value="09:20" style="width: 100%;">
+            </span>
+            <span style="display: flex; flex-direction: column; gap: 5px; flex-grow: 1; min-width: 0;">
+              <label for="ev-name" style="font-size: 10px; color: #97A0A7;">co to za wydarzenie</label>
+              <input id="ev-name" class="fld" type="text" placeholder="np. badania okresowe" style="width: 100%;">
+            </span>
+          </div>
+          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+            <input class="cbx" type="checkbox" checked>
+            <span style="font-size: 13px;">Przypomnij dzień wcześniej o 18:00</span>
+          </label>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="tap" onClick="{{cancelAdd}}" style="flex-grow: 1; height: 44px; border-radius: 13px; background: transparent; border: 1px solid #2A3036; color: #C5CCD1; font-size: 13px; font-weight: 600; cursor: pointer;">Anuluj</button>
+            <button type="button" class="tap" onClick="{{cancelAdd}}" style="flex-grow: 1; height: 44px; border: none; border-radius: 13px; background: #52D0B3; color: #06231D; font-size: 13px; font-weight: 700; cursor: pointer;">Dodaj</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{notAdding}}" hint-placeholder-val="{{ false }}">
+        <button type="button" class="tap" onClick="{{startAdd}}" style="display: flex; align-items: center; justify-content: center; gap: 8px; height: 46px; border-radius: 15px; background: rgba(255,255,255,0.04); border: 1px dashed #2A3036; color: #C5CCD1; font-size: 13px; font-weight: 600; cursor: pointer;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+          Dodaj wydarzenie
+        </button>
+      </sc-if>
+    </div>
+
+    <a href="Main.dc.html" class="tap" style="display: flex; align-items: center; justify-content: center; height: 50px; border-radius: 16px; background: #52D0B3; color: #06231D; font-size: 15px; font-weight: 700; text-decoration: none; box-shadow: 0 10px 30px rgba(82,208,179,0.2);">Gotowe</a>
+
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":390,"height":960}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { type: 'III', ot: 0, rate: '100%', adding: false };
+  }
+
+  renderVals() {
+    var self = this;
+    var T = {
+      I:   { bg: 'rgba(218,197,89,0.12)',  line: 'rgba(218,197,89,0.30)',  ink: '#DAC559', name: 'Zmiana I · ranna',         time: '06:00 – 14:00', glow: '0 12px 34px rgba(218,197,89,0.10)' },
+      II:  { bg: 'rgba(255,147,126,0.11)', line: 'rgba(255,147,126,0.28)', ink: '#FF937E', name: 'Zmiana II · popołudniowa', time: '14:00 – 22:00', glow: '0 12px 34px rgba(255,147,126,0.10)' },
+      III: { bg: 'rgba(122,189,255,0.11)', line: 'rgba(122,189,255,0.28)', ink: '#7ABDFF', name: 'Zmiana III · nocna',       time: '22:00 – 06:00', glow: '0 12px 34px rgba(122,189,255,0.12)' },
+      U:   { bg: 'rgba(244,144,217,0.11)', line: 'rgba(244,144,217,0.28)', ink: '#F490D9', name: 'Urlop wypoczynkowy',       time: 'cały dzień',    glow: '0 12px 34px rgba(244,144,217,0.10)' },
+      W:   { bg: 'rgba(255,255,255,0.035)', line: '#23282D',               ink: '#B7BEC3', name: 'Dzień wolny',              time: 'brak zmiany',   glow: 'none' }
+    };
+    var LABEL = { I: 'I', II: 'II', III: 'III', U: 'Urlop', W: 'Wolne' };
+    var order = ['I', 'II', 'III', 'U', 'W'];
+    var cur = T[this.state.type];
+
+    var types = order.map(function (k) {
+      var on = k === self.state.type;
+      var t = T[k];
+      return {
+        label: LABEL[k],
+        bg: on ? '#0E1113' : 'rgba(255,255,255,0.04)',
+        line: on ? t.line : '#23282D',
+        ink: on ? t.ink : '#97A0A7',
+        pick: function () { self.setState({ type: k }); }
+      };
+    });
+
+    var work = this.state.type !== 'W';
+    var rateOn = this.state.ot > 0;
+
+    return {
+      cur: {
+        badge: this.state.type === 'W' ? 'w5' : this.state.type,
+        bg: cur.bg, line: cur.line, ink: cur.ink, glow: cur.glow,
+        name: cur.name, time: cur.time,
+        hours: (work ? 8 + this.state.ot : 0) + ' h'
+      },
+      types: types,
+      ot: this.state.ot + ' h',
+      otHint: this.state.ot > 0 ? 'doliczone do bilansu okresu' : 'brak — dotknij plus, aby dodać',
+      rateLabel: this.state.rate,
+      rateBg: rateOn ? 'rgba(218,197,89,0.16)' : '#13171A',
+      rateLine: rateOn ? 'rgba(218,197,89,0.40)' : '#262B30',
+      rateInk: rateOn ? '#DAC559' : '#6E777E',
+      adding: this.state.adding,
+      notAdding: !this.state.adding,
+      inc: function () { self.setState({ ot: Math.min(12, self.state.ot + 1) }); },
+      dec: function () { self.setState({ ot: Math.max(0, self.state.ot - 1) }); },
+      rate: function () { self.setState({ rate: self.state.rate === '100%' ? '50%' : '100%' }); },
+      startAdd: function () { self.setState({ adding: true }); },
+      cancelAdd: function () { self.setState({ adding: false }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

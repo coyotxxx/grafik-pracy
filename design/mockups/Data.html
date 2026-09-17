@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; background: #0A0D0F; color-scheme: dark; }
+    a { color: #52D0B3; }
+    a:hover { color: #7FE0C8; }
+    button { font-family: inherit; }
+    @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+    @keyframes drift { from { transform: translate3d(0,0,0) scale(1); } to { transform: translate3d(0,-16px,0) scale(1.07); } }
+    .rise { animation: rise .6s cubic-bezier(.22,1,.36,1) both; }
+    .halo { animation: drift 24s ease-in-out infinite alternate; }
+    .tap { transition: transform .15s ease, background .16s ease, border-color .16s ease, color .16s ease; }
+    .tap:active { transform: scale(0.97); }
+    .sw { position: relative; display: inline-flex; width: 46px; height: 28px; flex-shrink: 0; }
+    .sw input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; z-index: 1; }
+    .sw > span { width: 100%; height: 100%; border-radius: 999px; background: #262B30; border: 1px solid #333A40; }
+    .sw > span::after { content: ""; position: absolute; top: 4px; left: 4px; width: 20px; height: 20px; border-radius: 999px; background: #8A939B; transition: transform .16s ease, background .16s ease; }
+    .sw input:checked + span { background: rgba(82,208,179,0.22); border-color: rgba(82,208,179,0.5); }
+    .sw input:checked + span::after { transform: translateX(18px); background: #52D0B3; }
+    @media (prefers-reduced-motion: reduce) { .rise, .halo { animation: none !important; } }
+  </style>
+</helmet>
+<div style="position: relative; width: 390px; height: 1040px; box-sizing: border-box; background: #0A0D0F; color: #F1F3F4; font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif; overflow: hidden;">
+
+  <div style="position: absolute; top: 0; left: 0; width: 390px; height: 1040px; overflow: hidden; pointer-events: none;">
+    <div class="halo" style="position: absolute; top: -210px; right: -140px; width: 470px; height: 470px; border-radius: 50%; background: radial-gradient(circle, rgba(82,208,179,0.14) 0%, rgba(82,208,179,0) 70%);"></div>
+  </div>
+
+  <div style="position: relative; width: 390px; height: 1040px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px; padding: 44px 16px 22px;">
+
+    <a href="Settings.dc.html" class="tap" style="display: inline-flex; align-items: center; gap: 6px; height: 40px; margin-left: -6px; padding: 0 6px; font-size: 13px; font-weight: 600; text-decoration: none; color: #97A0A7; align-self: flex-start;">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+      Ustawienia
+    </a>
+
+    <div class="rise" style="display: flex; flex-direction: column; gap: 6px;">
+      <h1 style="margin: 0; font-family: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif; font-size: 26px; font-weight: 700; letter-spacing: -0.03em; line-height: 1;">Dane i kopia</h1>
+      <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #97A0A7;">Wszystko jest w telefonie. Nic nie leci na żaden serwer.</p>
+    </div>
+
+    <div class="rise" style="display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: 22px; background: rgba(255,255,255,0.04); border: 1px solid #1F2428; animation-delay: .05s;">
+      <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6E777E;">CO JEST ZAPISANE</span>
+      <div style="display: flex; gap: 10px;">
+        <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px; padding: 12px; border-radius: 16px; background: rgba(0,0,0,0.28); border: 1px solid #23282D;">
+          <span style="font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums;">37</span>
+          <span style="font-size: 10px; color: #97A0A7;">ręcznych dni</span>
+        </span>
+        <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px; padding: 12px; border-radius: 16px; background: rgba(0,0,0,0.28); border: 1px solid #23282D;">
+          <span style="font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums;">6</span>
+          <span style="font-size: 10px; color: #97A0A7;">wydarzeń</span>
+        </span>
+        <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px; padding: 12px; border-radius: 16px; background: rgba(0,0,0,0.28); border: 1px solid #23282D;">
+          <span style="font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums;">10</span>
+          <span style="font-size: 10px; color: #97A0A7;">wykryć pracy</span>
+        </span>
+      </div>
+      <p style="margin: 0; font-size: 11px; line-height: 1.5; color: #97A0A7;">Grafik w kalendarzu liczy się z cyklu — w pamięci siedzą tylko dni, które zmieniłeś sam, ustawienia i wydarzenia.</p>
+    </div>
+
+    <div class="rise" style="display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 20px; background: rgba(82,208,179,0.06); border: 1px solid rgba(82,208,179,0.24); animation-delay: .09s;">
+      <span style="display: flex; flex-direction: column; gap: 3px;">
+        <span style="font-size: 14px; font-weight: 700;">Kopia zapasowa</span>
+        <span style="font-size: 11px; line-height: 1.5; color: #9FE3D2;">Jeden plik .json z całym stanem aplikacji — zmiana telefonu zajmie minutę.</span>
+      </span>
+      <div style="display: flex; gap: 8px;">
+        <button type="button" class="tap" style="flex-grow: 1; display: flex; align-items: center; justify-content: center; gap: 7px; height: 48px; border: none; border-radius: 15px; background: #52D0B3; color: #06231D; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 10px 26px rgba(82,208,179,0.2);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"></path><path d="M8 11l4 4 4-4"></path><path d="M5 19h14"></path></svg>
+          Zapisz kopię
+        </button>
+        <button type="button" class="tap" aria-label="Wyślij kopię" style="width: 48px; height: 48px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 15px; background: rgba(0,0,0,0.3); border: 1px solid #2A3036; color: #C5CCD1; cursor: pointer;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"></path><path d="M8 8l4-4 4 4"></path><path d="M5 20h14"></path></svg>
+        </button>
+      </div>
+      <button type="button" class="tap" style="display: flex; align-items: center; justify-content: center; gap: 7px; height: 44px; border-radius: 14px; background: transparent; border: 1px solid rgba(82,208,179,0.3); color: #52D0B3; font-size: 13px; font-weight: 600; cursor: pointer;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V9"></path><path d="M8 13l4-4 4 4"></path><path d="M5 4h14"></path></svg>
+        Wczytaj z pliku
+      </button>
+      <span style="font-size: 11px; color: #6E777E;">Wczytanie nadpisze obecne dane — najpierw zrób kopię.</span>
+    </div>
+
+    <div class="rise" style="display: flex; flex-direction: column; gap: 12px; padding: 14px; border-radius: 20px; background: rgba(255,255,255,0.035); border: 1px solid #1F2428; animation-delay: .13s;">
+      <label style="display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer;">
+        <span style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+          <span style="font-size: 14px; font-weight: 600;">Automatyczna kopia</span>
+          <span style="font-size: 11px; color: #97A0A7;">co niedzielę, do pamięci telefonu</span>
+        </span>
+        <span class="sw"><input type="checkbox" checked><span></span></span>
+      </label>
+      <div style="height: 1px; background: #1F2428;"></div>
+      <sc-for list="{{backups}}" as="b" hint-placeholder-count="3">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6E777E" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M5 4h9l5 5v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"></path><path d="M14 4v5h5"></path></svg>
+          <span style="flex-grow: 1; font-size: 12px; color: #B7BEC3; font-variant-numeric: tabular-nums;">{{b.name}}</span>
+          <span style="flex-shrink: 0; font-size: 11px; color: #6E777E; font-variant-numeric: tabular-nums;">{{b.size}}</span>
+          <button type="button" class="tap" aria-label="Przywróć tę kopię" style="width: 32px; height: 32px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: transparent; border: 1px solid #2A3036; color: #97A0A7; cursor: pointer;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14l-5-5 5-5"></path><path d="M4 9h9a7 7 0 0 1 0 14h-3"></path></svg>
+          </button>
+        </div>
+      </sc-for>
+    </div>
+
+    <div class="rise" style="display: flex; flex-direction: column; gap: 12px; padding: 14px; border-radius: 20px; background: rgba(193,53,30,0.06); border: 1px solid rgba(255,147,126,0.24); animation-delay: .17s;">
+      <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #FF937E;">OPERACJE NIEODWRACALNE</span>
+
+      <button type="button" class="tap" style="display: flex; align-items: center; gap: 12px; padding: 12px; text-align: left; border-radius: 15px; background: rgba(0,0,0,0.25); border: 1px solid #2A3036; cursor: pointer;">
+        <span style="width: 34px; height: 34px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 11px; background: rgba(255,255,255,0.05); color: #C5CCD1;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a8 8 0 0 1 13.7-5.6L21 8M21 4v4h-4"></path><path d="M20 13a8 8 0 0 1-13.7 5.6L3 16M3 20v-4h4"></path></svg>
+        </span>
+        <span style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1; min-width: 0;">
+          <span style="font-size: 13px; font-weight: 600; color: #E7EAEC;">Przywróć cały grafik do cyklu</span>
+          <span style="font-size: 11px; color: #97A0A7;">kasuje 37 ręcznych dni, ustawienia zostają</span>
+        </span>
+      </button>
+
+      <button type="button" class="tap" style="display: flex; align-items: center; gap: 12px; padding: 12px; text-align: left; border-radius: 15px; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,147,126,0.4); cursor: pointer;">
+        <span style="width: 34px; height: 34px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 11px; background: rgba(255,147,126,0.14); color: #FF937E;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5h6v2M7 7l1 13h8l1-13"></path></svg>
+        </span>
+        <span style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1; min-width: 0;">
+          <span style="font-size: 13px; font-weight: 700; color: #FF937E;">Wyczyść wszystkie dane</span>
+          <span style="font-size: 11px; color: #97A0A7;">grafik, ustawienia, wydarzenia, historia wykryć</span>
+        </span>
+      </button>
+
+      <span style="font-size: 11px; line-height: 1.5; color: #97A0A7;">Przed czyszczeniem zapytamy jeszcze raz i zaproponujemy zapisanie kopii.</span>
+    </div>
+
+    <div class="rise" style="display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 20px; background: rgba(255,255,255,0.03); border: 1px solid #1F2428; animation-delay: .21s;">
+      <span style="display: flex; flex-direction: column; gap: 3px; flex-grow: 1; min-width: 0;">
+        <span style="font-size: 13px; font-weight: 600;">Wersja 1.29.0</span>
+        <span style="font-size: 11px; color: #97A0A7;">aktualizacje z GitHuba · sprawdzone dziś</span>
+      </span>
+      <button type="button" class="tap" style="flex-shrink: 0; height: 36px; padding: 0 14px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid #2A3036; color: #C5CCD1; font-size: 12px; font-weight: 600; cursor: pointer;">Sprawdź</button>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":390,"height":1040}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      backups: [
+        { name: 'grafik-2026-09-13.json', size: '34 kB' },
+        { name: 'grafik-2026-09-06.json', size: '33 kB' },
+        { name: 'grafik-2026-08-30.json', size: '31 kB' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
