@@ -232,26 +232,26 @@ private fun DayCell(
     }
     val bw = if (isToday || special || satWork) 2.dp else 1.dp
 
-    Column(
+    Box(
         m.alpha(if (obcy) 0.42f else 1f)
             .clip(RoundedCornerShape(10.dp))
             .background(if (e?.shift == null) Surface1 else sw.fill)
             .border(bw, border, RoundedCornerShape(10.dp))
             .combinedClickable(onClick = onTap, onLongClick = onLong)
     ) {
-        // Numer dnia leży NA polu etykiety, a nie nad nim — dzięki temu etykieta
-        // zawsze ma całą wysokość komórki i nigdy nie zostaje przycięta.
-        Box(Modifier.fillMaxWidth().weight(1f)) {
-            val lbl = e?.shift?.code ?: ""
-            if (lbl.isNotEmpty()) {
-                Text(
-                    lbl,
-                    // Pod numerem dnia, nie na nim — w wąskich komórkach nachodziły na siebie.
-                    Modifier.align(Alignment.BottomCenter).padding(bottom = 3.dp),
-                    fontSize = if (lbl.length > 3) 11.sp else 18.sp,
-                    fontWeight = FontWeight.Bold, color = sw.text, maxLines = 1
-                )
-            }
+        // Wszystko leży NA sobie w jednej warstwie: numer u góry, etykieta na środku,
+        // pasek nadgodzin na dole. Dzięki temu dołożenie paska niczego nie przesuwa
+        // i kafelki trzymają jedną linię niezależnie od zawartości.
+        val lbl = e?.shift?.code ?: ""
+        if (lbl.isNotEmpty()) {
+            Text(
+                lbl,
+                Modifier.align(Alignment.Center),
+                fontSize = if (lbl.length > 3) 11.sp else 18.sp,
+                fontWeight = FontWeight.Bold, color = sw.text, maxLines = 1
+            )
+        }
+        run {
             Row(
                 Modifier.align(Alignment.TopStart).fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -292,10 +292,11 @@ private fun DayCell(
                 }
             }
         }
-        // Pasek nadgodzin NA DOLE, nie nad numerem — u góry spychał numer dnia
-        // w dół i kafelki z nadgodzinami nie trzymały linii z resztą miesiąca.
         if ((e?.otHours ?: 0) > 0) {
-            Box(Modifier.fillMaxWidth().background(if (e!!.otRate == OtRate.P100) OtColor100 else OtColor50)) {
+            Box(
+                Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                    .background(if (e!!.otRate == OtRate.P100) OtColor100 else OtColor50)
+            ) {
                 Text(
                     "+${e.otHours}h ${e.otRate.percent}%",
                     Modifier.fillMaxWidth().padding(vertical = 1.dp),
