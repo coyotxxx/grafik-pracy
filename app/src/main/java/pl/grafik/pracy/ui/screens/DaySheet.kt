@@ -38,6 +38,7 @@ import java.util.Locale
 
 private val PLL = Locale.forLanguageTag("pl-PL")
 private val DATA = DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", PLL)
+private val GODZ = DateTimeFormatter.ofPattern("HH:mm", PLL)
 
 /** Karta dnia: co to za święto, co masz zaplanowane, notatki. Otwierana przytrzymaniem dnia. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -118,6 +119,55 @@ fun DaySheet(vm: Vm, s: UiState, date: LocalDate, onClose: () -> Unit) {
                 }
                 if (entry?.deviation == true) {
                     Text("odbieg od stałego schematu", fontSize = 11.sp, color = DevColor)
+                }
+            }
+
+            // --- obecność ---
+            Text("OBECNOŚĆ", fontSize = 10.sp, color = OnFaint, fontWeight = FontWeight.Medium)
+            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Surface2).padding(14.dp)) {
+                val ob = s.obecnosc[date]
+                val zmianaRobocza = entry?.shift?.isWork == true
+
+                when {
+                    ob?.trwa == true -> {
+                        Text("Jesteś w pracy", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Accent)
+                        Text("pobyt trwa — godziny policzą się po wyjściu", fontSize = 11.sp, color = OnFaint)
+                    }
+                    ob != null -> {
+                        val godziny = if (ob.od != null && ob.doKiedy != null)
+                            "${ob.od.format(GODZ)}–${ob.doKiedy.format(GODZ)}  ·  ${ob.hours} h"
+                        else "${ob.hours} h"
+                        Text(godziny, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = OnBg)
+                        Text(
+                            if (ob.reczne) "wpisane ręcznie" else "wykryte przez telefon",
+                            fontSize = 11.sp, color = OnFaint
+                        )
+                    }
+                    else -> Text("Nic nie wykryto.", fontSize = 13.sp, color = OnFaint)
+                }
+
+                // Ręcznie oznaczamy tylko to, czego telefon nie wykrył sam — cudzego
+                // wykrycia nie da się tu skasować przez przypadek.
+                if (ob == null || ob.reczne) {
+                    Spacer(Modifier.height(10.dp))
+                    HorizontalDivider(color = Surface3)
+                    Spacer(Modifier.height(6.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f).padding(end = 12.dp)) {
+                            Text("Byłem w pracy", fontSize = 14.sp, color = OnBg)
+                            Text(
+                                if (zmianaRobocza) "godziny weźmiemy ze zmiany — ${entry!!.shift!!.from}–${entry.shift!!.to}"
+                                else "najpierw ustaw temu dniowi zmianę",
+                                fontSize = 11.sp, color = OnFaint, lineHeight = 15.sp
+                            )
+                        }
+                        Switch(
+                            checked = ob != null,
+                            enabled = zmianaRobocza,
+                            onCheckedChange = { vm.oznaczObecnosc(date, it) },
+                            colors = SwitchDefaults.colors(checkedThumbColor = AccentOn, checkedTrackColor = Accent)
+                        )
+                    }
                 }
             }
 

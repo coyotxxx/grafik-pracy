@@ -208,6 +208,41 @@ object PresenceRepo {
     fun shiftFromHour(h: Int): Shift =
         PresenceEngine.shiftByEntry(LocalDateTime.of(2000, 1, 1, h.coerceIn(0, 23), 0))
 
+    /**
+     * Ręczne „byłem w pracy" dla dnia, który apka przegapiła — na przykład sprzed
+     * uruchomienia wykrywania. Godzin nie wpisujemy: dzień ma zmianę, a zmiana ma okno.
+     * Nadgodzin nie ruszamy — te wpisuje się osobno w grafiku.
+     */
+    suspend fun markManual(ctx: Context, date: LocalDate) {
+        val db = AppDb.get(ctx)
+        val cfg = SettingsStore(ctx).config.first()
+        val shift = effectiveShift(ctx, cfg, date) ?: return
+        val okno = PresenceEngine.shiftWindow(date, shift) ?: return
+
+        clearManual(ctx, date)
+        db.presenceDao().insert(
+            PresenceRow(
+                date = date.toString(),
+                enterAt = okno.first.toString(),
+                exitAt = okno.second.toString(),
+                source = "manual",
+                status = "accepted",
+                otHours = 0,
+                otRate = 100,
+                countedFrom = okno.first.toString(),
+                countedTo = okno.second.toString(),
+                createdAt = LocalDateTime.now().toString(),
+                shiftCode = shift.code
+            )
+        )
+    }
+
+    /** Cofnięcie ręcznego oznaczenia. Wykrytych wpisów nie tyka. */
+    suspend fun clearManual(ctx: Context, date: LocalDate) {
+        val dao = AppDb.get(ctx).presenceDao()
+        dao.forDate(date.toString()).filter { it.source == "manual" }.forEach { dao.delete(it.id) }
+    }
+
     /** Zatwierdzenie propozycji — dopiero tu wpis trafia do grafiku. */
     suspend fun accept(ctx: Context, id: Long) {
         val db = AppDb.get(ctx)

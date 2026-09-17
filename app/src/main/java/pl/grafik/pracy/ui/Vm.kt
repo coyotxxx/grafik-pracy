@@ -22,7 +22,14 @@ enum class Tool { I, II, III, W5, WS, DWN, BWN, URLOP, L4, OT, DEV, ERASE }
  * Obecność wykryta w danym dniu — to, co kalendarz wypisuje w rogu kafelka.
  * Liczba godzin bierze się z zaliczonego czasu, nie z samego pobytu w strefie.
  */
-data class DayPresence(val hours: Int = 0, val trwa: Boolean = false)
+data class DayPresence(
+    val hours: Int = 0,
+    val trwa: Boolean = false,
+    /** Czy wszystkie wpisy tego dnia są wpisane ręcznie, a nie wykryte. */
+    val reczne: Boolean = false,
+    val od: LocalDateTime? = null,
+    val doKiedy: LocalDateTime? = null
+)
 
 data class UiState(
     val ym: YearMonth = YearMonth.now(),
@@ -245,14 +252,22 @@ class Vm(app: Application) : AndroidViewModel(app) {
                 runCatching { LocalDateTime.parse(r.countedFrom) }.getOrNull(),
                 runCatching { LocalDateTime.parse(r.countedTo) }.getOrNull()
             )
+            val od = runCatching { LocalDateTime.parse(r.countedFrom) }.getOrNull()
+            val doK = runCatching { LocalDateTime.parse(r.countedTo) }.getOrNull()
             val było = out[d]
-            out[d] = DayPresence((było?.hours ?: 0) + h, było?.trwa ?: false)
+            out[d] = DayPresence(
+                hours = (było?.hours ?: 0) + h,
+                trwa = było?.trwa ?: false,
+                reczne = (było?.reczne ?: true) && r.source == "manual",
+                od = listOfNotNull(było?.od, od).minOrNull(),
+                doKiedy = listOfNotNull(było?.doKiedy, doK).maxOrNull()
+            )
         }
         // Trwający pobyt trafia na ten dzień grafiku, do którego należy — po nocce
         // wejście nad ranem to jeszcze dzień poprzedni.
         otwarty?.let { enter ->
             val d = PresenceEngine.assignDate(PresenceSpan(enter, enter)) { dzien -> dni[dzien]?.shift }
-            out[d] = DayPresence(out[d]?.hours ?: 0, true)
+            out[d] = (out[d] ?: DayPresence()).copy(trwa = true)
         }
         return out
     }
@@ -295,6 +310,13 @@ class Vm(app: Application) : AndroidViewModel(app) {
             )
         }
         return lista to otRok
+    }
+
+    /** „Byłem w pracy" z karty dnia — godziny bierzemy ze zmiany, bez wpisywania. */
+    fun oznaczObecnosc(d: LocalDate, byl: Boolean) = viewModelScope.launch {
+        val app = getApplication<android.app.Application>()
+        if (byl) pl.grafik.pracy.location.PresenceRepo.markManual(app, d)
+        else pl.grafik.pracy.location.PresenceRepo.clearManual(app, d)
     }
 
     fun saveSettlement(c: SettlementCfg) = viewModelScope.launch { settings.saveSettlement(c) }

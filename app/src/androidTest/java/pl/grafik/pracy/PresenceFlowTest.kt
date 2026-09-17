@@ -387,4 +387,52 @@ class PresenceFlowTest {
         assertEquals("pending", db.presenceDao().byId(id)!!.status)
         assertEquals(0, db.dayDao().get(day.toString())!!.toEntry().otHours)
     }
+
+    // ——— „Byłem w pracy" z karty dnia ———
+
+    @Test
+    fun reczne_oznaczenie_bierze_godziny_ze_zmiany() = runBlocking {
+        SettingsStore(ctx).saveConfig(CycleConfig())
+        planShift(day, Shift.III)
+
+        PresenceRepo.markManual(ctx, day)
+
+        val wpisy = db.presenceDao().forDate(day.toString())
+        assertEquals(1, wpisy.size)
+        val r = wpisy.first()
+        assertEquals("manual", r.source)
+        assertEquals("accepted", r.status)
+        assertEquals("III", r.shiftCode)
+        // III to 22:00–6:00 dnia następnego
+        assertEquals(day.atTime(22, 0).toString(), r.countedFrom)
+        assertEquals(day.plusDays(1).atTime(6, 0).toString(), r.countedTo)
+        assertEquals(0, r.otHours)
+        // Grafik zostaje nietknięty — ręczne oznaczenie nie dopisuje nadgodzin.
+        assertEquals(0, db.dayDao().get(day.toString())!!.toEntry().otHours)
+    }
+
+    @Test
+    fun ponowne_oznaczenie_nie_dubluje_wpisu() = runBlocking {
+        planShift(day, Shift.I)
+        PresenceRepo.markManual(ctx, day)
+        PresenceRepo.markManual(ctx, day)
+        assertEquals(1, db.presenceDao().forDate(day.toString()).size)
+    }
+
+    @Test
+    fun wylaczenie_kasuje_tylko_reczny_wpis() = runBlocking {
+        planShift(day, Shift.I)
+        PresenceRepo.markManual(ctx, day)
+        assertEquals(1, db.presenceDao().forDate(day.toString()).size)
+
+        PresenceRepo.clearManual(ctx, day)
+        assertEquals(0, db.presenceDao().forDate(day.toString()).size)
+    }
+
+    @Test
+    fun dzien_wolny_nie_da_sie_oznaczyc_bez_zmiany() = runBlocking {
+        planShift(day, Shift.W5)
+        PresenceRepo.markManual(ctx, day)
+        assertEquals(0, db.presenceDao().forDate(day.toString()).size)
+    }
 }
