@@ -27,9 +27,12 @@ object Holidays {
         return LocalDate.of(year, month, day)
     }
 
+    /** Od 2025 roku Wigilia jest dniem ustawowo wolnym od pracy. */
+    private const val PIERWSZY_ROK_WIGILII = 2025
+
     fun all(year: Int): Map<LocalDate, String> {
         val e = easter(year)
-        return linkedMapOf(
+        val dni = linkedMapOf(
             LocalDate.of(year, 1, 1) to "Nowy Rok",
             LocalDate.of(year, 1, 6) to "Trzech Króli",
             e to "Wielkanoc",
@@ -44,6 +47,8 @@ object Holidays {
             LocalDate.of(year, 12, 25) to "Boże Narodzenie",
             LocalDate.of(year, 12, 26) to "Drugi dzień Świąt"
         )
+        if (year >= PIERWSZY_ROK_WIGILII) dni[LocalDate.of(year, 12, 24)] = "Wigilia"
+        return dni
     }
 
     fun nameOf(d: LocalDate): String? = all(d.year)[d]

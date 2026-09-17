@@ -38,15 +38,23 @@ class NormaMiesiacaTest {
     }
 
     @Test
-    fun caly_rok_2026_to_2016_godzin() {
-        // suma wymiarów wszystkich miesięcy; bez Wigilii jako dnia wolnego
-        assertEquals(2016, (1..12).sumOf { Holidays.monthlyNorm(2026, it) })
+    fun caly_rok_2026_to_2008_godzin() {
+        // suma wymiarów wszystkich miesięcy, z Wigilią jako dniem wolnym
+        assertEquals(2008, (1..12).sumOf { Holidays.monthlyNorm(2026, it) })
     }
 
     @Test
-    fun grudzien_2026_bez_wigilii_ma_168_godzin() {
-        // 23 dni robocze, święta 25.12 (piątek) i 26.12 (sobota)
-        // Uwaga: gdyby doszła Wigilia jako dzień ustawowo wolny, wyjdzie 160 h
-        assertEquals(168, Holidays.monthlyNorm(2026, 12))
+    fun grudzien_2026_ma_160_godzin_bo_wigilia_jest_wolna() {
+        // 23 dni robocze = 184 h, minus Wigilia (czwartek), Boże Narodzenie (piątek)
+        // i drugi dzień świąt (sobota) — każde po 8 h
+        assertEquals(160, Holidays.monthlyNorm(2026, 12))
+    }
+
+    @Test
+    fun wigilia_jest_swietem_dopiero_od_2025() {
+        assertEquals("Wigilia", Holidays.nameOf(java.time.LocalDate.of(2026, 12, 24)))
+        assertEquals("Wigilia", Holidays.nameOf(java.time.LocalDate.of(2025, 12, 24)))
+        // w latach wcześniejszych Wigilia była zwykłym dniem pracy
+        assertEquals(null, Holidays.nameOf(java.time.LocalDate.of(2024, 12, 24)))
     }
 }
