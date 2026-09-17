@@ -5,6 +5,17 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+/**
+ * Numer paczki nowego wyglądu — liczba commitów gałęzi. Rośnie sam przy każdej zmianie,
+ * więc telefon widzi kolejne APK jako NOWSZE i instaluje je na wierzch. Bez tego każda
+ * paczka miała ten sam versionCode i trzeba było odinstalowywać aplikację przed instalacją.
+ */
+val nowyBuild: Int = runCatching {
+    val proces = ProcessBuilder("git", "rev-list", "--count", "HEAD")
+        .directory(rootDir).redirectErrorStream(true).start()
+    proces.inputStream.bufferedReader().readText().trim().toInt()
+}.getOrDefault(0)
+
 android {
     namespace = "pl.grafik.pracy"
     compileSdk = 35
@@ -39,7 +50,9 @@ android {
         create("nowy") {
             dimension = "wyglad"
             applicationIdSuffix = ".nowy"
-            versionNameSuffix = "-nowy"
+            // Własna numeracja, żeby nie kolidowała z wydaniami klasycznej aplikacji.
+            versionCode = 1000 + nowyBuild
+            versionNameSuffix = "-nowy.$nowyBuild"
         }
     }
     compileOptions {

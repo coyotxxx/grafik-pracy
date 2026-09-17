@@ -22,6 +22,7 @@ import pl.grafik.pracy.nowy.ekrany.EkranBilans
 import pl.grafik.pracy.nowy.ekrany.EkranGrafik
 import pl.grafik.pracy.nowy.ekrany.EkranTeraz
 import pl.grafik.pracy.nowy.ekrany.KartaDnia
+import pl.grafik.pracy.nowy.ekrany.EkranUstawienia
 import pl.grafik.pracy.nowy.ekrany.TrybEdycji
 import java.time.LocalDate
 import pl.grafik.pracy.nowy.theme.*
@@ -86,6 +87,7 @@ private fun NowaApp(vm: Vm, pvm: PresenceVm, uvm: UpdateVm) {
                 )
                 Zakladka.GRAFIK -> EkranGrafik(vm, naDzien = { otwartyDzien = it }, naEdycje = { edycja = true })
                 Zakladka.BILANS -> EkranBilans(vm)
+                Zakladka.USTAWIENIA -> EkranUstawienia(vm, pvm, uvm)
                 else -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(zakladka.etykieta, style = GrafikType.h1, color = DarkTokens.ink)
                 }

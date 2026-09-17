@@ -9,6 +9,7 @@ import android.util.Log
 import androidx.core.content.FileProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.net.HttpURLConnection
@@ -74,6 +75,56 @@ object Updater {
         Log.w(TAG, "wydanie $latest nie ma pliku APK")
         null
     }
+
+    /**
+     * Wydania nowego wyglądu — osobny kanał, żeby nie mieszać się z wydaniami
+     * klasycznej aplikacji. Tagi mają postać `nowy-vN`, gdzie N to numer paczki
+     * (liczba commitów gałęzi), a wydania są oznaczone jako pre-release — dzięki temu
+     * GitHub nie poda ich jako `latest` i klasyczna aplikacja ich nie zobaczy.
+     *
+     * @param currentBuild numer paczki, która jest zainstalowana
+     * @return nowsze wydanie albo null
+     */
+    suspend fun checkChannel(prefix: String, currentBuild: Int): UpdateInfo? = withContext(Dispatchers.IO) {
+        val body = runCatching { get("https://api.github.com/repos/$REPO/releases?per_page=20") }.getOrElse {
+            Log.w(TAG, "nie udało się sprawdzić wydań kanału $prefix: ${it.message}")
+            return@withContext null
+        } ?: return@withContext null
+
+        val lista = runCatching { JSONArray(body) }.getOrNull() ?: return@withContext null
+        for (i in 0 until lista.length()) {
+            val wydanie = lista.optJSONObject(i) ?: continue
+            val tag = wydanie.optString("tag_name")
+            if (!tag.startsWith(prefix)) continue
+
+            val numer = numerPaczki(tag, prefix) ?: continue
+            if (numer <= currentBuild) {
+                Log.i(TAG, "kanał $prefix: wersja aktualna (paczka $currentBuild, najnowsza $numer)")
+                return@withContext null
+            }
+
+            val assets = wydanie.optJSONArray("assets") ?: continue
+            for (j in 0 until assets.length()) {
+                val a = assets.optJSONObject(j) ?: continue
+                if (a.optString("name").endsWith(".apk", ignoreCase = true)) {
+                    Log.i(TAG, "kanał $prefix: dostępna paczka $numer")
+                    return@withContext UpdateInfo(
+                        version = tag.removePrefix(prefix).removePrefix("v"),
+                        apkUrl = a.optString("browser_download_url"),
+                        notes = wydanie.optString("body").trim(),
+                        sizeBytes = a.optLong("size")
+                    )
+                }
+            }
+            Log.w(TAG, "kanał $prefix: wydanie $tag nie ma pliku APK")
+            return@withContext null
+        }
+        null
+    }
+
+    /** `nowy-v45` → 45. Null, gdy tag nie ma numeru. */
+    fun numerPaczki(tag: String, prefix: String): Int? =
+        tag.removePrefix(prefix).removePrefix("v").takeWhile(Char::isDigit).toIntOrNull()
 
     /**
      * Pobiera APK i oddaje go systemowemu instalatorowi.

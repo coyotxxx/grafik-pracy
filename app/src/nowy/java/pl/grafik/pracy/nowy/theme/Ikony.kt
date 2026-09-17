@@ -188,3 +188,74 @@ val IkonaWDol: ImageVector = ikona(2f) {
 val IkonaWGore: ImageVector = ikona(2f) {
     moveTo(6f, 15f); lineToRelative(6f, -6f); lineToRelative(6f, 6f)
 }
+
+/** Dwie strzałki w kółko — „Mój cykl". */
+val IkonaCykl: ImageVector = ikona(1.7f) {
+    moveTo(4f, 11f); arcToRelative(8f, 8f, 0f, false, true, 13.7f, -5.6f); lineTo(21f, 8f)
+    moveTo(21f, 4f); verticalLineToRelative(4f); horizontalLineToRelative(-4f)
+    moveTo(20f, 13f); arcToRelative(8f, 8f, 0f, false, true, -13.7f, 5.6f); lineTo(3f, 16f)
+    moveTo(3f, 20f); verticalLineToRelative(-4f); horizontalLineToRelative(4f)
+}
+
+/** Zegar ze wskazówkami — „Czas pracy i nadgodziny". */
+val IkonaCzasPracy: ImageVector = ikona(1.8f) {
+    okrag(12f, 12f, 9f)
+    moveTo(12f, 7f); verticalLineToRelative(5f); lineToRelative(3.5f, 2f)
+}
+
+/** Portfel z monetą — „Stawki i wypłata". */
+val IkonaWyplata: ImageVector = ikona(1.7f) {
+    moveTo(3f, 8.5f); arcToRelative(2.5f, 2.5f, 0f, false, true, 2.5f, -2.5f); horizontalLineTo(19f)
+    arcToRelative(2f, 2f, 0f, false, true, 2f, 2f); verticalLineToRelative(9f)
+    arcToRelative(2f, 2f, 0f, false, true, -2f, 2f); horizontalLineTo(5.5f)
+    arcToRelative(2.5f, 2.5f, 0f, false, true, -2.5f, -2.5f); close()
+    moveTo(3f, 9f); horizontalLineToRelative(18f)
+    okrag(16.5f, 13.5f, 1.3f)
+}
+
+/** Księżyc — „Odpoczynek". */
+val IkonaOdpoczynek: ImageVector = ikona(1.8f) {
+    moveTo(17.5f, 14.5f); arcToRelative(7f, 7f, 0f, false, true, -8f, -8f)
+    arcToRelative(7f, 7f, 0f, true, false, 8f, 8f); close()
+}
+
+/** Parasol — „Urlop". */
+val IkonaUrlop: ImageVector = ikona(1.8f) {
+    moveTo(12f, 21f); verticalLineToRelative(-8f)
+    moveTo(3f, 13f); arcToRelative(9f, 9f, 0f, false, true, 18f, 0f); close()
+}
+
+/** Pinezka — „Wykrywanie pracy". */
+val IkonaLokalizacja: ImageVector = ikona(1.8f) {
+    moveTo(12f, 21f); reflectiveCurveToRelative(7f, -5.6f, 7f, -11f)
+    arcToRelative(7f, 7f, 0f, true, false, -14f, 0f); curveToRelative(0f, 5.4f, 7f, 11f, 7f, 11f); close()
+    okrag(12f, 10f, 2.6f)
+}
+
+/** Paleta — „Wygląd i kolory". */
+val IkonaPaleta: ImageVector = ikona(1.7f) {
+    moveTo(12f, 3.5f); arcToRelative(8.5f, 8.5f, 0f, true, false, 0f, 17f)
+    curveToRelative(1.1f, 0f, 1.9f, -0.9f, 1.9f, -1.9f); curveToRelative(0f, -0.5f, -0.2f, -0.9f, -0.5f, -1.2f)
+    curveToRelative(-0.3f, -0.3f, -0.5f, -0.7f, -0.5f, -1.2f); curveToRelative(0f, -1f, 0.8f, -1.8f, 1.8f, -1.8f)
+    horizontalLineToRelative(1.1f); arcToRelative(4.7f, 4.7f, 0f, false, false, 4.7f, -4.7f)
+    curveToRelative(0f, -3.4f, -3.8f, -6.2f, -8.5f, -6.2f); close()
+    okrag(7.8f, 11.2f, 1.1f)
+    okrag(11f, 7.8f, 1.1f)
+    okrag(15.2f, 8.6f, 1.1f)
+}
+
+/** Baza danych — „Dane i kopia". */
+val IkonaDane: ImageVector = ikona(1.8f) {
+    moveTo(4f, 7f); curveToRelative(0f, -1.7f, 3.6f, -3f, 8f, -3f); reflectiveCurveToRelative(8f, 1.3f, 8f, 3f)
+    reflectiveCurveToRelative(-3.6f, 3f, -8f, 3f); reflectiveCurveToRelative(-8f, -1.3f, -8f, -3f); close()
+    moveTo(4f, 7f); verticalLineToRelative(10f); curveToRelative(0f, 1.7f, 3.6f, 3f, 8f, 3f)
+    reflectiveCurveToRelative(8f, -1.3f, 8f, -3f); verticalLineTo(7f)
+    moveTo(4f, 12f); curveToRelative(0f, 1.7f, 3.6f, 3f, 8f, 3f); reflectiveCurveToRelative(8f, -1.3f, 8f, -3f)
+}
+
+/** Kółko z „i" — „O aplikacji". */
+val IkonaInfo: ImageVector = ikona(1.8f) {
+    okrag(12f, 12f, 9f)
+    moveTo(12f, 11f); verticalLineToRelative(5f)
+    moveTo(12f, 8f); lineToRelative(0.01f, 0f)
+}

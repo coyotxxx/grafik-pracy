@@ -22,6 +22,10 @@ data class UpdateUi(
     val upToDateMessage: String? = null
 )
 
+/** Prefiks tagów wydań nowego wyglądu i baza, od której liczy się jego versionCode. */
+private const val KANAL_NOWY = "nowy-"
+private const val BAZA_NOWY = 1000
+
 class UpdateVm(app: Application) : AndroidViewModel(app) {
 
     private val _state = MutableStateFlow(UpdateUi())
@@ -31,7 +35,12 @@ class UpdateVm(app: Application) : AndroidViewModel(app) {
 
     fun check(manual: Boolean) = viewModelScope.launch {
         if (manual) _state.value = _state.value.copy(progress = UpdateProgress.Checking, upToDateMessage = null)
-        val info = Updater.check(BuildConfig.VERSION_NAME)
+        val info = if (BuildConfig.FLAVOR == "nowy") {
+            // Nowy wygląd ma własny kanał wydań; numer paczki siedzi w versionCode.
+            Updater.checkChannel(KANAL_NOWY, BuildConfig.VERSION_CODE - BAZA_NOWY)
+        } else {
+            Updater.check(BuildConfig.VERSION_NAME)
+        }
         _state.value = _state.value.copy(
             available = info,
             dismissed = if (info != null) false else _state.value.dismissed,
