@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import pl.grafik.pracy.nowy.ekrany.EkranGrafik
 import pl.grafik.pracy.nowy.theme.*
 import pl.grafik.pracy.ui.PresenceVm
 import pl.grafik.pracy.ui.UpdateVm
@@ -58,13 +59,14 @@ private fun NowaApp(vm: Vm, pvm: PresenceVm, uvm: UpdateVm) {
     var zakladka by remember { mutableStateOf(Zakladka.GRAFIK) }
 
     Column(Modifier.fillMaxSize().background(DarkTokens.bg)) {
-        Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Box(Modifier.weight(1f).fillMaxWidth()) {
             // Ekrany dochodzą po kolei, jeden na commit — patrz design/README.md.
-            Text(
-                zakladka.etykieta,
-                style = GrafikType.h1,
-                color = DarkTokens.ink
-            )
+            when (zakladka) {
+                Zakladka.GRAFIK -> EkranGrafik(vm, naDzien = {}, naEdycje = {})
+                else -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(zakladka.etykieta, style = GrafikType.h1, color = DarkTokens.ink)
+                }
+            }
         }
         PasekNawigacji(zakladka) { zakladka = it }
     }

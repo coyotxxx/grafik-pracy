@@ -76,3 +76,45 @@ val IkonaUstawienia: ImageVector = ikona {
     okrag(9f, 8f, 2.6f)
     okrag(16f, 16f, 2.6f)
 }
+
+// ─── ikony ekranu Grafik (Main.html) ───────────────────────────
+
+/** Strzałka w lewo — poprzedni miesiąc. Obrys 1.8 jak w makiecie. */
+val IkonaWLewo: ImageVector = ikona(1.8f) {
+    moveTo(15f, 5f); lineToRelative(-7f, 7f); lineToRelative(7f, 7f)
+}
+
+/** Strzałka w prawo — następny miesiąc, szczegóły dnia. */
+val IkonaWPrawo: ImageVector = ikona(1.8f) {
+    moveTo(9f, 5f); lineToRelative(7f, 7f); lineToRelative(-7f, 7f)
+}
+
+/** Trójkąt ostrzegawczy — pasek kolizji odpoczynku. */
+val IkonaOstrzezenie: ImageVector = ikona(1.9f) {
+    moveTo(12f, 9f); verticalLineToRelative(5f)
+    moveTo(12f, 17f); lineToRelative(0.01f, 0f)
+    moveTo(10.3f, 4.2f)
+    lineTo(2.6f, 17.4f)
+    arcToRelative(2f, 2f, 0f, false, false, 1.7f, 3f)
+    horizontalLineToRelative(15.4f)
+    arcToRelative(2f, 2f, 0f, false, false, 1.7f, -3f)
+    lineTo(13.7f, 4.2f)
+    arcToRelative(2f, 2f, 0f, false, false, -3.4f, 0f)
+    close()
+}
+
+/** Ołówek — „Edytuj grafik". */
+val IkonaOlowek: ImageVector = ikona(1.7f) {
+    moveTo(4f, 20f); horizontalLineToRelative(4f); lineToRelative(10f, -10f)
+    arcToRelative(2.8f, 2.8f, 0f, true, false, -4f, -4f)
+    lineTo(4f, 16f); verticalLineToRelative(4f)
+    close()
+}
+
+/** Trzy kreski — filtr i widok. */
+val IkonaFiltr: ImageVector = ikona(1.7f) {
+    moveTo(4f, 7f); horizontalLineToRelative(16f)
+    moveTo(7f, 12f); horizontalLineToRelative(10f)
+    moveTo(10f, 17f); horizontalLineToRelative(4f)
+}
+
