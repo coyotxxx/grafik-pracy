@@ -23,7 +23,13 @@ data class PowiadomieniaCfg(
     val przedZmiana: Boolean = false,
     val przedZmianaMin: Int = 60,
     /** Nie budzić w trakcie nocki ani zaraz po niej. */
-    val ciszaNaNocce: Boolean = true
+    val ciszaNaNocce: Boolean = true,
+    /** W niedzielę wieczorem, gdy od jutra wypada inna zmiana niż w mijającym tygodniu. */
+    val zmianaBrygady: Boolean = true,
+    /** Gdy nadgodziny przekroczą 80 % limitu okresu rozliczeniowego. */
+    val limitNadgodzin: Boolean = false,
+    /** W sierpniu, gdy został urlop zaległy — termin to 30 września (art. 168 KP). */
+    val zaleglyUrlop: Boolean = true
 )
 
 object PlanPowiadomien {
@@ -73,6 +79,73 @@ object PlanPowiadomien {
     /** „15 min", „30 min", „1 h", „2 h" — etykieta wyprzedzenia. */
     fun etykietaWyprzedzenia(minuty: Int): String =
         if (minuty < 60) "$minuty min" else "${minuty / 60} h"
+
+    /**
+     * Powiadomienia warunkowe — odzywają się tylko wtedy, gdy grafik albo kalendarz
+     * dają po temu powód. Każda z tych funkcji zwraca gotową treść albo null,
+     * gdy nie ma o czym mówić.
+     */
+
+    /** Po ilu procentach limitu okresu ostrzegamy przed nadgodzinami. */
+    const val PROG_LIMITU = 0.80
+
+    /** Miesiąc, w którym przypominamy o zaległym urlopie — zostają dwa na jego wybranie. */
+    const val MIESIAC_ZALEGLEGO = 8
+
+    /**
+     * Zmiana brygady: w niedzielę wieczorem sprawdzamy, czy poniedziałek zaczyna
+     * inną zmianę niż ta, na której chodziło się w mijającym tygodniu.
+     *
+     * @param mijajacyTydzien zmiany od poniedziałku do soboty, w kolejności
+     * @param jutrzejsza zmiana poniedziałkowa
+     */
+    fun zmianaBrygady(dzis: LocalDate, mijajacyTydzien: List<Shift?>, jutrzejsza: Shift?): String? {
+        if (dzis.dayOfWeek != java.time.DayOfWeek.SUNDAY) return null
+        if (jutrzejsza == null || !jutrzejsza.isWork) return null
+        val ostatnia = mijajacyTydzien.lastOrNull { it?.isWork == true } ?: return null
+        if (ostatnia == jutrzejsza) return null
+        return "Od jutra ${opisZmiany(jutrzejsza)} — w mijającym tygodniu była ${opisZmiany(ostatnia)}."
+    }
+
+    private fun opisZmiany(s: Shift): String = when (s) {
+        Shift.I -> "I zmiana"
+        Shift.II -> "II zmiana"
+        Shift.III -> "zmiana nocna"
+        else -> s.code
+    }
+
+    /**
+     * Limit nadgodzin: ostrzegamy po przekroczeniu [PROG_LIMITU], ale jeszcze przed
+     * samym limitem — po jego przekroczeniu ostrzeżenie nie ma już czego zapowiadać.
+     */
+    fun limitNadgodzin(wykorzystane: Int, limit: Int): String? {
+        if (limit <= 0) return null
+        val udzial = wykorzystane.toDouble() / limit
+        if (udzial < PROG_LIMITU) return null
+        val zostalo = limit - wykorzystane
+        return if (zostalo > 0)
+            "Masz $wykorzystane z $limit h nadgodzin w tym okresie — zostało $zostalo h."
+        else
+            "Masz $wykorzystane z $limit h nadgodzin — limit okresu jest wyczerpany."
+    }
+
+    /**
+     * Zaległy urlop: raz, w sierpniu, gdy coś jeszcze zostało.
+     * Art. 168 KP każe go wybrać do 30 września.
+     */
+    fun zaleglyUrlop(dzis: LocalDate, dni: Int): String? {
+        if (dzis.monthValue != MIESIAC_ZALEGLEGO || dni <= 0) return null
+        val termin = VacationCfg.terminZaleglego(dzis.year)
+        val zostalo = java.time.temporal.ChronoUnit.DAYS.between(dzis, termin)
+        return "Został Ci $dni ${dniOdmiana(dni)} urlopu zaległego — do wybrania w $zostalo dni, " +
+            "termin to 30 września."
+    }
+
+    private fun dniOdmiana(ile: Int): String = when {
+        ile == 1 -> "dzień"
+        ile % 10 in 2..4 && ile % 100 !in 12..14 -> "dni"
+        else -> "dni"
+    }
 
     /** „9:20", „09:20", „9" → LocalTime. Puste i bzdurne wartości dają null. */
     fun parsujGodzine(s: String): LocalTime? {

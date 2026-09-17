@@ -26,6 +26,7 @@ import pl.grafik.pracy.domain.Shift
 import pl.grafik.pracy.nowy.theme.*
 import pl.grafik.pracy.nowy.ui.*
 import pl.grafik.pracy.ui.UiState
+import pl.grafik.pracy.events.PowiadomieniaWarunkowe
 import pl.grafik.pracy.ui.Vm
 import java.time.LocalDate
 
@@ -39,6 +40,7 @@ import java.time.LocalDate
 fun EkranPowiadomienia(vm: Vm, naPowrot: () -> Unit) {
     val s by vm.state.collectAsState()
     val cfg = s.powiadomienia
+    val ctx = androidx.compose.ui.platform.LocalContext.current
 
     Box(Modifier.fillMaxSize()) {
         TloZPoswiata(Modifier.fillMaxSize())
@@ -63,7 +65,11 @@ fun EkranPowiadomienia(vm: Vm, naPowrot: () -> Unit) {
             Podglad(s, cfg)
             KartaWydarzen(cfg) { vm.savePowiadomienia(it) }
             KartaCiszy(cfg) { vm.savePowiadomienia(it) }
-            KartaZmiany(cfg) { vm.savePowiadomienia(it) }
+            KartaZmiany(cfg) { nowe ->
+                vm.savePowiadomienia(nowe)
+                // Warunkowe planuje tylko nowy wygląd — klasyczna aplikacja ich nie zna.
+                PowiadomieniaWarunkowe.ustaw(ctx, nowe)
+            }
 
             val pNotka by postepWejscia(Motion.RISE_MS, 200)
             Text(
@@ -347,5 +353,50 @@ private fun KartaZmiany(cfg: PowiadomieniaCfg, zapisz: (PowiadomieniaCfg) -> Uni
                 }
             }
         }
+
+        Box(Modifier.fillMaxWidth().height(1.dp).background(DarkTokens.line))
+
+        WierszWarunkowy(
+            tytul = "Zmiana brygady w cyklu",
+            opis = "w niedzielę wieczorem, gdy od jutra inna zmiana",
+            wlaczony = cfg.zmianaBrygady
+        ) { zapisz(cfg.copy(zmianaBrygady = it)) }
+
+        Box(Modifier.fillMaxWidth().height(1.dp).background(DarkTokens.line))
+
+        WierszWarunkowy(
+            tytul = "Limit nadgodzin blisko",
+            opis = "gdy przekroczysz 80% limitu okresu",
+            wlaczony = cfg.limitNadgodzin
+        ) { zapisz(cfg.copy(limitNadgodzin = it)) }
+
+        Box(Modifier.fillMaxWidth().height(1.dp).background(DarkTokens.line))
+
+        WierszWarunkowy(
+            tytul = "Zaległy urlop do wykorzystania",
+            opis = "przypomnimy w sierpniu, termin to 30 września",
+            wlaczony = cfg.zaleglyUrlop
+        ) { zapisz(cfg.copy(zaleglyUrlop = it)) }
+    }
+}
+
+/** Wiersz przełącznika z karty warunkowych — 54 dp wysokości, jak w makiecie. */
+@Composable
+private fun WierszWarunkowy(
+    tytul: String,
+    opis: String,
+    wlaczony: Boolean,
+    naZmiane: (Boolean) -> Unit
+) {
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = 54.dp).clickable { naZmiane(!wlaczony) },
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(tytul, style = GrafikType.cardTitle, color = DarkTokens.ink)
+            Text(opis, fontSize = 11.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted)
+        }
+        Przelacznik(wlaczony, naZmiane)
     }
 }

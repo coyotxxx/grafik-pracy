@@ -41,6 +41,11 @@ import pl.grafik.pracy.nowy.ui.dolnaKrawedz
 import pl.grafik.pracy.ui.PresenceVm
 import pl.grafik.pracy.ui.UpdateVm
 import pl.grafik.pracy.ui.Vm
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import pl.grafik.pracy.data.SettingsStore
+import pl.grafik.pracy.events.PowiadomieniaWarunkowe
 
 /**
  * Ekran startowy wariantu „nowy".
@@ -56,6 +61,11 @@ class NowaActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        // Powiadomienia warunkowe zna tylko nowy wygląd — klasyczna aplikacja ich nie planuje.
+        lifecycleScope.launch {
+            val cfg = SettingsStore(applicationContext).powiadomienia.first()
+            PowiadomieniaWarunkowe.ustaw(applicationContext, cfg)
+        }
         setContent { NowaApp(vm, pvm, uvm) }
     }
 

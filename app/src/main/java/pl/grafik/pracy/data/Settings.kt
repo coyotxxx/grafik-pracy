@@ -43,6 +43,10 @@ class SettingsStore(private val ctx: Context) {
     private val kNotifPrzedZmiana = booleanPreferencesKey("notif_przed_zmiana")
     private val kNotifPrzedZmianaMin = intPreferencesKey("notif_przed_zmiana_min")
     private val kNotifCisza = booleanPreferencesKey("notif_cisza_nocka")
+    /** Powiadomienia warunkowe: zmiana brygady, limit nadgodzin, zaległy urlop. */
+    private val kNotifBrygada = booleanPreferencesKey("notif_brygada")
+    private val kNotifLimit = booleanPreferencesKey("notif_limit_ot")
+    private val kNotifZalegly = booleanPreferencesKey("notif_zalegly_urlop")
     /** Znacznik kolizji odpoczynku na kafelku dnia (art. 132 KP). */
     private val kRestMarker = booleanPreferencesKey("rest_marker")
     /** Ostrzeżenie w trybie edycji, gdy malowana zmiana skraca przerwę poniżej 11 h. */
@@ -169,7 +173,10 @@ class SettingsStore(private val ctx: Context) {
             wyprzedzenieMin = p[kNotifWyprzedzenie] ?: 60,
             przedZmiana = p[kNotifPrzedZmiana] ?: false,
             przedZmianaMin = p[kNotifPrzedZmianaMin] ?: 60,
-            ciszaNaNocce = p[kNotifCisza] ?: true
+            ciszaNaNocce = p[kNotifCisza] ?: true,
+            zmianaBrygady = p[kNotifBrygada] ?: true,
+            limitNadgodzin = p[kNotifLimit] ?: false,
+            zaleglyUrlop = p[kNotifZalegly] ?: true
         )
     }
 
@@ -181,6 +188,9 @@ class SettingsStore(private val ctx: Context) {
             p[kNotifWyprzedzenie] = c.wyprzedzenieMin
             p[kNotifPrzedZmiana] = c.przedZmiana
             p[kNotifPrzedZmianaMin] = c.przedZmianaMin
+            p[kNotifBrygada] = c.zmianaBrygady
+            p[kNotifLimit] = c.limitNadgodzin
+            p[kNotifZalegly] = c.zaleglyUrlop
             p[kNotifCisza] = c.ciszaNaNocce
         }
     }
