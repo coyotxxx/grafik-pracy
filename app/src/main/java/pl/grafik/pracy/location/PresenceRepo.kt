@@ -179,7 +179,14 @@ object PresenceRepo {
             )
         )
         Log.i(TAG, "zapisano propozycję #$id: ${result.date} ${result.otHours}h ${result.otRate.percent}% (${'$'}source)")
-        PresenceNotif.propose(ctx, id, result)
+
+        // Automatyczny zapis: wpis od razu wchodzi do grafiku, a powiadomienie
+        // tylko informuje. Nadal da się go cofnąć jednym dotknięciem.
+        if (wp.autoSave) {
+            accept(ctx, id)
+            Log.i(TAG, "automatyczny zapis #$id")
+        }
+        PresenceNotif.propose(ctx, id, result, zapisane = wp.autoSave)
         return id
     }
 
@@ -230,7 +237,22 @@ object PresenceRepo {
         db.presenceDao().setStatus(id, "accepted")
     }
 
+    /**
+     * Odrzucenie. Gdy wpis zdążył już wejść do grafiku — bo tak działa automatyczny
+     * zapis — zdejmujemy z dnia dokładnie te nadgodziny, które sam dopisał.
+     * Etykiety zmiany nie ruszamy: nie wiemy, co było wcześniej, a zgadywanie
+     * kasowałoby cudzą pracę.
+     */
     suspend fun reject(ctx: Context, id: Long) {
-        AppDb.get(ctx).presenceDao().setStatus(id, "rejected")
+        val db = AppDb.get(ctx)
+        val row = db.presenceDao().byId(id)
+        if (row != null && row.status == "accepted" && row.otHours > 0) {
+            db.dayDao().get(row.date)?.toEntry()?.let { cur ->
+                db.dayDao().upsert(
+                    DayRow.from(cur.copy(otHours = (cur.otHours - row.otHours).coerceAtLeast(0)))
+                )
+            }
+        }
+        db.presenceDao().setStatus(id, "rejected")
     }
 }

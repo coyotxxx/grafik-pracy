@@ -88,6 +88,7 @@ class PresenceVm(app: Application) : AndroidViewModel(app) {
     fun setRadius(m: Int) = update { it.copy(radiusM = m.coerceIn(100, 500)) }
     fun setMinStay(m: Int) = update { it.copy(minStayMin = m.coerceIn(10, 120)) }
     fun setMergeGap(m: Int) = update { it.copy(mergeGapMin = m.coerceIn(5, 90)) }
+    fun setAutoSave(on: Boolean) = update { it.copy(autoSave = on) }
 
     fun setEnabled(on: Boolean) = viewModelScope.launch {
         val app = getApplication<Application>()

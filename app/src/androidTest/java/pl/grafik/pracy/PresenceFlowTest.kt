@@ -340,4 +340,51 @@ class PresenceFlowTest {
 
         assertNull(PresenceState.openEnter(ctx))
     }
+
+    // ——— automatyczny zapis ———
+
+    @Test
+    fun z_automatycznym_zapisem_dzien_wchodzi_do_grafiku_bez_pytania() = runBlocking {
+        SettingsStore(ctx).saveWorkPlace(
+            WorkPlace(enabled = true, lat = 52.1, lon = 21.0, radiusM = 200, minStayMin = 30, autoSave = true)
+        )
+        planShift(day, Shift.I)
+
+        PresenceRepo.onEnter(ctx, day.atTime(6, 0))
+        val id = PresenceRepo.onExit(ctx, day.atTime(16, 15))!!
+
+        assertEquals("accepted", db.presenceDao().byId(id)!!.status)
+        assertEquals(2, db.dayDao().get(day.toString())!!.toEntry().otHours)
+    }
+
+    @Test
+    fun cofniecie_zdejmuje_z_grafiku_dopisane_nadgodziny() = runBlocking {
+        SettingsStore(ctx).saveWorkPlace(
+            WorkPlace(enabled = true, lat = 52.1, lon = 21.0, radiusM = 200, minStayMin = 30, autoSave = true)
+        )
+        planShift(day, Shift.I)
+
+        PresenceRepo.onEnter(ctx, day.atTime(6, 0))
+        val id = PresenceRepo.onExit(ctx, day.atTime(16, 15))!!
+        assertEquals(2, db.dayDao().get(day.toString())!!.toEntry().otHours)
+
+        PresenceRepo.reject(ctx, id)
+
+        assertEquals("rejected", db.presenceDao().byId(id)!!.status)
+        assertEquals(0, db.dayDao().get(day.toString())!!.toEntry().otHours)
+    }
+
+    @Test
+    fun bez_automatycznego_zapisu_propozycja_czeka() = runBlocking {
+        SettingsStore(ctx).saveWorkPlace(
+            WorkPlace(enabled = true, lat = 52.1, lon = 21.0, radiusM = 200, minStayMin = 30, autoSave = false)
+        )
+        planShift(day, Shift.I)
+
+        PresenceRepo.onEnter(ctx, day.atTime(6, 0))
+        val id = PresenceRepo.onExit(ctx, day.atTime(16, 15))!!
+
+        assertEquals("pending", db.presenceDao().byId(id)!!.status)
+        assertEquals(0, db.dayDao().get(day.toString())!!.toEntry().otHours)
+    }
 }

@@ -77,8 +77,12 @@ fun WorkPlaceScreen(vm: PresenceVm) {
     ) {
         Text("Miejsce pracy", fontSize = 21.sp, fontWeight = FontWeight.SemiBold, color = OnBg)
         Text(
-            "Telefon sam rozpozna, że jesteś w pracy, i zaproponuje wpis. " +
-                "Nic nie trafia do grafiku bez Twojego dotknięcia. Lokalizacja nie opuszcza telefonu.",
+            // Zdanie o dotknięciu przestaje być prawdą przy automatycznym zapisie —
+            // ekran nie może obiecywać czegoś, czego ustawienie niżej właśnie nie robi.
+            "Telefon sam rozpozna, że jesteś w pracy. " +
+                (if (wp.autoSave) "Wykryty dzień wchodzi do grafiku sam — możesz go cofnąć."
+                 else "Wpis czeka na Twoje dotknięcie.") +
+                " Lokalizacja nie opuszcza telefonu.",
             fontSize = 12.sp, color = OnMuted, lineHeight = 17.sp
         )
 
@@ -102,6 +106,29 @@ fun WorkPlaceScreen(vm: PresenceVm) {
                     onCheckedChange = { vm.setEnabled(it) },
                     colors = SwitchDefaults.colors(checkedThumbColor = AccentOn, checkedTrackColor = Accent)
                 )
+            }
+            if (wp.enabled) {
+                Spacer(Modifier.height(10.dp))
+                HorizontalDivider(color = Surface3)
+                Spacer(Modifier.height(10.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f).padding(end = 12.dp)) {
+                        Text("Zapisuj automatycznie", fontSize = 14.sp, color = OnBg)
+                        Text(
+                            if (wp.autoSave)
+                                "Wykryty dzień wchodzi do grafiku sam. Powiadomienie tylko informuje, " +
+                                    "z możliwością cofnięcia."
+                            else
+                                "Teraz każdy wykryty dzień czeka na Twoje „Zapisz” w powiadomieniu.",
+                            fontSize = 11.sp, color = if (wp.autoSave) Accent else OnFaint, lineHeight = 15.sp
+                        )
+                    }
+                    Switch(
+                        checked = wp.autoSave,
+                        onCheckedChange = { vm.setAutoSave(it) },
+                        colors = SwitchDefaults.colors(checkedThumbColor = AccentOn, checkedTrackColor = Accent)
+                    )
+                }
             }
             s.error?.let {
                 Spacer(Modifier.height(8.dp))

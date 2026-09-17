@@ -42,6 +42,7 @@ class SettingsStore(private val ctx: Context) {
     private val kWpSsid = stringPreferencesKey("wp_ssid")
     private val kWpStay = intPreferencesKey("wp_min_stay")
     private val kWpGap = intPreferencesKey("wp_merge_gap")
+    private val kWpAuto = booleanPreferencesKey("wp_auto_save")
     private val kOkrDl = intPreferencesKey("okres_dlugosc")
     private val kOkrLimity = stringPreferencesKey("okres_limity")
 
@@ -87,7 +88,8 @@ class SettingsStore(private val ctx: Context) {
             radiusM = p[kWpR] ?: 200,
             ssid = p[kWpSsid] ?: "",
             minStayMin = p[kWpStay] ?: 30,
-            mergeGapMin = p[kWpGap] ?: 30
+            mergeGapMin = p[kWpGap] ?: 30,
+            autoSave = p[kWpAuto] ?: false
         )
     }
 
@@ -100,6 +102,7 @@ class SettingsStore(private val ctx: Context) {
             p[kWpSsid] = w.ssid
             p[kWpStay] = w.minStayMin
             p[kWpGap] = w.mergeGapMin
+            p[kWpAuto] = w.autoSave
         }
     }
 

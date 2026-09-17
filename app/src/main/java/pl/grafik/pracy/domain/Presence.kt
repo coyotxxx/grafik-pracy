@@ -20,7 +20,9 @@ data class WorkPlace(
     /** Krótszy pobyt nie jest uznawany za dzień pracy (przejazd obok). */
     val minStayMin: Int = 30,
     /** Wyjście krótsze niż to sklejamy — skok do sklepu nie tnie dnia na dwa. */
-    val mergeGapMin: Int = 30
+    val mergeGapMin: Int = 30,
+    /** Zapisywać wykryty dzień do grafiku bez pytania. Domyślnie NIE — propozycja czeka. */
+    val autoSave: Boolean = false
 ) {
     val isSet: Boolean get() = lat != 0.0 || lon != 0.0
     val hasWifi: Boolean get() = ssid.isNotBlank()

@@ -39,7 +39,7 @@ object PresenceNotif {
         )
     }
 
-    fun propose(ctx: Context, id: Long, r: PresenceResult) {
+    fun propose(ctx: Context, id: Long, r: PresenceResult, zapisane: Boolean = false) {
         ensureChannel(ctx)
         if (NotificationManagerCompat.from(ctx).areNotificationsEnabled().not()) return
 
@@ -48,7 +48,7 @@ object PresenceNotif {
             1 -> "1 godz. nadgodzin (${r.otRate.percent}%)"
             else -> "${r.otHours} godz. nadgodzin (${r.otRate.percent}%)"
         }
-        val title = "Praca ${r.date.format(dm)} · $godz"
+        val title = (if (zapisane) "Zapisano: " else "") + "Praca ${r.date.format(dm)} · $godz"
         val body = buildString {
             append("W pracy ${r.span.enter.format(hm)}–${r.span.exit.format(hm)}")
             append(" · liczone ${r.countedFrom.format(hm)}–${r.countedTo.format(hm)}")
@@ -72,8 +72,11 @@ object PresenceNotif {
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
             .setContentIntent(open)
             .setAutoCancel(true)
-            .addAction(0, "Zapisz", action(ctx, id, ACTION_ACCEPT))
-            .addAction(0, "Odrzuć", action(ctx, id, ACTION_REJECT))
+            .apply {
+                // Przy automatycznym zapisie nie ma czego zatwierdzać — zostaje cofnięcie.
+                if (!zapisane) addAction(0, "Zapisz", action(ctx, id, ACTION_ACCEPT))
+                addAction(0, if (zapisane) "Cofnij" else "Odrzuć", action(ctx, id, ACTION_REJECT))
+            }
             .build()
 
         runCatching { NotificationManagerCompat.from(ctx).notify(id.toInt(), n) }
