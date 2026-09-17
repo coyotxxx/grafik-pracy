@@ -162,3 +162,19 @@ val IkonaKosz: ImageVector = ikona(1.8f) {
     moveTo(7f, 7f); lineToRelative(1f, 13f); horizontalLineToRelative(8f); lineToRelative(1f, -13f)
 }
 
+// ─── ikony trybu edycji (Edit.html) ────────────────────────────
+
+/** Strzałka zawracająca — „Cofnij ostatnią zmianę". */
+val IkonaCofnij: ImageVector = ikona(1.8f) {
+    moveTo(9f, 14f); lineToRelative(-5f, -5f); lineToRelative(5f, -5f)
+    moveTo(4f, 9f); horizontalLineToRelative(9f)
+    arcToRelative(7f, 7f, 0f, false, true, 0f, 14f)
+    horizontalLineToRelative(-3f)
+}
+
+/** Zegar z wskazówkami — modyfikator nadgodzin w panelu edycji. */
+val IkonaZegarek: ImageVector = ikona(1.9f) {
+    moveTo(12f, 6f); verticalLineToRelative(6f); lineToRelative(4f, 2f)
+    okrag(12f, 12f, 9f)
+}
+

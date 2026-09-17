@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import pl.grafik.pracy.nowy.ekrany.EkranGrafik
 import pl.grafik.pracy.nowy.ekrany.KartaDnia
+import pl.grafik.pracy.nowy.ekrany.TrybEdycji
 import java.time.LocalDate
 import pl.grafik.pracy.nowy.theme.*
 import pl.grafik.pracy.ui.PresenceVm
@@ -60,14 +61,20 @@ private enum class Zakladka(val etykieta: String, val ikona: ImageVector) {
 private fun NowaApp(vm: Vm, pvm: PresenceVm, uvm: UpdateVm) {
     var zakladka by remember { mutableStateOf(Zakladka.GRAFIK) }
     var otwartyDzien by remember { mutableStateOf<LocalDate?>(null) }
+    var edycja by remember { mutableStateOf(false) }
 
     otwartyDzien?.let { d -> KartaDnia(vm, d) { otwartyDzien = null } }
+
+    if (edycja) {
+        TrybEdycji(vm) { edycja = false }
+        return
+    }
 
     Column(Modifier.fillMaxSize().background(DarkTokens.bg)) {
         Box(Modifier.weight(1f).fillMaxWidth()) {
             // Ekrany dochodzą po kolei, jeden na commit — patrz design/README.md.
             when (zakladka) {
-                Zakladka.GRAFIK -> EkranGrafik(vm, naDzien = { otwartyDzien = it }, naEdycje = {})
+                Zakladka.GRAFIK -> EkranGrafik(vm, naDzien = { otwartyDzien = it }, naEdycje = { edycja = true })
                 else -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(zakladka.etykieta, style = GrafikType.h1, color = DarkTokens.ink)
                 }

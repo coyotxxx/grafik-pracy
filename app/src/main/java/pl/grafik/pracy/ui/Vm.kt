@@ -58,6 +58,12 @@ data class UiState(
     /** Godziny wykrytej obecności w dniach widocznej siatki. */
     val obecnosc: Map<LocalDate, DayPresence> = emptyMap(),
     val okresy: List<PeriodStats> = emptyList(),
+    /**
+     * Dni wpisane ręcznie — reszta pochodzi z cyklu.
+     * Tryb edycji w nowym wyglądzie zaznacza je pierścieniem, żeby było widać,
+     * co już nadpisałeś, a czego cykl jeszcze pilnuje.
+     */
+    val reczne: Set<LocalDate> = emptySet(),
     /** Nadgodziny w całym roku i limit roczny, czyli suma limitów okresów. */
     val otRok: Int = 0,
     val otLimitRok: Int = 0
@@ -193,7 +199,7 @@ class Vm(app: Application) : AndroidViewModel(app) {
 
         UiState(ym, merged, ev, cfg, cols, tool, otH, otR, calc(wMiesiacu, ym), rem.first, rem.second,
             maluj, url, urlRok, urlPrev, motyw, okres,
-            obecnosc(presRows, otwartyPobyt, merged), okresy.first, okresy.second,
+            obecnosc(presRows, otwartyPobyt, merged), okresy.first, saved.keys, okresy.second,
             Settlement.yearLimit(ym.year, okres))
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState())
 
@@ -427,6 +433,22 @@ class Vm(app: Application) : AndroidViewModel(app) {
         zapamietajDoCofniecia(d)
         dao.upsert(DayRow.from(cur.copy(otHours = godziny.coerceIn(0, 12), otRate = stawka)))
     }
+
+    /**
+     * Malowanie dnia w trybie edycji: typ dnia i — opcjonalnie — nadgodziny,
+     * jednym zapisem i jednym krokiem cofania. `nadgodziny = null` zostawia je bez zmian.
+     */
+    fun paintDay(d: LocalDate, shift: Shift?, nadgodziny: Int? = null, stawka: OtRate = OtRate.P100) =
+        viewModelScope.launch {
+            val cur = state.value.entries[d] ?: DayEntry(date = d)
+            zapamietajDoCofniecia(d)
+            val next = cur.copy(
+                shift = shift,
+                otHours = nadgodziny?.coerceIn(0, 12) ?: cur.otHours,
+                otRate = if (nadgodziny != null) stawka else cur.otRate
+            )
+            dao.upsert(DayRow.from(next))
+        }
 
     /** Wspólny zapis stanu sprzed zmiany — żeby „Cofnij" działało tak samo dla każdej drogi. */
     private suspend fun zapamietajDoCofniecia(d: LocalDate) {
