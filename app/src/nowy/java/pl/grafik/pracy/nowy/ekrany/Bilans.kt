@@ -45,7 +45,7 @@ private fun liczba(rozmiar: Int, waga: FontWeight = FontWeight.Bold) = TextStyle
  * aplikacja; ten ekran tylko inaczej je układa.
  */
 @Composable
-fun EkranBilans(vm: Vm) {
+fun EkranBilans(vm: Vm, naPlaner: () -> Unit) {
     val s by vm.state.collectAsState()
 
     // Wejście w bilans zawsze zaczyna od bieżącego miesiąca — jak w klasycznej aplikacji.
@@ -68,7 +68,7 @@ fun EkranBilans(vm: Vm) {
             KartaMiesiaca(s)
             KartaOkresu(s)
             KafelkiNadgodzin(s)
-            KartaUrlopu(s)
+            KartaUrlopu(s, naPlaner)
             KartaRozkladu(s)
         }
     }
@@ -403,7 +403,7 @@ private fun KafelekStatystyki(
 // ─────────────────────────────────────────────────────────────
 
 @Composable
-private fun KartaUrlopu(s: UiState) {
+private fun KartaUrlopu(s: UiState, naPlaner: () -> Unit) {
     val p by postepWejscia(Motion.RISE_MS, 200)
     val u = s.urlopBilans
     val rozowy = ShiftPaletteDark.URLOP.ink
@@ -437,6 +437,21 @@ private fun KartaUrlopu(s: UiState) {
             KafelekUrlopu(Modifier.weight(1f), "za ${u.rok}",
                 u.zostaloBiezacego, u.bazaBiezacy)
         }
+        Spacer(Modifier.height(14.dp))
+        Row(
+            Modifier.fillMaxWidth().height(46.dp)
+                .clip(RoundedCornerShape(15.dp))
+                .background(Color(0x24F490D9))
+                .border(1.dp, Color(0x59F490D9), RoundedCornerShape(15.dp))
+                .clickable(onClick = naPlaner),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
+        ) {
+            Icon(IkonaUrlop, null, Modifier.size(16.dp), tint = rozowy)
+            Text("Kiedy najlepiej wziąć urlop", fontSize = 13.sp, fontWeight = FontWeight.Bold,
+                fontFamily = Jakarta, color = rozowy)
+        }
+
         if (s.urlopMiesiaca.isNotEmpty()) {
             Spacer(Modifier.height(14.dp))
             Row(

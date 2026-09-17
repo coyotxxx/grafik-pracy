@@ -26,6 +26,7 @@ import pl.grafik.pracy.nowy.ekrany.KartaDnia
 import pl.grafik.pracy.nowy.ekrany.EkranCzasPracy
 import pl.grafik.pracy.nowy.ekrany.EkranMojCykl
 import pl.grafik.pracy.nowy.ekrany.EkranOdpoczynek
+import pl.grafik.pracy.nowy.ekrany.EkranPlanerUrlopu
 import pl.grafik.pracy.nowy.ekrany.EkranPowiadomienia
 import pl.grafik.pracy.nowy.ekrany.EkranUrlop
 import pl.grafik.pracy.nowy.ekrany.EkranWygladKolory
@@ -63,7 +64,7 @@ class NowaActivity : ComponentActivity() {
 }
 
 /** Podstrony ustawień — dochodzą po kolei, każda z własnej makiety. */
-enum class Podstrona { CYKL, CZAS_PRACY, URLOP, WYKRYWANIE, WYGLAD, ODPOCZYNEK, POWIADOMIENIA }
+enum class Podstrona { CYKL, CZAS_PRACY, URLOP, WYKRYWANIE, WYGLAD, ODPOCZYNEK, POWIADOMIENIA, PLANER }
 
 private enum class Zakladka(val etykieta: String, val ikona: ImageVector) {
     TERAZ("Teraz", IkonaTeraz),
@@ -96,10 +97,15 @@ private fun NowaApp(vm: Vm, pvm: PresenceVm, uvm: UpdateVm) {
     when (podstrona) {
         Podstrona.CYKL -> { EkranMojCykl(vm) { podstrona = null }; return }
         Podstrona.CZAS_PRACY -> { EkranCzasPracy(vm) { podstrona = null }; return }
-        Podstrona.URLOP -> { EkranUrlop(vm) { podstrona = null }; return }
+        Podstrona.URLOP -> {
+            EkranUrlop(vm, naPowrot = { podstrona = null },
+                naPlaner = { podstrona = Podstrona.PLANER })
+            return
+        }
         Podstrona.WYKRYWANIE -> { EkranWykrywanie(pvm) { podstrona = null }; return }
         Podstrona.WYGLAD -> { EkranWygladKolory(vm) { podstrona = null }; return }
         Podstrona.POWIADOMIENIA -> { EkranPowiadomienia(vm) { podstrona = null }; return }
+        Podstrona.PLANER -> { EkranPlanerUrlopu(vm) { podstrona = null }; return }
         Podstrona.ODPOCZYNEK -> {
             EkranOdpoczynek(vm, naPowrot = { podstrona = null },
                 naDzien = { podstrona = null; otwartyDzien = it })
@@ -125,7 +131,7 @@ private fun NowaApp(vm: Vm, pvm: PresenceVm, uvm: UpdateVm) {
                     naEdycje = { edycja = true },
                     naOdpoczynek = { podstrona = Podstrona.ODPOCZYNEK }
                 )
-                Zakladka.BILANS -> EkranBilans(vm)
+                Zakladka.BILANS -> EkranBilans(vm) { podstrona = Podstrona.PLANER }
                 Zakladka.USTAWIENIA -> EkranUstawienia(vm, pvm, uvm) { podstrona = it }
                 else -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(zakladka.etykieta, style = GrafikType.h1, color = DarkTokens.ink)

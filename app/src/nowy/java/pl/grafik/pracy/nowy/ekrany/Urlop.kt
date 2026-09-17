@@ -36,7 +36,7 @@ private val DATA_PL = DateTimeFormatter.ofPattern("dd.MM.yyyy")
  * aplikacja: zaległy zużywa się przed bieżącym, a dzień urlopu pokrywa 8 h normy.
  */
 @Composable
-fun EkranUrlop(vm: Vm, naPowrot: () -> Unit) {
+fun EkranUrlop(vm: Vm, naPowrot: () -> Unit, naPlaner: () -> Unit) {
     val s by vm.state.collectAsState()
 
     Box(Modifier.fillMaxSize()) {
@@ -63,6 +63,7 @@ fun EkranUrlop(vm: Vm, naPowrot: () -> Unit) {
             KartaWymiaru(s, vm)
             KartaStanuZZakladu(s, vm)
             KartaJakLiczymy()
+            PrzyciskPlanera(naPlaner)
         }
     }
 }
@@ -328,6 +329,26 @@ private fun KartaJakLiczymy() {
                     fontFamily = Jakarta, color = DarkTokens.ink3)
             }
         }
+    }
+}
+
+/** „Kiedy najlepiej wziąć urlop" — wejście do planera z makiety Leave.html. */
+@Composable
+private fun PrzyciskPlanera(naPlaner: () -> Unit) {
+    val p by postepWejscia(Motion.RISE_MS, 210)
+    val rozowy = ShiftPaletteDark.URLOP.ink
+    Row(
+        Modifier.wejscie(p).fillMaxWidth().height(48.dp)
+            .clip(RoundedCornerShape(15.dp))
+            .background(Color(0x1FF490D9))
+            .border(1.dp, Color(0x52F490D9), RoundedCornerShape(15.dp))
+            .clickable(onClick = naPlaner),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
+    ) {
+        Icon(IkonaUrlop, null, Modifier.size(16.dp), tint = rozowy)
+        Text("Kiedy najlepiej wziąć urlop", fontSize = 13.sp, fontWeight = FontWeight.Bold,
+            fontFamily = Jakarta, color = rozowy)
     }
 }
 
