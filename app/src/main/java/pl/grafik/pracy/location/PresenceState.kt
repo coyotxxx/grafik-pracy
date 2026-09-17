@@ -4,7 +4,9 @@ import android.content.Context
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import java.time.LocalDateTime
 
 private val Context.presenceDs by preferencesDataStore("presence_state")
@@ -17,6 +19,12 @@ object PresenceState {
 
     private val kEnter = stringPreferencesKey("open_enter")
     private val kSeen = stringPreferencesKey("last_seen")
+
+    /** Trwający pobyt na żywo — kalendarz pokazuje z tego napis „praca". */
+    fun openEnterFlow(ctx: Context): Flow<LocalDateTime?> =
+        ctx.presenceDs.data.map { p ->
+            p[kEnter]?.let { runCatching { LocalDateTime.parse(it) }.getOrNull() }
+        }
 
     suspend fun openEnter(ctx: Context): LocalDateTime? =
         ctx.presenceDs.data.first()[kEnter]?.let { runCatching { LocalDateTime.parse(it) }.getOrNull() }

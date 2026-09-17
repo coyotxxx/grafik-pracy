@@ -11,10 +11,18 @@ import pl.grafik.pracy.location.GeofenceManager
 import pl.grafik.pracy.location.PresenceState
 import pl.grafik.pracy.location.PresenceWatchdog
 import pl.grafik.pracy.events.Reminders
+import java.time.Duration
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.YearMonth
 
 enum class Tool { I, II, III, W5, WS, DWN, BWN, URLOP, L4, OT, DEV, ERASE }
+
+/**
+ * Obecność wykryta w danym dniu — to, co kalendarz wypisuje w rogu kafelka.
+ * Liczba godzin bierze się z zaliczonego czasu, nie z samego pobytu w strefie.
+ */
+data class DayPresence(val hours: Int = 0, val trwa: Boolean = false)
 
 data class UiState(
     val ym: YearMonth = YearMonth.now(),
@@ -40,6 +48,8 @@ data class UiState(
     /** Jak zakład rozlicza czas pracy: długość okresu i normy. */
     val okres: SettlementCfg = SettlementCfg(),
     /** Nadgodziny każdego okresu roku — po jednym pasku na kwartał. */
+    /** Godziny wykrytej obecności w dniach widocznej siatki. */
+    val obecnosc: Map<LocalDate, DayPresence> = emptyMap(),
     val okresy: List<PeriodStats> = emptyList(),
     /** Nadgodziny w całym roku i limit roczny, czyli suma limitów okresów. */
     val otRok: Int = 0,
@@ -125,6 +135,11 @@ class Vm(app: Application) : AndroidViewModel(app) {
         },
         settings.motyw,
         settings.settlement,
+        _ym.flatMapLatest { ym ->
+            val (a, b) = gridRange(ym)
+            AppDb.get(getApplication()).presenceDao().observeRange(a.toString(), b.toString())
+        },
+        pl.grafik.pracy.location.PresenceState.openEnterFlow(getApplication()),
         // Cały rok — z tego liczymy i okres rozliczeniowy, i limit roczny nadgodzin.
         _ym.flatMapLatest { ym ->
             dao.observeRange("${ym.year}-01-01", "${ym.year}-12-31")
@@ -150,7 +165,10 @@ class Vm(app: Application) : AndroidViewModel(app) {
         val motyw = arr[13] as pl.grafik.pracy.ui.theme.PaletteTheme
         val okres = arr[14] as SettlementCfg
         @Suppress("UNCHECKED_CAST")
-        val rokRows = arr[15] as List<DayRow>
+        val presRows = arr[15] as List<PresenceRow>
+        val otwartyPobyt = arr[16] as LocalDateTime?
+        @Suppress("UNCHECKED_CAST")
+        val rokRows = arr[17] as List<DayRow>
 
         val okresy = calcOkresy(rokRows, ym, cfg, okres)
 
@@ -167,7 +185,8 @@ class Vm(app: Application) : AndroidViewModel(app) {
         val wMiesiacu = merged.filterKeys { YearMonth.from(it) == ym }
 
         UiState(ym, merged, ev, cfg, cols, tool, otH, otR, calc(wMiesiacu, ym), rem.first, rem.second,
-            maluj, url, urlRok, urlPrev, motyw, okres, okresy.first, okresy.second,
+            maluj, url, urlRok, urlPrev, motyw, okres,
+            obecnosc(presRows, otwartyPobyt, merged), okresy.first, okresy.second,
             Settlement.yearLimit(ym.year, okres))
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState())
 
@@ -207,6 +226,35 @@ class Vm(app: Application) : AndroidViewModel(app) {
         return MonthStats(worked, Settlement.statutoryNorm(ym),
             ot100, ot50, dw, df, sun, hol, sat, by, dni, urlopH, doDzis,
             biezacyMiesiac = YearMonth.from(dzis) == ym)
+    }
+
+    /**
+     * Obecność do wypisania na kafelkach. Odrzucone wykrycia pomijamy — odrzucenie
+     * znaczy „to nie była prawda", więc nie ma czego oznaczać.
+     */
+    private fun obecnosc(
+        rows: List<PresenceRow>,
+        otwarty: LocalDateTime?,
+        dni: Map<LocalDate, DayEntry>
+    ): Map<LocalDate, DayPresence> {
+        val out = HashMap<LocalDate, DayPresence>()
+        rows.forEach { r ->
+            if (r.status == "rejected") return@forEach
+            val d = runCatching { LocalDate.parse(r.date) }.getOrNull() ?: return@forEach
+            val h = PresenceEngine.countedHours(
+                runCatching { LocalDateTime.parse(r.countedFrom) }.getOrNull(),
+                runCatching { LocalDateTime.parse(r.countedTo) }.getOrNull()
+            )
+            val było = out[d]
+            out[d] = DayPresence((było?.hours ?: 0) + h, było?.trwa ?: false)
+        }
+        // Trwający pobyt trafia na ten dzień grafiku, do którego należy — po nocce
+        // wejście nad ranem to jeszcze dzień poprzedni.
+        otwarty?.let { enter ->
+            val d = PresenceEngine.assignDate(PresenceSpan(enter, enter)) { dzien -> dni[dzien]?.shift }
+            out[d] = DayPresence(out[d]?.hours ?: 0, true)
+        }
+        return out
     }
 
     /**

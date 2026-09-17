@@ -74,6 +74,9 @@ interface PresenceDao {
     @Query("SELECT * FROM presence WHERE id = :id LIMIT 1")
     suspend fun byId(id: Long): PresenceRow?
 
+    @Query("SELECT * FROM presence WHERE date BETWEEN :from AND :to ORDER BY date")
+    fun observeRange(from: String, to: String): Flow<List<PresenceRow>>
+
     @Query("SELECT * FROM presence WHERE date = :date ORDER BY enterAt")
     suspend fun forDate(date: String): List<PresenceRow>
 

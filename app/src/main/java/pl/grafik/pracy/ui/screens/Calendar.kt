@@ -195,6 +195,7 @@ private fun Grid(
                         date = d,
                         e = s.entries[d],
                         events = s.events[d].orEmpty().size,
+                        obecnosc = s.obecnosc[d],
                         colors = s.colors,
                         isToday = d == today,
                         // Sąsiednie miesiące widać, ale są przygaszone.
@@ -213,7 +214,7 @@ private fun Grid(
 @Composable
 private fun DayCell(
     motyw: PaletteTheme,
-    date: LocalDate, e: DayEntry?, events: Int, colors: Map<String, String>,
+    date: LocalDate, e: DayEntry?, events: Int, obecnosc: DayPresence?, colors: Map<String, String>,
     isToday: Boolean, obcy: Boolean, m: Modifier, onTap: () -> Unit, onLong: () -> Unit
 ) {
     val sw = Palette.byId(colors[e?.shift?.code] ?: Palette.defaults[e?.shift?.code], motyw)
@@ -286,6 +287,19 @@ private fun DayCell(
                 Spacer(Modifier.weight(1f))
                 if (e?.deviation == true) Box(Modifier.padding(start = 2.dp).size(6.dp).clip(RoundedCornerShape(2.dp)).background(DevColor))
                 if (events > 0) Box(Modifier.padding(start = 2.dp).size(6.dp).clip(RoundedCornerShape(3.dp)).background(EventColor))
+                // Wykryta obecność: sama liczba jest znacznikiem — jest, więc byłem.
+                // Biel, a nie akcent, bo pomarańcz zlewałby się z paskiem nadgodzin.
+                obecnosc?.let { ob ->
+                    Text(
+                        if (ob.trwa) "praca" else "${ob.hours}h",
+                        Modifier.padding(start = 2.dp),
+                        // „praca" to pięć znaków obok numeru dnia — przy siedmiu kolumnach
+                        // musi być drobniejsze, inaczej kafelek je ucina.
+                        fontSize = if (ob.trwa) 8.sp else 10.sp,
+                        fontWeight = FontWeight.Bold, color = OnBg,
+                        maxLines = 1, softWrap = false
+                    )
+                }
             }
         }
     }

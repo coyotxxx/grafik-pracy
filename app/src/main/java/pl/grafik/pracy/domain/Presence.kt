@@ -119,6 +119,15 @@ object PresenceEngine {
         else -> Shift.III
     }
 
+    /**
+     * Godziny zaliczone w zapisanym pobycie. Liczymy z zaokrąglonych brzegów,
+     * bo to one trafiają do grafiku — nie z surowego czasu w strefie.
+     */
+    fun countedHours(from: LocalDateTime?, to: LocalDateTime?): Int {
+        if (from == null || to == null || !to.isAfter(from)) return 0
+        return Duration.between(from, to).toHours().toInt()
+    }
+
     /** Czy pobyt w ogóle zahacza o okno zmiany. */
     fun overlaps(span: PresenceSpan, w: Pair<LocalDateTime, LocalDateTime>): Boolean =
         span.enter.isBefore(w.second) && span.exit.isAfter(w.first)

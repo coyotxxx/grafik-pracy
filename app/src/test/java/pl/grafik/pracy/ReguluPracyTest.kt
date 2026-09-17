@@ -136,4 +136,19 @@ class ReguluPracyTest {
         assertNull(PresenceEngine.restBefore(koniec, listOf(dt("2026-09-21", "22:00"))))
         assertNull(PresenceEngine.restBefore(koniec, emptyList()))
     }
+
+    // ——— godziny wypisywane na kafelku kalendarza ———
+
+    @Test fun godziny_pobytu_licza_sie_z_zaokraglonych_brzegow() {
+        assertEquals(8, PresenceEngine.countedHours(dt("2026-09-14", "22:00"), dt("2026-09-15", "06:00")))
+        assertEquals(10, PresenceEngine.countedHours(dt("2026-09-15", "22:00"), dt("2026-09-16", "08:00")))
+    }
+
+    @Test fun niekompletny_albo_pusty_pobyt_daje_zero() {
+        assertEquals(0, PresenceEngine.countedHours(null, dt("2026-09-15", "06:00")))
+        assertEquals(0, PresenceEngine.countedHours(dt("2026-09-15", "06:00"), null))
+        assertEquals(0, PresenceEngine.countedHours(dt("2026-09-15", "06:00"), dt("2026-09-15", "06:00")))
+        // wyjście przed wejściem — uszkodzony wpis nie może dać ujemnych godzin
+        assertEquals(0, PresenceEngine.countedHours(dt("2026-09-15", "08:00"), dt("2026-09-15", "06:00")))
+    }
 }
