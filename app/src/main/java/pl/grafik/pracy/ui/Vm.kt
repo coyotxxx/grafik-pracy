@@ -75,7 +75,9 @@ data class UiState(
     val restZnacznik: Boolean = true,
     val restOstrzegaj: Boolean = true,
     /** Ustawienia powiadomień. */
-    val powiadomienia: PowiadomieniaCfg = PowiadomieniaCfg()
+    val powiadomienia: PowiadomieniaCfg = PowiadomieniaCfg(),
+    /** Stawki do szacunku wypłaty. */
+    val stawki: StawkiCfg = StawkiCfg()
 ) {
     /**
      * Bilans urlopu w roku wyświetlanego miesiąca.
@@ -170,7 +172,8 @@ class Vm(app: Application) : AndroidViewModel(app) {
             dao.observeRange("${ym.year}-01-01", "${ym.year}-12-31")
         },
         settings.odpoczynek,
-        settings.powiadomienia
+        settings.powiadomienia,
+        settings.stawki
     ) { arr ->
         @Suppress("UNCHECKED_CAST")
         val ym = arr[0] as YearMonth
@@ -199,6 +202,7 @@ class Vm(app: Application) : AndroidViewModel(app) {
         @Suppress("UNCHECKED_CAST")
         val rest = arr[18] as Pair<Boolean, Boolean>
         val notif = arr[19] as PowiadomieniaCfg
+        val stawki = arr[20] as StawkiCfg
 
         val okresy = calcOkresy(rokRows, ym, cfg, okres)
 
@@ -220,7 +224,7 @@ class Vm(app: Application) : AndroidViewModel(app) {
             Settlement.yearLimit(ym.year, okres),
             Odpoczynek.kolizjeDobowe(merged),
             Odpoczynek.tygodnie(merged, ym.atDay(1), ym.atEndOfMonth()),
-            rest.first, rest.second, notif)
+            rest.first, rest.second, notif, stawki)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState())
 
     private fun calc(m: Map<LocalDate, DayEntry>, ym: YearMonth): MonthStats {
@@ -392,6 +396,9 @@ class Vm(app: Application) : AndroidViewModel(app) {
     }
 
     fun saveVacation(v: VacationCfg) = viewModelScope.launch { settings.saveVacation(v) }
+
+    /** Stawki do szacunku wypłaty. */
+    fun saveStawki(c: StawkiCfg) = viewModelScope.launch { settings.saveStawki(c) }
 
     /** Ustawienia powiadomień — po zapisie od razu przeplanowujemy zadania. */
     fun savePowiadomienia(c: PowiadomieniaCfg) = viewModelScope.launch {

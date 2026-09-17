@@ -30,6 +30,7 @@ import pl.grafik.pracy.nowy.ekrany.EkranPlanerUrlopu
 import pl.grafik.pracy.nowy.ekrany.EkranPowiadomienia
 import pl.grafik.pracy.nowy.ekrany.EkranUrlop
 import pl.grafik.pracy.nowy.ekrany.EkranWygladKolory
+import pl.grafik.pracy.nowy.ekrany.EkranWyplata
 import pl.grafik.pracy.nowy.ekrany.EkranWykrywanie
 import pl.grafik.pracy.nowy.ekrany.EkranUstawienia
 import pl.grafik.pracy.nowy.ekrany.TrybEdycji
@@ -64,7 +65,9 @@ class NowaActivity : ComponentActivity() {
 }
 
 /** Podstrony ustawień — dochodzą po kolei, każda z własnej makiety. */
-enum class Podstrona { CYKL, CZAS_PRACY, URLOP, WYKRYWANIE, WYGLAD, ODPOCZYNEK, POWIADOMIENIA, PLANER }
+enum class Podstrona {
+    CYKL, CZAS_PRACY, URLOP, WYKRYWANIE, WYGLAD, ODPOCZYNEK, POWIADOMIENIA, PLANER, WYPLATA
+}
 
 private enum class Zakladka(val etykieta: String, val ikona: ImageVector) {
     TERAZ("Teraz", IkonaTeraz),
@@ -106,6 +109,7 @@ private fun NowaApp(vm: Vm, pvm: PresenceVm, uvm: UpdateVm) {
         Podstrona.WYGLAD -> { EkranWygladKolory(vm) { podstrona = null }; return }
         Podstrona.POWIADOMIENIA -> { EkranPowiadomienia(vm) { podstrona = null }; return }
         Podstrona.PLANER -> { EkranPlanerUrlopu(vm) { podstrona = null }; return }
+        Podstrona.WYPLATA -> { EkranWyplata(vm) { podstrona = null }; return }
         Podstrona.ODPOCZYNEK -> {
             EkranOdpoczynek(vm, naPowrot = { podstrona = null },
                 naDzien = { podstrona = null; otwartyDzien = it })
@@ -131,7 +135,11 @@ private fun NowaApp(vm: Vm, pvm: PresenceVm, uvm: UpdateVm) {
                     naEdycje = { edycja = true },
                     naOdpoczynek = { podstrona = Podstrona.ODPOCZYNEK }
                 )
-                Zakladka.BILANS -> EkranBilans(vm) { podstrona = Podstrona.PLANER }
+                Zakladka.BILANS -> EkranBilans(
+                    vm,
+                    naPlaner = { podstrona = Podstrona.PLANER },
+                    naWyplate = { podstrona = Podstrona.WYPLATA }
+                )
                 Zakladka.USTAWIENIA -> EkranUstawienia(vm, pvm, uvm) { podstrona = it }
                 else -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(zakladka.etykieta, style = GrafikType.h1, color = DarkTokens.ink)

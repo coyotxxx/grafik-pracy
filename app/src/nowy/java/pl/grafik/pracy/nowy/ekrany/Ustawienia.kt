@@ -71,7 +71,8 @@ fun EkranUstawienia(vm: Vm, pvm: PresenceVm, uvm: UpdateVm, naPodstrone: (Podstr
                 )
                 Wiersz(
                     IkonaWyplata, ShiftPaletteDark.I.ink, "Stawki i wypłata",
-                    "stawka godzinowa, dodatki, premia", gotowe = false
+                    opisStawek(s), gotowe = true,
+                    akcja = { naPodstrone(Podstrona.WYPLATA) }
                 )
                 Wiersz(
                     IkonaOdpoczynek, DarkTokens.warnInk, "Odpoczynek",
@@ -360,6 +361,15 @@ private fun opisWykrywania(p: pl.grafik.pracy.domain.WorkPlace): String {
     val wifi = if (p.ssid.isNotBlank()) " · ${p.ssid}" else ""
     val auto = if (p.autoSave) " · auto-zapis" else ""
     return "włączone · ${p.radiusM} m$wifi$auto"
+}
+
+/** „28,50 zł/h · premia 10 %" albo zachęta, gdy stawki nie ma. */
+private fun opisStawek(s: UiState): String {
+    val c = s.stawki
+    if (!c.ustawiona) return "ustaw stawkę, policzymy wypłatę z grafiku"
+    val premia = if (c.premiaProc > 0) " · premia ${c.premiaProc} %" else ""
+    val noc = if (c.nocnyZMinimalnej) " · noc z minimalnej" else " · noc z mojej stawki"
+    return "${pl.grafik.pracy.domain.KalkulatorWyplaty.zlote(c.stawka)} zł/h$premia$noc"
 }
 
 /** „11 h na dobę, 35 h w tygodniu" albo liczba kolizji, gdy jakieś są. */

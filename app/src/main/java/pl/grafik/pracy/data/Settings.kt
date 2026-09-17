@@ -6,6 +6,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import pl.grafik.pracy.domain.PowiadomieniaCfg
+import pl.grafik.pracy.domain.StawkiCfg
 import pl.grafik.pracy.domain.CyclePattern
 import pl.grafik.pracy.domain.CycleConfig
 import pl.grafik.pracy.domain.WorkPlace
@@ -28,6 +29,12 @@ class SettingsStore(private val ctx: Context) {
     private val kGenTo = stringPreferencesKey("gen_to")
     private val kReverse = booleanPreferencesKey("reverse")
     private val kRemindOn = booleanPreferencesKey("remind_on")
+    /** Stawki do szacunku wypłaty. */
+    private val kStawka = stringPreferencesKey("stawka")
+    private val kStawkaMin = stringPreferencesKey("stawka_min")
+    private val kNocnyZMin = booleanPreferencesKey("nocny_z_min")
+    private val kPremia = intPreferencesKey("premia_proc")
+    private val kPokazWyplate = booleanPreferencesKey("pokaz_wyplate")
     /** Powiadomienia: krótko przed wydarzeniem, przed zmianą, cisza na nocce. */
     private val kNotifWDniu = booleanPreferencesKey("notif_w_dniu")
     private val kNotifWyprzedzenie = intPreferencesKey("notif_wyprzedzenie")
@@ -120,6 +127,27 @@ class SettingsStore(private val ctx: Context) {
     /** Przypomnienia o wydarzeniach: czy włączone i o której dnia poprzedniego. */
     val reminders: Flow<Pair<Boolean, Int>> = ctx.ds.data.map { p ->
         (p[kRemindOn] ?: true) to (p[kRemindHour] ?: 18)
+    }
+
+    /** Stawki — trzymane jako tekst, bo DataStore nie ma typu Double. */
+    val stawki: Flow<StawkiCfg> = ctx.ds.data.map { p ->
+        StawkiCfg(
+            stawka = p[kStawka]?.toDoubleOrNull() ?: 0.0,
+            nocnyZMinimalnej = p[kNocnyZMin] ?: true,
+            stawkaMinimalna = p[kStawkaMin]?.toDoubleOrNull() ?: 30.50,
+            premiaProc = p[kPremia] ?: 0,
+            pokazujWBilansie = p[kPokazWyplate] ?: true
+        )
+    }
+
+    suspend fun saveStawki(c: StawkiCfg) {
+        ctx.ds.edit { p ->
+            p[kStawka] = c.stawka.coerceIn(0.0, 999.0).toString()
+            p[kStawkaMin] = c.stawkaMinimalna.coerceIn(0.0, 999.0).toString()
+            p[kNocnyZMin] = c.nocnyZMinimalnej
+            p[kPremia] = c.premiaProc.coerceIn(0, 100)
+            p[kPokazWyplate] = c.pokazujWBilansie
+        }
     }
 
     /**

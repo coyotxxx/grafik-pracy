@@ -45,7 +45,7 @@ private fun liczba(rozmiar: Int, waga: FontWeight = FontWeight.Bold) = TextStyle
  * aplikacja; ten ekran tylko inaczej je układa.
  */
 @Composable
-fun EkranBilans(vm: Vm, naPlaner: () -> Unit) {
+fun EkranBilans(vm: Vm, naPlaner: () -> Unit, naWyplate: () -> Unit) {
     val s by vm.state.collectAsState()
 
     // Wejście w bilans zawsze zaczyna od bieżącego miesiąca — jak w klasycznej aplikacji.
@@ -66,6 +66,7 @@ fun EkranBilans(vm: Vm, naPlaner: () -> Unit) {
                 WyborMiesiaca(s.ym) { vm.setMonth(it); wyborMiesiaca = false }
             }
             KartaMiesiaca(s)
+            KartaWyplaty(s, naWyplate)
             KartaOkresu(s)
             KafelkiNadgodzin(s)
             KartaUrlopu(s, naPlaner)
@@ -260,6 +261,52 @@ private fun PigulkaBilansu(bilans: Int) {
             "bilans ${if (bilans > 0) "+" else ""}$bilans h",
             style = liczba(11, FontWeight.SemiBold), color = kolor
         )
+    }
+}
+
+/**
+ * „Szacunek wypłaty" z makiety Summary.html. Pokazujemy tylko wtedy, gdy stawka jest
+ * ustawiona i użytkownik nie schował kwot w ustawieniach wypłaty.
+ */
+@Composable
+private fun KartaWyplaty(s: UiState, naWyplate: () -> Unit) {
+    if (!s.stawki.ustawiona || !s.stawki.pokazujWBilansie) return
+    val p by postepWejscia(Motion.RISE_MS, 90)
+    val zolty = ShiftPaletteDark.I.ink
+    val w = remember(s.entries, s.ym, s.stawki) {
+        pl.grafik.pracy.domain.KalkulatorWyplaty.policz(
+            s.entries.filterKeys { java.time.YearMonth.from(it) == s.ym }.values, s.stawki
+        )
+    }
+
+    Row(
+        Modifier.wejscie(p).padding(horizontal = Dim.screenGutter).fillMaxWidth()
+            .clip(RoundedCornerShape(Dim.rCard))
+            .background(Color(0x12DAC559))
+            .border(1.dp, Color(0x3DDAC559), RoundedCornerShape(Dim.rCard))
+            .clickable(onClick = naWyplate)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        Box(
+            Modifier.size(42.dp).clip(RoundedCornerShape(14.dp))
+                .background(Color(0x24DAC559)),
+            contentAlignment = Alignment.Center
+        ) { Icon(IkonaWyplata, null, Modifier.size(20.dp), tint = zolty) }
+
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Text("Szacunek wypłaty", fontSize = 14.sp, fontWeight = FontWeight.Bold,
+                fontFamily = Jakarta, color = DarkTokens.ink)
+            Text("z grafiku i Twoich stawek · brutto", fontSize = 11.sp,
+                fontFamily = Jakarta, color = DarkTokens.inkMuted,
+                maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        Text(
+            "≈ ${pl.grafik.pracy.domain.KalkulatorWyplaty.zlote(w.razem)} zł",
+            style = liczba(16), color = zolty
+        )
+        Icon(IkonaWPrawo, null, Modifier.size(16.dp), tint = Color(0xFF8A939B))
     }
 }
 
