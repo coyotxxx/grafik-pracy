@@ -1,30 +1,34 @@
 package pl.grafik.pracy.domain
 
+import java.time.YearMonth
+
 /**
- * Szacunek wypłaty z grafiku. Liczymy brutto — kwoty do ręki nie policzymy,
- * bo aplikacja nie zna składek, ulg ani premii regulaminowej.
+ * Szacunek wypłaty z grafiku — liczymy wyłącznie to, co wynika z umowy i godzin.
  *
- * Silnik jest czysty: dostaje dni i stawki, oddaje liczby. Bez bazy i bez Androida.
+ * Model wzięty z prawdziwych odcinków Macieja (Unilever, ruch ciągły):
+ *
+ * - wynagrodzenie jest **miesięczne**, a stawka za godzinę to zasadnicza ÷ **czas
+ *   zaplanowany w grafiku** na ten miesiąc. W ruchu ciągłym plan bywa inny niż wymiar
+ *   ustawowy: sierpień 2026 ma 160 h planu, lipiec 184 h, a stawki z odcinków
+ *   (49,69 i 43,21 zł) wychodzą właśnie z tych liczb, nie z wymiaru z art. 130 KP;
+ * - nadgodziny płatne są jak 1,5 albo 2 stawki godzinowej z zasadniczej;
+ * - dodatek za III zmianę to **stała kwota za godzinę** z regulaminu, nie procent z Kodeksu.
+ *
+ * Świadomie NIE liczymy: premii uznaniowej, dodatku urlopowego ze średniej i nadgodzin
+ * ze średniej — tych pozycji nie da się przewidzieć z grafiku, a zgadywanie robiłoby
+ * z szacunku wróżenie.
  */
 
-/** Stawki użytkownika — wszystko, czego potrzeba do wyliczenia. */
+/** Stawki użytkownika — trzy liczby, wszystkie z umowy albo z regulaminu. */
 data class StawkiCfg(
-    /** Brutto za godzinę, z umowy. Zero = nie ustawiono. */
-    val stawka: Double = 0.0,
-    /**
-     * Podstawa dodatku za porę nocną. Kodeks (art. 151⁸ § 1) liczy 20 % stawki
-     * wynikającej z płacy minimalnej, ale wiele zakładów liczy z własnej stawki
-     * pracownika — stąd wybór.
-     */
-    val nocnyZMinimalnej: Boolean = true,
-    /** Stawka godzinowa z płacy minimalnej — zmienia się co roku, więc jest do wpisania. */
-    val stawkaMinimalna: Double = 30.50,
-    /** Premia procentowa od podstawy. */
-    val premiaProc: Int = 0,
+    /** Wynagrodzenie zasadnicze brutto za miesiąc. Zero = nie ustawiono. */
+    val zasadnicza: Double = 0.0,
+    /** Dodatek za godzinę pracy na zmianie nocnej — kwota z regulaminu zakładu. */
+    val dodatekNocny: Double = 0.0,
     /** Czy pokazywać kwoty w Bilansie. */
     val pokazujWBilansie: Boolean = true
 ) {
-    val ustawiona: Boolean get() = stawka > 0.0
+    val ustawiona: Boolean get() = zasadnicza > 0.0
 }
 
 /** Jeden składnik wypłaty — nazwa, ile godzin, po ile i ile z tego wychodzi. */
@@ -37,24 +41,22 @@ data class SkladnikWyplaty(
 
 /** Wyliczona wypłata miesiąca. */
 data class Wyplata(
-    val podstawa: SkladnikWyplaty,
-    val urlop: SkladnikWyplaty,
+    val zasadnicza: SkladnikWyplaty,
     val nadgodziny50: SkladnikWyplaty,
     val nadgodziny100: SkladnikWyplaty,
     val nocny: SkladnikWyplaty,
-    val premia: SkladnikWyplaty
+    /** Stawka za godzinę wyliczona z zasadniczej i planu — pokazujemy ją wprost. */
+    val stawkaGodzinowa: Double,
+    /** Czas zaplanowany w miesiącu, czyli dzielnik stawki. */
+    val normaMiesiaca: Int
 ) {
     val skladniki: List<SkladnikWyplaty>
-        get() = listOf(podstawa, urlop, nadgodziny50, nadgodziny100, nocny, premia)
-            .filter { it.kwota > 0.0 }
+        get() = listOf(zasadnicza, nadgodziny50, nadgodziny100, nocny).filter { it.kwota > 0.0 }
 
     val razem: Double get() = skladniki.sumOf { it.kwota }
 }
 
 object KalkulatorWyplaty {
-
-    /** Art. 151⁸ KP — dodatek za każdą godzinę pracy w porze nocnej. */
-    const val DODATEK_NOCNY = 0.20
 
     /** Dodatek za nadgodziny: +50 % albo +100 % do normalnego wynagrodzenia. */
     const val MNOZNIK_50 = 1.5
@@ -66,47 +68,52 @@ object KalkulatorWyplaty {
         else -> 0
     }
 
-    /**
-     * Wypłata z podanych dni.
-     *
-     * Dzień urlopu liczymy jak przepracowany — wynagrodzenie urlopowe w stałej stawce
-     * wychodzi tak samo, a rozbicie i tak pokazujemy osobno.
-     */
-    fun policz(dni: Collection<DayEntry>, cfg: StawkiCfg): Wyplata {
-        val stawkaNocna =
-            (if (cfg.nocnyZMinimalnej) cfg.stawkaMinimalna else cfg.stawka) * DODATEK_NOCNY
+    /** Stawka za godzinę: zasadnicza podzielona przez czas zaplanowany w miesiącu. */
+    fun stawkaGodzinowa(zasadnicza: Double, planowaneH: Int): Double =
+        if (planowaneH > 0) zasadnicza / planowaneH else 0.0
 
-        var hPraca = 0
-        var hUrlop = 0
+    /**
+     * Czas zaplanowany: wszystkie zmiany z grafiku po 8 h, razem z dniami urlopu.
+     * Tyle właśnie pokazuje odcinek w rubryce „Czas planowany" i przez tę liczbę
+     * zakład dzieli zasadniczą, licząc stawkę za godzinę.
+     */
+    fun godzinyPlanowane(dni: Collection<DayEntry>): Int =
+        dni.count { it.shift?.isWork == true || it.shift == Shift.URLOP } * 8
+
+    /**
+     * Wypłata z dni miesiąca.
+     *
+     * Zasadnicza wchodzi w całości — urlop jest płatny i już się w niej mieści,
+     * dlatego nie liczymy go osobno.
+     */
+    fun policz(dni: Collection<DayEntry>, cfg: StawkiCfg, ym: YearMonth): Wyplata {
+        val planowane = godzinyPlanowane(dni)
+        val stawka = stawkaGodzinowa(cfg.zasadnicza, planowane)
+
         var hNoc = 0
         var hOt50 = 0
         var hOt100 = 0
 
         dni.forEach { e ->
-            if (e.shift?.isWork == true) {
-                hPraca += 8
-                hNoc += godzinyNocne(e.shift)
-            }
-            if (e.shift == Shift.URLOP) hUrlop += 8
+            if (e.shift?.isWork == true) hNoc += godzinyNocne(e.shift)
             if (e.otHours > 0) {
                 if (e.otRate == OtRate.P50) hOt50 += e.otHours else hOt100 += e.otHours
             }
         }
 
-        val podstawa = hPraca * cfg.stawka
-        val premia = podstawa * (cfg.premiaProc / 100.0)
-
         return Wyplata(
-            podstawa = SkladnikWyplaty("Podstawa", hPraca, cfg.stawka, podstawa),
-            urlop = SkladnikWyplaty("Urlop", hUrlop, cfg.stawka, hUrlop * cfg.stawka),
+            zasadnicza = SkladnikWyplaty("Zasadnicza", planowane, stawka, cfg.zasadnicza),
             nadgodziny50 = SkladnikWyplaty(
-                "Nadgodziny 50 %", hOt50, cfg.stawka * MNOZNIK_50, hOt50 * cfg.stawka * MNOZNIK_50
+                "Nadgodziny 50 %", hOt50, stawka * MNOZNIK_50, hOt50 * stawka * MNOZNIK_50
             ),
             nadgodziny100 = SkladnikWyplaty(
-                "Nadgodziny 100 %", hOt100, cfg.stawka * MNOZNIK_100, hOt100 * cfg.stawka * MNOZNIK_100
+                "Nadgodziny 100 %", hOt100, stawka * MNOZNIK_100, hOt100 * stawka * MNOZNIK_100
             ),
-            nocny = SkladnikWyplaty("Dodatek nocny", hNoc, stawkaNocna, hNoc * stawkaNocna),
-            premia = SkladnikWyplaty("Premia ${cfg.premiaProc} %", 0, 0.0, premia)
+            nocny = SkladnikWyplaty(
+                "Dodatek za nocki", hNoc, cfg.dodatekNocny, hNoc * cfg.dodatekNocny
+            ),
+            stawkaGodzinowa = stawka,
+            normaMiesiaca = planowane
         )
     }
 

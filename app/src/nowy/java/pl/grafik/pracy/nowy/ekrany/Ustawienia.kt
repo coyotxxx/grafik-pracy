@@ -366,10 +366,10 @@ private fun opisWykrywania(p: pl.grafik.pracy.domain.WorkPlace): String {
 /** „28,50 zł/h · premia 10 %" albo zachęta, gdy stawki nie ma. */
 private fun opisStawek(s: UiState): String {
     val c = s.stawki
-    if (!c.ustawiona) return "ustaw stawkę, policzymy wypłatę z grafiku"
-    val premia = if (c.premiaProc > 0) " · premia ${c.premiaProc} %" else ""
-    val noc = if (c.nocnyZMinimalnej) " · noc z minimalnej" else " · noc z mojej stawki"
-    return "${pl.grafik.pracy.domain.KalkulatorWyplaty.zlote(c.stawka)} zł/h$premia$noc"
+    if (!c.ustawiona) return "ustaw zasadniczą, policzymy wypłatę z grafiku"
+    val zlote = pl.grafik.pracy.domain.KalkulatorWyplaty::zlote
+    val noc = if (c.dodatekNocny > 0) " · nocki ${zlote(c.dodatekNocny)} zł/h" else ""
+    return "${zlote(c.zasadnicza)} zł/mies.$noc"
 }
 
 /** „11 h na dobę, 35 h w tygodniu" albo liczba kolizji, gdy jakieś są. */

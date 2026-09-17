@@ -46,7 +46,7 @@ fun EkranWyplata(vm: Vm, naPowrot: () -> Unit) {
     val cfg = s.stawki
     val wyplata = remember(s.entries, s.ym, cfg) {
         KalkulatorWyplaty.policz(
-            s.entries.filterKeys { YearMonth.from(it) == s.ym }.values, cfg
+            s.entries.filterKeys { YearMonth.from(it) == s.ym }.values, cfg, s.ym
         )
     }
 
@@ -66,7 +66,8 @@ fun EkranWyplata(vm: Vm, naPowrot: () -> Unit) {
             Naglowek(s)
             KartaKwoty(wyplata, cfg)
             if (cfg.ustawiona) KartaSkladnikow(wyplata)
-            KartaStawek(cfg) { vm.saveStawki(it) }
+            KartaStawek(wyplata, cfg) { vm.saveStawki(it) }
+            KartaCzegoNieLiczymy()
         }
     }
 }
@@ -171,8 +172,7 @@ private fun PasekSkladnikow(w: Wyplata) {
 }
 
 private fun kolorSkladnika(nazwa: String): Color = when {
-    nazwa.startsWith("Podstawa") -> ShiftPaletteDark.I.solid
-    nazwa.startsWith("Urlop") -> ShiftPaletteDark.URLOP.solid
+    nazwa.startsWith("Zasadnicza") -> ShiftPaletteDark.I.solid
     nazwa.startsWith("Nadgodziny") -> ShiftPaletteDark.II.solid
     nazwa.startsWith("Dodatek") -> ShiftPaletteDark.III.solid
     else -> DarkTokens.ok
@@ -228,8 +228,8 @@ private fun WierszSkladnika(s: SkladnikWyplaty) {
             Text(s.nazwa, fontSize = 13.sp, fontFamily = Jakarta, color = DarkTokens.inkStrong,
                 maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(
-                if (s.godziny > 0) "${s.godziny} h × ${KalkulatorWyplaty.zlote(s.stawka)} zł"
-                else "procent od podstawy",
+                if (s.nazwa.startsWith("Zasadnicza")) "${s.godziny} h planu · ${KalkulatorWyplaty.zlote(s.stawka)} zł/h"
+                else "${s.godziny} h × ${KalkulatorWyplaty.zlote(s.stawka)} zł",
                 style = TextStyle(fontSize = 10.sp, fontFamily = Jakarta, fontFeatureSettings = TNUM),
                 color = DarkTokens.inkFaint
             )
@@ -248,7 +248,7 @@ private fun WierszSkladnika(s: SkladnikWyplaty) {
 // ─────────────────────────────────────────────────────────────
 
 @Composable
-private fun KartaStawek(cfg: StawkiCfg, zapisz: (StawkiCfg) -> Unit) {
+private fun KartaStawek(w: Wyplata, cfg: StawkiCfg, zapisz: (StawkiCfg) -> Unit) {
     val p by postepWejscia(Motion.RISE_MS, 130)
 
     Column(
@@ -262,48 +262,32 @@ private fun KartaStawek(cfg: StawkiCfg, zapisz: (StawkiCfg) -> Unit) {
         Text("TWOJE STAWKI", style = GrafikType.sectionLabel, color = DarkTokens.inkFaint)
 
         PoleStawki(
-            "Stawka zasadnicza", "brutto za godzinę, z umowy", cfg.stawka
-        ) { zapisz(cfg.copy(stawka = it)) }
+            "Wynagrodzenie zasadnicze", "brutto za miesiąc, z umowy", cfg.zasadnicza
+        ) { zapisz(cfg.copy(zasadnicza = it)) }
 
-        Box(Modifier.fillMaxWidth().height(1.dp).background(DarkTokens.line))
-
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text("Dodatek za porę nocną", style = GrafikType.cardTitle, color = DarkTokens.ink)
+        if (cfg.ustawiona && w.normaMiesiaca > 0) {
+            Row(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(13.dp))
+                    .background(Color(0x14DAC559))
+                    .border(1.dp, Color(0x3DDAC559), RoundedCornerShape(13.dp))
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 Text(
-                    "Kodeks liczy 20 % stawki z płacy minimalnej, ale wiele zakładów liczy " +
-                        "z Twojej stawki. Ustaw jak na pasku.",
+                    "Stawka za godzinę w tym miesiącu: " +
+                        "${KalkulatorWyplaty.zlote(w.stawkaGodzinowa)} zł " +
+                        "(zasadnicza ÷ ${w.normaMiesiaca} h planu)",
                     fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta,
-                    color = DarkTokens.inkMuted
+                    color = ShiftPaletteDark.I.ink
                 )
-            }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                PodstawaNocna(
-                    Modifier.weight(1f), "Z minimalnej",
-                    "${KalkulatorWyplaty.zlote(cfg.stawkaMinimalna * KalkulatorWyplaty.DODATEK_NOCNY)} zł/h",
-                    cfg.nocnyZMinimalnej
-                ) { zapisz(cfg.copy(nocnyZMinimalnej = true)) }
-                PodstawaNocna(
-                    Modifier.weight(1f), "Z mojej stawki",
-                    "${KalkulatorWyplaty.zlote(cfg.stawka * KalkulatorWyplaty.DODATEK_NOCNY)} zł/h",
-                    !cfg.nocnyZMinimalnej
-                ) { zapisz(cfg.copy(nocnyZMinimalnej = false)) }
-            }
-            if (cfg.nocnyZMinimalnej) {
-                PoleStawki(
-                    "Stawka z płacy minimalnej", "zmienia się co roku — sprawdź w przepisach",
-                    cfg.stawkaMinimalna
-                ) { zapisz(cfg.copy(stawkaMinimalna = it)) }
             }
         }
 
         Box(Modifier.fillMaxWidth().height(1.dp).background(DarkTokens.line))
 
-        WierszStawki(
-            "Premia", "procent od podstawy, jeśli dostajesz", "${cfg.premiaProc} %",
-            naMinus = { zapisz(cfg.copy(premiaProc = (cfg.premiaProc - 1).coerceAtLeast(0))) },
-            naPlus = { zapisz(cfg.copy(premiaProc = (cfg.premiaProc + 1).coerceAtMost(100))) }
-        )
+        PoleStawki(
+            "Dodatek za nocki", "kwota za godzinę III zmiany, z regulaminu", cfg.dodatekNocny
+        ) { zapisz(cfg.copy(dodatekNocny = it)) }
 
         Box(Modifier.fillMaxWidth().height(1.dp).background(DarkTokens.line))
 
@@ -324,9 +308,47 @@ private fun KartaStawek(cfg: StawkiCfg, zapisz: (StawkiCfg) -> Unit) {
     }
 }
 
+/** Czego świadomie nie liczymy — żeby różnica wobec paska była zrozumiała. */
+@Composable
+private fun KartaCzegoNieLiczymy() {
+    val p by postepWejscia(Motion.RISE_MS, 170)
+    Column(
+        Modifier.wejscie(p).fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(Color(0x08FFFFFF))
+            .border(1.dp, DarkTokens.line, RoundedCornerShape(20.dp))
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Text("CZEGO NIE LICZYMY", style = GrafikType.sectionLabel, color = DarkTokens.inkFaint)
+        listOf(
+            "Premii — jest uznaniowa, raz jest, raz jej nie ma.",
+            "Dodatku urlopowego i nadgodzin ze średniej — liczą się z poprzednich miesięcy.",
+            "Potrąceń: składek, zaliczki na podatek, PZU, kasy zapomogowej."
+        ).forEach { zdanie ->
+            Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+                Box(
+                    Modifier.padding(top = 6.dp).size(5.dp)
+                        .clip(RoundedCornerShape(999.dp))
+                        .background(DarkTokens.inkDisabled)
+                )
+                Text(zdanie, fontSize = 12.sp, lineHeight = 18.sp,
+                    fontFamily = Jakarta, color = DarkTokens.ink3)
+            }
+        }
+        Text(
+            "Dlatego kwota z aplikacji jest niższa niż suma naliczeń na pasku — " +
+                "pokazujemy tylko to, co da się policzyć z grafiku i umowy.",
+            fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta,
+            color = DarkTokens.inkMuted
+        )
+    }
+}
+
+
 /**
- * Kwota wpisywana z klawiatury. Makieta ma tu stepper, ale wbicie 28,50 zł skokiem
- * po 50 gr to prawie sześćdziesiąt dotknięć — stawkę wpisuje się raz i na lata.
+ * Kwota wpisywana z klawiatury. Makieta ma tu stepper, ale wbicie 7 950 zł skokiem
+ * po 50 gr nie miałoby końca — pensję wpisuje się raz i na lata.
  */
 @Composable
 private fun PoleStawki(
@@ -335,8 +357,8 @@ private fun PoleStawki(
     wartosc: Double,
     naZmiane: (Double) -> Unit
 ) {
-    // Klucz remembera to sama wartość zapisana, nie to, co w polu — inaczej opóźniona
-    // emisja z DataStore przestawiałaby cyfry w trakcie pisania.
+    // Klucz remembera to tytuł pola, nie zapisywana wartość — opóźniona emisja
+    // z DataStore przestawiałaby cyfry w trakcie pisania.
     var wpis by remember(tytul) {
         mutableStateOf(if (wartosc > 0.0) KalkulatorWyplaty.zlote(wartosc) else "")
     }
@@ -359,11 +381,13 @@ private fun PoleStawki(
                 wartosc = wpis,
                 podpowiedz = "0,00",
                 cyfry = true,
-                modifier = Modifier.width(92.dp),
+                modifier = Modifier.width(104.dp),
                 wyrownanie = TextAlign.End,
-                naZmiane = { tekst -> wpis = przyjmijKwote(tekst, wpis).also {
-                    naZmiane(it.replace(',', '.').toDoubleOrNull() ?: 0.0)
-                } }
+                naZmiane = { tekst ->
+                    wpis = przyjmijKwote(tekst, wpis).also {
+                        naZmiane(it.replace(',', '.').toDoubleOrNull() ?: 0.0)
+                    }
+                }
             )
             Text("zł", fontSize = 13.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted)
         }
@@ -371,89 +395,14 @@ private fun PoleStawki(
 }
 
 /**
- * Wpis kwoty: najwyżej trzy cyfry złotych i dwie groszy. Bez tego „3150" wpisane
- * zamiast „31,50" wyglądałoby jak stawka 3150 zł za godzinę.
+ * Wpis kwoty: najwyżej pięć cyfr złotych i dwie groszy. Pensja miesięczna ma cztery
+ * cyfry, dodatek za godzinę dwie — jedno pole obsługuje oba.
  */
 private fun przyjmijKwote(tekst: String, poprzedni: String): String {
     val czyste = tekst.replace('.', ',').filter { it.isDigit() || it == ',' }
     val czesci = czyste.split(",")
     if (czesci.size > 2) return poprzedni
-    val zlote = czesci[0].take(3)
+    if (czesci[0].length > 5) return poprzedni
     val grosze = czesci.getOrNull(1)?.take(2)
-    if (czesci[0].length > 3) return poprzedni
-    return if (grosze == null) zlote else "$zlote,$grosze"
-}
-
-@Composable
-private fun WierszStawki(
-    tytul: String,
-    podpis: String,
-    wartosc: String,
-    naMinus: () -> Unit,
-    naPlus: () -> Unit
-) {
-    Row(
-        Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text(tytul, style = GrafikType.cardTitle, color = DarkTokens.ink)
-            Text(podpis, fontSize = 11.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted,
-                maxLines = 2, overflow = TextOverflow.Ellipsis)
-        }
-        Row(
-            Modifier.clip(RoundedCornerShape(14.dp))
-                .background(DarkTokens.surfaceInput)
-                .border(1.dp, DarkTokens.lineInput, RoundedCornerShape(14.dp))
-                .padding(horizontal = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Box(
-                Modifier.size(34.dp).clip(RoundedCornerShape(10.dp)).clickable(onClick = naMinus),
-                contentAlignment = Alignment.Center
-            ) { Icon(IkonaMinus, "Mniej", Modifier.size(14.dp), tint = DarkTokens.ink2) }
-            Text(
-                wartosc, Modifier.widthIn(min = 58.dp),
-                style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Bold,
-                    fontFamily = Jakarta, fontFeatureSettings = TNUM),
-                color = DarkTokens.ink, textAlign = TextAlign.Center
-            )
-            Box(
-                Modifier.size(34.dp).clip(RoundedCornerShape(10.dp)).clickable(onClick = naPlus),
-                contentAlignment = Alignment.Center
-            ) { Icon(IkonaPlus, "Więcej", Modifier.size(14.dp), tint = DarkTokens.ink2) }
-        }
-    }
-}
-
-@Composable
-private fun PodstawaNocna(
-    modifier: Modifier,
-    etykieta: String,
-    podpis: String,
-    wybrana: Boolean,
-    akcja: () -> Unit
-) {
-    Column(
-        modifier.height(54.dp).clip(RoundedCornerShape(14.dp))
-            .background(if (wybrana) Color(0x2452D0B3) else DarkTokens.surfaceInput)
-            .border(
-                1.dp,
-                if (wybrana) Color(0x7352D0B3) else DarkTokens.lineInput,
-                RoundedCornerShape(14.dp)
-            )
-            .clickable(onClick = akcja),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(3.dp, Alignment.CenterVertically)
-    ) {
-        Text(etykieta, fontSize = 12.sp, fontWeight = FontWeight.Bold, fontFamily = Jakarta,
-            color = if (wybrana) DarkTokens.accent else DarkTokens.inkMuted)
-        Text(
-            podpis,
-            style = TextStyle(fontSize = 10.sp, fontFamily = Jakarta, fontFeatureSettings = TNUM),
-            color = DarkTokens.inkMuted
-        )
-    }
+    return if (grosze == null) czesci[0] else "${czesci[0]},$grosze"
 }

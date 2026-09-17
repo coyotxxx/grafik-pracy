@@ -30,10 +30,8 @@ class SettingsStore(private val ctx: Context) {
     private val kReverse = booleanPreferencesKey("reverse")
     private val kRemindOn = booleanPreferencesKey("remind_on")
     /** Stawki do szacunku wypłaty. */
-    private val kStawka = stringPreferencesKey("stawka")
-    private val kStawkaMin = stringPreferencesKey("stawka_min")
-    private val kNocnyZMin = booleanPreferencesKey("nocny_z_min")
-    private val kPremia = intPreferencesKey("premia_proc")
+    private val kZasadnicza = stringPreferencesKey("zasadnicza")
+    private val kDodatekNocny = stringPreferencesKey("dodatek_nocny")
     private val kPokazWyplate = booleanPreferencesKey("pokaz_wyplate")
     /** Powiadomienia: krótko przed wydarzeniem, przed zmianą, cisza na nocce. */
     private val kNotifWDniu = booleanPreferencesKey("notif_w_dniu")
@@ -132,20 +130,16 @@ class SettingsStore(private val ctx: Context) {
     /** Stawki — trzymane jako tekst, bo DataStore nie ma typu Double. */
     val stawki: Flow<StawkiCfg> = ctx.ds.data.map { p ->
         StawkiCfg(
-            stawka = p[kStawka]?.toDoubleOrNull() ?: 0.0,
-            nocnyZMinimalnej = p[kNocnyZMin] ?: true,
-            stawkaMinimalna = p[kStawkaMin]?.toDoubleOrNull() ?: 30.50,
-            premiaProc = p[kPremia] ?: 0,
+            zasadnicza = p[kZasadnicza]?.toDoubleOrNull() ?: 0.0,
+            dodatekNocny = p[kDodatekNocny]?.toDoubleOrNull() ?: 0.0,
             pokazujWBilansie = p[kPokazWyplate] ?: true
         )
     }
 
     suspend fun saveStawki(c: StawkiCfg) {
         ctx.ds.edit { p ->
-            p[kStawka] = c.stawka.coerceIn(0.0, 999.0).toString()
-            p[kStawkaMin] = c.stawkaMinimalna.coerceIn(0.0, 999.0).toString()
-            p[kNocnyZMin] = c.nocnyZMinimalnej
-            p[kPremia] = c.premiaProc.coerceIn(0, 100)
+            p[kZasadnicza] = c.zasadnicza.coerceIn(0.0, 99999.0).toString()
+            p[kDodatekNocny] = c.dodatekNocny.coerceIn(0.0, 999.0).toString()
             p[kPokazWyplate] = c.pokazujWBilansie
         }
     }
