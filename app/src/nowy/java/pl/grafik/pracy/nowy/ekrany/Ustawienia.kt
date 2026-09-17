@@ -94,7 +94,8 @@ fun EkranUstawienia(vm: Vm, pvm: PresenceVm, uvm: UpdateVm, naPodstrone: (Podstr
                 )
                 Wiersz(
                     IkonaDzwonek, DarkTokens.warnInk, "Powiadomienia",
-                    opisPowiadomien(s), gotowe = false
+                    opisPowiadomien(s), gotowe = true,
+                    akcja = { naPodstrone(Podstrona.POWIADOMIENIA) }
                 )
             }
 
@@ -366,6 +367,12 @@ private fun opisOdpoczynku(s: UiState): String =
     if (s.kolizje.isEmpty()) "11 h na dobę, 35 h w tygodniu · bez kolizji"
     else "11 h na dobę, 35 h w tygodniu · sprawdź ${s.kolizje.size} dzień"
 
-private fun opisPowiadomien(s: UiState): String =
-    if (s.remindOn) "wydarzenia: dzień wcześniej ${s.remindHour}:00"
-    else "wyłączone"
+private fun opisPowiadomien(s: UiState): String {
+    val c = s.powiadomienia
+    if (!c.wydarzenia && !c.przedZmiana) return "wyłączone"
+    val czesci = buildList {
+        if (c.wydarzenia) add("wydarzenia: dzień wcześniej ${c.godzinaWieczorna}:00")
+        if (c.przedZmiana) add("zmiana: ${pl.grafik.pracy.domain.PlanPowiadomien.etykietaWyprzedzenia(c.przedZmianaMin)} przed")
+    }
+    return czesci.joinToString(" · ")
+}

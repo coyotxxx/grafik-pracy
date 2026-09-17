@@ -111,6 +111,9 @@ data class EventRow(
 @Dao
 interface EventDao {
     @Query("SELECT * FROM events WHERE date >= :from AND date <= :to ORDER BY date, time")
+    suspend fun rangeOnce(from: String, to: String): List<EventRow>
+
+    @Query("SELECT * FROM events WHERE date >= :from AND date <= :to ORDER BY date, time")
     fun observeRange(from: String, to: String): Flow<List<EventRow>>
 
     @Query("SELECT * FROM events WHERE date = :date ORDER BY time")
@@ -136,6 +139,9 @@ interface EventDao {
 interface DayDao {
     @Query("SELECT * FROM days WHERE date >= :from AND date <= :to")
     fun observeRange(from: String, to: String): Flow<List<DayRow>>
+
+    @Query("SELECT * FROM days WHERE date >= :from AND date <= :to")
+    suspend fun rangeOnce(from: String, to: String): List<DayRow>
 
     @Query("SELECT * FROM days WHERE date = :date LIMIT 1")
     suspend fun get(date: String): DayRow?

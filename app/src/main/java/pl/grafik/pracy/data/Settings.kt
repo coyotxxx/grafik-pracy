@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import pl.grafik.pracy.domain.PowiadomieniaCfg
 import pl.grafik.pracy.domain.CyclePattern
 import pl.grafik.pracy.domain.CycleConfig
 import pl.grafik.pracy.domain.WorkPlace
@@ -27,6 +28,12 @@ class SettingsStore(private val ctx: Context) {
     private val kGenTo = stringPreferencesKey("gen_to")
     private val kReverse = booleanPreferencesKey("reverse")
     private val kRemindOn = booleanPreferencesKey("remind_on")
+    /** Powiadomienia: krótko przed wydarzeniem, przed zmianą, cisza na nocce. */
+    private val kNotifWDniu = booleanPreferencesKey("notif_w_dniu")
+    private val kNotifWyprzedzenie = intPreferencesKey("notif_wyprzedzenie")
+    private val kNotifPrzedZmiana = booleanPreferencesKey("notif_przed_zmiana")
+    private val kNotifPrzedZmianaMin = intPreferencesKey("notif_przed_zmiana_min")
+    private val kNotifCisza = booleanPreferencesKey("notif_cisza_nocka")
     /** Znacznik kolizji odpoczynku na kafelku dnia (art. 132 KP). */
     private val kRestMarker = booleanPreferencesKey("rest_marker")
     /** Ostrzeżenie w trybie edycji, gdy malowana zmiana skraca przerwę poniżej 11 h. */
@@ -113,6 +120,35 @@ class SettingsStore(private val ctx: Context) {
     /** Przypomnienia o wydarzeniach: czy włączone i o której dnia poprzedniego. */
     val reminders: Flow<Pair<Boolean, Int>> = ctx.ds.data.map { p ->
         (p[kRemindOn] ?: true) to (p[kRemindHour] ?: 18)
+    }
+
+    /**
+     * Ustawienia powiadomień. „Wydarzenia" i godzina wieczorna siedzą w starych kluczach,
+     * bo tego samego ustawienia używa klasyczna aplikacja.
+     */
+    val powiadomienia: Flow<PowiadomieniaCfg> = ctx.ds.data.map { p ->
+        PowiadomieniaCfg(
+            wydarzenia = p[kRemindOn] ?: true,
+            dzienWczesniej = p[kRemindOn] ?: true,
+            godzinaWieczorna = p[kRemindHour] ?: 18,
+            wDniu = p[kNotifWDniu] ?: true,
+            wyprzedzenieMin = p[kNotifWyprzedzenie] ?: 60,
+            przedZmiana = p[kNotifPrzedZmiana] ?: false,
+            przedZmianaMin = p[kNotifPrzedZmianaMin] ?: 60,
+            ciszaNaNocce = p[kNotifCisza] ?: true
+        )
+    }
+
+    suspend fun savePowiadomienia(c: PowiadomieniaCfg) {
+        ctx.ds.edit { p ->
+            p[kRemindOn] = c.wydarzenia
+            p[kRemindHour] = c.godzinaWieczorna.coerceIn(0, 23)
+            p[kNotifWDniu] = c.wDniu
+            p[kNotifWyprzedzenie] = c.wyprzedzenieMin
+            p[kNotifPrzedZmiana] = c.przedZmiana
+            p[kNotifPrzedZmianaMin] = c.przedZmianaMin
+            p[kNotifCisza] = c.ciszaNaNocce
+        }
     }
 
     /** Jak pokazywać kolizje odpoczynku: znacznik w kalendarzu, ostrzeżenie przy malowaniu. */

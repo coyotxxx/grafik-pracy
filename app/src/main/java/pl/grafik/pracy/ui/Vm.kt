@@ -73,7 +73,9 @@ data class UiState(
     val tygodnieOdpoczynku: List<TydzienOdpoczynku> = emptyList(),
     /** Znacznik kolizji na kafelku dnia i ostrzeżenie przy malowaniu. */
     val restZnacznik: Boolean = true,
-    val restOstrzegaj: Boolean = true
+    val restOstrzegaj: Boolean = true,
+    /** Ustawienia powiadomień. */
+    val powiadomienia: PowiadomieniaCfg = PowiadomieniaCfg()
 ) {
     /**
      * Bilans urlopu w roku wyświetlanego miesiąca.
@@ -122,6 +124,9 @@ class Vm(app: Application) : AndroidViewModel(app) {
         // Przypomnienia planujemy przy każdym starcie — WorkManager sam pilnuje, żeby był jeden.
         viewModelScope.launch {
             if (settings.reminders.first().first) Reminders.schedule(getApplication())
+            // Plan punktowy na dwie doby odświeżamy przy każdym starcie — dzięki temu
+            // nie trzeba pilnować każdego zapisu wydarzenia ani zmiany z osobna.
+            Reminders.planujNajblizsze(getApplication())
         }
     }
 
@@ -164,7 +169,8 @@ class Vm(app: Application) : AndroidViewModel(app) {
         _ym.flatMapLatest { ym ->
             dao.observeRange("${ym.year}-01-01", "${ym.year}-12-31")
         },
-        settings.odpoczynek
+        settings.odpoczynek,
+        settings.powiadomienia
     ) { arr ->
         @Suppress("UNCHECKED_CAST")
         val ym = arr[0] as YearMonth
@@ -192,6 +198,7 @@ class Vm(app: Application) : AndroidViewModel(app) {
         val rokRows = arr[17] as List<DayRow>
         @Suppress("UNCHECKED_CAST")
         val rest = arr[18] as Pair<Boolean, Boolean>
+        val notif = arr[19] as PowiadomieniaCfg
 
         val okresy = calcOkresy(rokRows, ym, cfg, okres)
 
@@ -213,7 +220,7 @@ class Vm(app: Application) : AndroidViewModel(app) {
             Settlement.yearLimit(ym.year, okres),
             Odpoczynek.kolizjeDobowe(merged),
             Odpoczynek.tygodnie(merged, ym.atDay(1), ym.atEndOfMonth()),
-            rest.first, rest.second)
+            rest.first, rest.second, notif)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState())
 
     private fun calc(m: Map<LocalDate, DayEntry>, ym: YearMonth): MonthStats {
@@ -385,6 +392,14 @@ class Vm(app: Application) : AndroidViewModel(app) {
     }
 
     fun saveVacation(v: VacationCfg) = viewModelScope.launch { settings.saveVacation(v) }
+
+    /** Ustawienia powiadomień — po zapisie od razu przeplanowujemy zadania. */
+    fun savePowiadomienia(c: PowiadomieniaCfg) = viewModelScope.launch {
+        settings.savePowiadomienia(c)
+        if (c.wydarzenia || c.przedZmiana) Reminders.schedule(getApplication())
+        else Reminders.cancel(getApplication())
+        Reminders.planujNajblizsze(getApplication())
+    }
 
     /** Jak pokazywać kolizje odpoczynku — znacznik w kalendarzu i ostrzeżenie przy malowaniu. */
     fun saveOdpoczynek(znacznik: Boolean, ostrzegaj: Boolean) =

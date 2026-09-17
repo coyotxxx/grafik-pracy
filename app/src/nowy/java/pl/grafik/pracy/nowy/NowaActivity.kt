@@ -26,6 +26,7 @@ import pl.grafik.pracy.nowy.ekrany.KartaDnia
 import pl.grafik.pracy.nowy.ekrany.EkranCzasPracy
 import pl.grafik.pracy.nowy.ekrany.EkranMojCykl
 import pl.grafik.pracy.nowy.ekrany.EkranOdpoczynek
+import pl.grafik.pracy.nowy.ekrany.EkranPowiadomienia
 import pl.grafik.pracy.nowy.ekrany.EkranUrlop
 import pl.grafik.pracy.nowy.ekrany.EkranWygladKolory
 import pl.grafik.pracy.nowy.ekrany.EkranWykrywanie
@@ -62,7 +63,7 @@ class NowaActivity : ComponentActivity() {
 }
 
 /** Podstrony ustawień — dochodzą po kolei, każda z własnej makiety. */
-enum class Podstrona { CYKL, CZAS_PRACY, URLOP, WYKRYWANIE, WYGLAD, ODPOCZYNEK }
+enum class Podstrona { CYKL, CZAS_PRACY, URLOP, WYKRYWANIE, WYGLAD, ODPOCZYNEK, POWIADOMIENIA }
 
 private enum class Zakladka(val etykieta: String, val ikona: ImageVector) {
     TERAZ("Teraz", IkonaTeraz),
@@ -98,6 +99,7 @@ private fun NowaApp(vm: Vm, pvm: PresenceVm, uvm: UpdateVm) {
         Podstrona.URLOP -> { EkranUrlop(vm) { podstrona = null }; return }
         Podstrona.WYKRYWANIE -> { EkranWykrywanie(pvm) { podstrona = null }; return }
         Podstrona.WYGLAD -> { EkranWygladKolory(vm) { podstrona = null }; return }
+        Podstrona.POWIADOMIENIA -> { EkranPowiadomienia(vm) { podstrona = null }; return }
         Podstrona.ODPOCZYNEK -> {
             EkranOdpoczynek(vm, naPowrot = { podstrona = null },
                 naDzien = { podstrona = null; otwartyDzien = it })
