@@ -66,7 +66,14 @@ data class UiState(
     val reczne: Set<LocalDate> = emptySet(),
     /** Nadgodziny w całym roku i limit roczny, czyli suma limitów okresów. */
     val otRok: Int = 0,
-    val otLimitRok: Int = 0
+    val otLimitRok: Int = 0,
+    /** Kolizje odpoczynku dobowego w widocznej siatce — art. 132 KP. */
+    val kolizje: List<KolizjaOdpoczynku> = emptyList(),
+    /** Odpoczynek tygodniowy w miesiącu — art. 133 KP. */
+    val tygodnieOdpoczynku: List<TydzienOdpoczynku> = emptyList(),
+    /** Znacznik kolizji na kafelku dnia i ostrzeżenie przy malowaniu. */
+    val restZnacznik: Boolean = true,
+    val restOstrzegaj: Boolean = true
 ) {
     /**
      * Bilans urlopu w roku wyświetlanego miesiąca.
@@ -156,7 +163,8 @@ class Vm(app: Application) : AndroidViewModel(app) {
         // Cały rok — z tego liczymy i okres rozliczeniowy, i limit roczny nadgodzin.
         _ym.flatMapLatest { ym ->
             dao.observeRange("${ym.year}-01-01", "${ym.year}-12-31")
-        }
+        },
+        settings.odpoczynek
     ) { arr ->
         @Suppress("UNCHECKED_CAST")
         val ym = arr[0] as YearMonth
@@ -182,6 +190,8 @@ class Vm(app: Application) : AndroidViewModel(app) {
         val otwartyPobyt = arr[16] as LocalDateTime?
         @Suppress("UNCHECKED_CAST")
         val rokRows = arr[17] as List<DayRow>
+        @Suppress("UNCHECKED_CAST")
+        val rest = arr[18] as Pair<Boolean, Boolean>
 
         val okresy = calcOkresy(rokRows, ym, cfg, okres)
 
@@ -200,7 +210,10 @@ class Vm(app: Application) : AndroidViewModel(app) {
         UiState(ym, merged, ev, cfg, cols, tool, otH, otR, calc(wMiesiacu, ym), rem.first, rem.second,
             maluj, url, urlRok, urlPrev, motyw, okres,
             obecnosc(presRows, otwartyPobyt, merged), okresy.first, saved.keys, okresy.second,
-            Settlement.yearLimit(ym.year, okres))
+            Settlement.yearLimit(ym.year, okres),
+            Odpoczynek.kolizjeDobowe(merged),
+            Odpoczynek.tygodnie(merged, ym.atDay(1), ym.atEndOfMonth()),
+            rest.first, rest.second)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState())
 
     private fun calc(m: Map<LocalDate, DayEntry>, ym: YearMonth): MonthStats {
@@ -372,6 +385,10 @@ class Vm(app: Application) : AndroidViewModel(app) {
     }
 
     fun saveVacation(v: VacationCfg) = viewModelScope.launch { settings.saveVacation(v) }
+
+    /** Jak pokazywać kolizje odpoczynku — znacznik w kalendarzu i ostrzeżenie przy malowaniu. */
+    fun saveOdpoczynek(znacznik: Boolean, ostrzegaj: Boolean) =
+        viewModelScope.launch { settings.saveOdpoczynek(znacznik, ostrzegaj) }
 
     /**
      * Dni od wczoraj na trzy tygodnie w przód. Ekran „Teraz" w nowym wyglądzie odlicza

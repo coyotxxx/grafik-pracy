@@ -27,6 +27,10 @@ class SettingsStore(private val ctx: Context) {
     private val kGenTo = stringPreferencesKey("gen_to")
     private val kReverse = booleanPreferencesKey("reverse")
     private val kRemindOn = booleanPreferencesKey("remind_on")
+    /** Znacznik kolizji odpoczynku na kafelku dnia (art. 132 KP). */
+    private val kRestMarker = booleanPreferencesKey("rest_marker")
+    /** Ostrzeżenie w trybie edycji, gdy malowana zmiana skraca przerwę poniżej 11 h. */
+    private val kRestWarn = booleanPreferencesKey("rest_warn")
     private val kRemindHour = intPreferencesKey("remind_hour")
     private val kUrlWymiar = intPreferencesKey("url_wymiar")
     private val kUrlZalegly = intPreferencesKey("url_zalegly")
@@ -109,6 +113,15 @@ class SettingsStore(private val ctx: Context) {
     /** Przypomnienia o wydarzeniach: czy włączone i o której dnia poprzedniego. */
     val reminders: Flow<Pair<Boolean, Int>> = ctx.ds.data.map { p ->
         (p[kRemindOn] ?: true) to (p[kRemindHour] ?: 18)
+    }
+
+    /** Jak pokazywać kolizje odpoczynku: znacznik w kalendarzu, ostrzeżenie przy malowaniu. */
+    val odpoczynek: Flow<Pair<Boolean, Boolean>> = ctx.ds.data.map { p ->
+        (p[kRestMarker] ?: true) to (p[kRestWarn] ?: true)
+    }
+
+    suspend fun saveOdpoczynek(znacznik: Boolean, ostrzegaj: Boolean) {
+        ctx.ds.edit { p -> p[kRestMarker] = znacznik; p[kRestWarn] = ostrzegaj }
     }
 
     suspend fun saveReminders(on: Boolean, hour: Int) {

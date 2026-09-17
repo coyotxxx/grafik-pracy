@@ -75,7 +75,9 @@ fun EkranUstawienia(vm: Vm, pvm: PresenceVm, uvm: UpdateVm, naPodstrone: (Podstr
                 )
                 Wiersz(
                     IkonaOdpoczynek, DarkTokens.warnInk, "Odpoczynek",
-                    "11 h na dobę, 35 h w tygodniu · ostrzeżenia", gotowe = false
+                    opisOdpoczynku(s), gotowe = true,
+                    akcja = { naPodstrone(Podstrona.ODPOCZYNEK) },
+                    odznaka = s.kolizje.size.takeIf { it > 0 }
                 )
                 Wiersz(
                     IkonaUrlop, ShiftPaletteDark.URLOP.ink, "Urlop",
@@ -183,6 +185,7 @@ private fun Wiersz(
     gotowe: Boolean,
     kropka: Color? = null,
     probki: List<Color>? = null,
+    odznaka: Int? = null,
     akcja: (() -> Unit)? = null
 ) {
     Row(
@@ -208,6 +211,18 @@ private fun Wiersz(
                 maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
 
+        if (odznaka != null) {
+            Box(
+                Modifier.height(22.dp).clip(RoundedCornerShape(999.dp))
+                    .background(Color(0x24FF937E))
+                    .border(1.dp, Color(0x4DFF937E), RoundedCornerShape(999.dp))
+                    .padding(horizontal = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("$odznaka", fontSize = 10.sp, fontWeight = FontWeight.Bold,
+                    fontFamily = Jakarta, color = DarkTokens.warnInk)
+            }
+        }
         if (kropka != null) {
             Box(Modifier.size(8.dp).clip(RoundedCornerShape(999.dp)).background(kropka))
         }
@@ -345,6 +360,11 @@ private fun opisWykrywania(p: pl.grafik.pracy.domain.WorkPlace): String {
     val auto = if (p.autoSave) " · auto-zapis" else ""
     return "włączone · ${p.radiusM} m$wifi$auto"
 }
+
+/** „11 h na dobę, 35 h w tygodniu" albo liczba kolizji, gdy jakieś są. */
+private fun opisOdpoczynku(s: UiState): String =
+    if (s.kolizje.isEmpty()) "11 h na dobę, 35 h w tygodniu · bez kolizji"
+    else "11 h na dobę, 35 h w tygodniu · sprawdź ${s.kolizje.size} dzień"
 
 private fun opisPowiadomien(s: UiState): String =
     if (s.remindOn) "wydarzenia: dzień wcześniej ${s.remindHour}:00"

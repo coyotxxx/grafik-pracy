@@ -39,7 +39,12 @@ private val PL = Locale.forLanguageTag("pl-PL")
  * którego używa klasyczna aplikacja.
  */
 @Composable
-fun EkranGrafik(vm: Vm, naDzien: (LocalDate) -> Unit, naEdycje: () -> Unit) {
+fun EkranGrafik(
+    vm: Vm,
+    naDzien: (LocalDate) -> Unit,
+    naEdycje: () -> Unit,
+    naOdpoczynek: () -> Unit
+) {
     val s by vm.state.collectAsState()
     val dzis = remember { LocalDate.now() }
     var wybrany by remember(s.ym) { mutableStateOf(if (YearMonth.from(dzis) == s.ym) dzis else s.ym.atDay(1)) }
@@ -57,6 +62,7 @@ fun EkranGrafik(vm: Vm, naDzien: (LocalDate) -> Unit, naEdycje: () -> Unit) {
         ) {
             Naglowek(s, vm)
             KartaGodzin(s)
+            PasekOdpoczynku(s, naOdpoczynek)
             SiatkaMiesiaca(s, dzis, wybrany) { wybrany = it }
             PasekWybranego(s, wybrany) { naDzien(wybrany) }
             RzadPrzyciskow(naEdycje)
@@ -139,6 +145,35 @@ private fun KartaGodzin(s: UiState) {
     }
 }
 
+/**
+ * Pasek kolizji odpoczynku z makiety — pojawia się tylko wtedy, gdy w miesiącu
+ * jest przerwa krótsza niż 11 h (art. 132 KP). Prowadzi do ekranu „Odpoczynek".
+ */
+@Composable
+private fun PasekOdpoczynku(s: UiState, naOdpoczynek: () -> Unit) {
+    val pierwsza = s.kolizje.firstOrNull() ?: return
+    Row(
+        Modifier.padding(horizontal = Dim.screenGutter).fillMaxWidth()
+            .clip(RoundedCornerShape(15.dp))
+            .background(Color(0x14FF937E))
+            .border(1.dp, Color(0x42FF937E), RoundedCornerShape(15.dp))
+            .clickable(onClick = naOdpoczynek)
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Icon(IkonaOstrzezenie, null, Modifier.size(16.dp), tint = DarkTokens.warnInk)
+        Text(
+            "%02d.%02d — tylko %d h przerwy między zmianami".format(
+                pierwsza.date.dayOfMonth, pierwsza.date.monthValue, pierwsza.przerwaH
+            ) + if (s.kolizje.size > 1) " (+${s.kolizje.size - 1})" else "",
+            style = GrafikType.caption, color = DarkTokens.warnInk2,
+            modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis
+        )
+        Icon(IkonaWPrawo, null, Modifier.size(15.dp), tint = Color(0xFFB08578))
+    }
+}
+
 private val DNI_TYGODNIA = listOf("PN", "WT", "ŚR", "CZ", "PT", "SO", "ND")
 
 @Composable
@@ -147,6 +182,7 @@ private fun SiatkaMiesiaca(s: UiState, dzis: LocalDate, wybrany: LocalDate, naWy
     // Jedna animacja na całą siatkę; kaskadę liczymy per kafelek z jej postępu.
     val calosc = Motion.CELL_START_MS + 41 * Motion.CELL_STAGGER_MS + Motion.CELL_IN_MS
     val pSiatki by postepWejscia(calosc)
+    val dniZKolizja = remember(s.kolizje) { s.kolizje.map { it.date }.toSet() }
 
     val pierwszy = s.ym.atDay(1)
     val start = pierwszy.minusDays((pierwszy.dayOfWeek.value - 1).toLong())
@@ -178,6 +214,7 @@ private fun SiatkaMiesiaca(s: UiState, dzis: LocalDate, wybrany: LocalDate, naWy
                         poza = YearMonth.from(d) != s.ym,
                         dzisiaj = d == dzis,
                         zaznaczony = d == wybrany,
+                        kolizja = s.restZnacznik && d in dniZKolizja,
                         postepSiatki = pSiatki,
                         indeks = i,
                         calosc = calosc,
@@ -197,6 +234,7 @@ private fun KafelekDnia(
     poza: Boolean,
     dzisiaj: Boolean,
     zaznaczony: Boolean,
+    kolizja: Boolean,
     postepSiatki: Float,
     indeks: Int,
     calosc: Int,
@@ -258,6 +296,14 @@ private fun KafelekDnia(
             if (etykieta.isNotEmpty()) {
                 Text(etykieta, Modifier.align(Alignment.BottomStart),
                     style = GrafikType.dayLabel, color = atrament)
+            }
+            // Znacznik zbyt krótkiej przerwy — art. 132 KP. Włączany w „Odpoczynku".
+            if (kolizja) {
+                Box(
+                    Modifier.align(Alignment.BottomEnd).size(5.dp)
+                        .clip(RoundedCornerShape(999.dp))
+                        .background(DarkTokens.warnInk)
+                )
             }
         }
     }

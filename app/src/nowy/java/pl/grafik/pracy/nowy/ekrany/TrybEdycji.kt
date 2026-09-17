@@ -83,6 +83,7 @@ fun TrybEdycji(vm: Vm, naGotowe: () -> Unit) {
             ) {
                 PasekEdycji(s, vm, naGotowe)
                 BanerNarzedzia(wybrane, kolory)
+                if (s.restOstrzegaj) PasekKolizji(s)
                 SiatkaEdycji(s, wybrane, ngWlaczone, ngGodziny, ngStawka, vm)
                 Spacer(Modifier.height(4.dp))
             }
@@ -100,6 +101,33 @@ fun TrybEdycji(vm: Vm, naGotowe: () -> Unit) {
                 naPrzywroc = { vm.resetMonth() }
             )
         }
+    }
+}
+
+/**
+ * Ostrzeżenie o zbyt krótkiej przerwie — pokazuje się od razu po pomalowaniu dnia,
+ * gdy w miesiącu powstała kolizja (art. 132 KP). Wyłączane w „Odpoczynku".
+ */
+@Composable
+private fun PasekKolizji(s: UiState) {
+    val pierwsza = s.kolizje.firstOrNull() ?: return
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = Dim.screenGutter)
+            .clip(RoundedCornerShape(15.dp))
+            .background(Color(0x14FF937E))
+            .border(1.dp, Color(0x42FF937E), RoundedCornerShape(15.dp))
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Icon(IkonaOstrzezenie, null, Modifier.size(16.dp), tint = DarkTokens.warnInk)
+        Text(
+            "%02d.%02d — tylko %d h przerwy między zmianami".format(
+                pierwsza.date.dayOfMonth, pierwsza.date.monthValue, pierwsza.przerwaH
+            ) + if (s.kolizje.size > 1) " (+${s.kolizje.size - 1})" else "",
+            style = GrafikType.caption, color = DarkTokens.warnInk2,
+            maxLines = 1, overflow = TextOverflow.Ellipsis
+        )
     }
 }
 

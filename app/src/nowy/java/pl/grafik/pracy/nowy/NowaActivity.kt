@@ -25,6 +25,7 @@ import pl.grafik.pracy.nowy.ekrany.EkranTeraz
 import pl.grafik.pracy.nowy.ekrany.KartaDnia
 import pl.grafik.pracy.nowy.ekrany.EkranCzasPracy
 import pl.grafik.pracy.nowy.ekrany.EkranMojCykl
+import pl.grafik.pracy.nowy.ekrany.EkranOdpoczynek
 import pl.grafik.pracy.nowy.ekrany.EkranUrlop
 import pl.grafik.pracy.nowy.ekrany.EkranWygladKolory
 import pl.grafik.pracy.nowy.ekrany.EkranWykrywanie
@@ -61,7 +62,7 @@ class NowaActivity : ComponentActivity() {
 }
 
 /** Podstrony ustawień — dochodzą po kolei, każda z własnej makiety. */
-enum class Podstrona { CYKL, CZAS_PRACY, URLOP, WYKRYWANIE, WYGLAD }
+enum class Podstrona { CYKL, CZAS_PRACY, URLOP, WYKRYWANIE, WYGLAD, ODPOCZYNEK }
 
 private enum class Zakladka(val etykieta: String, val ikona: ImageVector) {
     TERAZ("Teraz", IkonaTeraz),
@@ -97,6 +98,11 @@ private fun NowaApp(vm: Vm, pvm: PresenceVm, uvm: UpdateVm) {
         Podstrona.URLOP -> { EkranUrlop(vm) { podstrona = null }; return }
         Podstrona.WYKRYWANIE -> { EkranWykrywanie(pvm) { podstrona = null }; return }
         Podstrona.WYGLAD -> { EkranWygladKolory(vm) { podstrona = null }; return }
+        Podstrona.ODPOCZYNEK -> {
+            EkranOdpoczynek(vm, naPowrot = { podstrona = null },
+                naDzien = { podstrona = null; otwartyDzien = it })
+            return
+        }
         null -> {}
     }
 
@@ -111,7 +117,12 @@ private fun NowaApp(vm: Vm, pvm: PresenceVm, uvm: UpdateVm) {
                     naUstawienia = { zakladka = Zakladka.USTAWIENIA },
                     naDzien = { otwartyDzien = it }
                 )
-                Zakladka.GRAFIK -> EkranGrafik(vm, naDzien = { otwartyDzien = it }, naEdycje = { edycja = true })
+                Zakladka.GRAFIK -> EkranGrafik(
+                    vm,
+                    naDzien = { otwartyDzien = it },
+                    naEdycje = { edycja = true },
+                    naOdpoczynek = { podstrona = Podstrona.ODPOCZYNEK }
+                )
                 Zakladka.BILANS -> EkranBilans(vm)
                 Zakladka.USTAWIENIA -> EkranUstawienia(vm, pvm, uvm) { podstrona = it }
                 else -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
