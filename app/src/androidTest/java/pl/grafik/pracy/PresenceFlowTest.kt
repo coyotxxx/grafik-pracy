@@ -30,7 +30,10 @@ class PresenceFlowTest {
 
     @get:Rule
     val perms: androidx.test.rule.GrantPermissionRule =
-        androidx.test.rule.GrantPermissionRule.grant(Manifest.permission.POST_NOTIFICATIONS)
+        androidx.test.rule.GrantPermissionRule.grant(
+            Manifest.permission.POST_NOTIFICATIONS,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        )
 
     private val ctx: Context get() = InstrumentationRegistry.getInstrumentation().targetContext
     private val db get() = AppDb.get(ctx)
@@ -296,5 +299,45 @@ class PresenceFlowTest {
         assertEquals(Shift.W5, wpis.shift)                        // dzień wolny zostaje wolny
         assertEquals(8, wpis.otHours)
         assertEquals(OtRate.P100, wpis.otRate)
+    }
+
+    // ——— firmowe Wi-Fi jako samodzielne źródło wykrycia ———
+
+    @Test
+    fun firmowe_wifi_samo_otwiera_pobyt() = runBlocking {
+        SettingsStore(ctx).saveWorkPlace(
+            WorkPlace(enabled = true, lat = 52.1, lon = 21.0, radiusM = 200, minStayMin = 30, ssid = "FirmaWiFi")
+        )
+        PresenceState.clear(ctx)
+        assertNull(PresenceState.openEnter(ctx))
+
+        // Brak pozycji z GPS — liczy się wyłącznie sieć.
+        PresenceRepo.watchdog(ctx, now = day.atTime(21, 40), probe = { null }, wifi = { true })
+
+        assertEquals(day.atTime(21, 40), PresenceState.openEnter(ctx))
+    }
+
+    @Test
+    fun obca_siec_nie_otwiera_pobytu() = runBlocking {
+        SettingsStore(ctx).saveWorkPlace(
+            WorkPlace(enabled = true, lat = 52.1, lon = 21.0, radiusM = 200, minStayMin = 30, ssid = "FirmaWiFi")
+        )
+        PresenceState.clear(ctx)
+
+        PresenceRepo.watchdog(ctx, now = day.atTime(21, 40), probe = { null }, wifi = { false })
+
+        assertNull(PresenceState.openEnter(ctx))
+    }
+
+    @Test
+    fun bez_skonfigurowanej_sieci_wifi_nic_nie_otwiera() = runBlocking {
+        SettingsStore(ctx).saveWorkPlace(
+            WorkPlace(enabled = true, lat = 52.1, lon = 21.0, radiusM = 200, minStayMin = 30, ssid = "")
+        )
+        PresenceState.clear(ctx)
+
+        PresenceRepo.watchdog(ctx, now = day.atTime(21, 40), probe = { null }, wifi = { true })
+
+        assertNull(PresenceState.openEnter(ctx))
     }
 }

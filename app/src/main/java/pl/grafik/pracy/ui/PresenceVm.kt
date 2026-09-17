@@ -95,7 +95,9 @@ class PresenceVm(app: Application) : AndroidViewModel(app) {
         settings.saveWorkPlace(wp)
         _error.value = if (on) {
             val err = GeofenceManager.register(app, wp)
-            if (err == null) PresenceWatchdog.schedule(app)
+            // Watchdog planujemy także wtedy, gdy strefy nie udało się założyć —
+            // przy ustawionym firmowym Wi-Fi to on wykrywa obecność.
+            if (err == null || wp.hasWifi) PresenceWatchdog.schedule(app)
             err
         } else {
             GeofenceManager.unregister(app)
@@ -114,10 +116,21 @@ class PresenceVm(app: Application) : AndroidViewModel(app) {
         val app = getApplication<Application>()
         val wp = settings.workPlace.first()
         if (!wp.enabled || !wp.isSet) return@launch
-        if (!GeofenceManager.hasBackgroundLocation(app)) return@launch
-        val err = GeofenceManager.register(app, wp)
-        _error.value = err
-        if (err == null) PresenceWatchdog.schedule(app)
+
+        var strefaOk = false
+        if (GeofenceManager.hasBackgroundLocation(app)) {
+            val err = GeofenceManager.register(app, wp)
+            _error.value = err
+            strefaOk = err == null
+        }
+
+        // Przy otwartej apce SSID jest czytelny nawet bez uprawnienia do lokalizacji
+        // w tle — jeśli wisimy na firmowej sieci, to wystarczy, żeby otworzyć pobyt.
+        if (wp.hasWifi && WifiCheck.isAtWork(app, wp.ssid)) {
+            PresenceRepo.onEnter(app)
+        }
+
+        if (strefaOk || wp.hasWifi) PresenceWatchdog.schedule(app)
     }
 
     fun accept(id: Long) = viewModelScope.launch { PresenceRepo.accept(getApplication(), id) }

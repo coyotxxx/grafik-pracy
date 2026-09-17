@@ -60,15 +60,30 @@ object PresenceRepo {
     suspend fun watchdog(
         ctx: Context,
         now: LocalDateTime = LocalDateTime.now(),
+        /** Podmieniane w testach — prawdziwe SSID bywa niedostępne w tle. */
+        wifi: (String) -> Boolean = { ssid -> WifiCheck.isAtWork(ctx, ssid) },
+        // probe zostaje ostatni, żeby wywołania z nawiasem klamrowym dalej działały.
         probe: suspend () -> Location? = { LocationProbe.current(ctx) }
     ) {
         val wp = SettingsStore(ctx).workPlace.first()
         if (!wp.enabled) { Log.i(TAG, "watchdog: wykrywanie wyłączone"); return }
         val enter = PresenceState.openEnter(ctx)
-        if (enter == null) { Log.i(TAG, "watchdog: brak otwartego pobytu"); return }
+        if (enter == null) {
+            // Firmowa sieć jest samodzielnym dowodem obecności. Wcześniej Wi-Fi tylko
+            // potwierdzało pobyt otwarty przez geofence — gdy Android zgubił wejście
+            // albo strefy w ogóle nie było, telefon wisiał na firmowym Wi-Fi,
+            // a apka twierdziła, że nie ma Cię w pracy.
+            if (wp.hasWifi && wifi(wp.ssid)) {
+                Log.i(TAG, "watchdog: firmowe Wi-Fi bez otwartego pobytu — otwieram")
+                PresenceState.markEnter(ctx, now)
+            } else {
+                Log.i(TAG, "watchdog: brak otwartego pobytu")
+            }
+            return
+        }
 
         // 1. Firmowe Wi-Fi — najtańsze i najpewniejsze potwierdzenie.
-        if (wp.hasWifi && WifiCheck.isAtWork(ctx, wp.ssid)) {
+        if (wp.hasWifi && wifi(wp.ssid)) {
             Log.i(TAG, "watchdog: firmowe Wi-Fi — nadal w pracy")
             PresenceState.touch(ctx, now)
             return
