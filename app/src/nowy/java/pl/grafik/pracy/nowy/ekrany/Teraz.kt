@@ -108,7 +108,7 @@ fun EkranTeraz(
             PasekGorny(s, dzis, naUstawienia)
             TarczaDoby(zmiana, teraz, Modifier.align(Alignment.CenterHorizontally))
             TrzyKafelki(s, naBilans)
-            NajblizszeDni(kolejne, wybrany, wybranyWpis) { wybrany = it }
+            NajblizszeDni(kolejne, wybrany, wybranyWpis, s.events[wybrany].orEmpty()) { wybrany = it }
             KartaWydarzenia(s, dni, dzis, naDzien)
             RzadAkcji(naGrafik) { naDzien(dzis) }
         }
@@ -181,6 +181,23 @@ private fun najblizszaZmiana(dni: List<DayEntry>, teraz: LocalDateTime): Najbliz
 /** Godzina jako ułamek doby przeliczony na kąt: 0:00 na górze, doba = 360°. */
 private fun kat(czas: LocalDateTime): Float = -90f + (czas.hour + czas.minute / 60f) * 15f
 
+/**
+ * Średnica tarczy doby. Makieta ma 240 dp, ale Maciej poprosił o większą, żeby
+ * w środku było więcej miejsca na godzinę i opis zmiany (zgłoszenie z 17.09.2026).
+ */
+private val TARCZA = 296.dp
+
+// Proporcje względem średnicy — wszystkie wzięte z makiety (np. 96/240 = 0.40).
+private const val PROMIEN = 0.40f
+private const val GRUBOSC = 0.0583f
+private const val KRESKA_OD = 0.45f
+private const val KRESKA_KROTKA = 0.475f
+private const val KRESKA_DLUGA = 0.4833f
+private const val WSKAZ_OD = 0.35f
+private const val WSKAZ_DO = 0.4583f
+private const val KULKA_OD = 0.4667f
+private const val KULKA_R = 0.01875f
+
 @Composable
 private fun TarczaDoby(zm: NajblizszaZmiana?, teraz: LocalDateTime, modifier: Modifier = Modifier) {
     val kolory = Paleta.of(typDniaZ(zm?.shift))
@@ -197,11 +214,14 @@ private fun TarczaDoby(zm: NajblizszaZmiana?, teraz: LocalDateTime, modifier: Mo
     val kolorToru = Tokeny.tarczaTor
     val kolorKresek = Tokeny.tarczaKreski
 
-    Box(modifier.size(240.dp), contentAlignment = Alignment.Center) {
-        Canvas(Modifier.size(240.dp)) {
+    Box(modifier.size(TARCZA), contentAlignment = Alignment.Center) {
+        Canvas(Modifier.size(TARCZA)) {
             val srodek = Offset(size.width / 2f, size.height / 2f)
-            val r = 96.dp.toPx()
-            val grubosc = 14.dp.toPx()
+            // Wymiary liczymy z rozmiaru tarczy, a nie wpisujemy na sztywno — dzięki temu
+            // zmiana jednej liczby (TARCZA) skaluje pierścień, kreski i wskazówkę naraz.
+            val bok = size.minDimension
+            val r = bok * PROMIEN
+            val grubosc = bok * GRUBOSC
             val rogTarczy = Offset(srodek.x - r, srodek.y - r)
             val bokTarczy = Size(r * 2, r * 2)
 
@@ -241,8 +261,11 @@ private fun TarczaDoby(zm: NajblizszaZmiana?, teraz: LocalDateTime, modifier: Mo
                 rotate(-90f + i * 45f, srodek) {
                     drawLine(
                         kolorKresek,
-                        start = Offset(srodek.x + 108.dp.toPx(), srodek.y),
-                        end = Offset(srodek.x + (if (dlugi) 116.dp else 114.dp).toPx(), srodek.y),
+                        start = Offset(srodek.x + bok * KRESKA_OD, srodek.y),
+                        end = Offset(
+                            srodek.x + bok * (if (dlugi) KRESKA_DLUGA else KRESKA_KROTKA),
+                            srodek.y
+                        ),
                         strokeWidth = 2.dp.toPx(), cap = StrokeCap.Round
                     )
                 }
@@ -253,12 +276,12 @@ private fun TarczaDoby(zm: NajblizszaZmiana?, teraz: LocalDateTime, modifier: Mo
             rotate(katWsk, srodek) {
                 drawLine(
                     kolorWskazowki,
-                    start = Offset(srodek.x + 84.dp.toPx(), srodek.y),
-                    end = Offset(srodek.x + 110.dp.toPx(), srodek.y),
+                    start = Offset(srodek.x + bok * WSKAZ_OD, srodek.y),
+                    end = Offset(srodek.x + bok * WSKAZ_DO, srodek.y),
                     strokeWidth = 3.dp.toPx(), cap = StrokeCap.Round
                 )
-                drawCircle(kolorWskazowki, radius = 4.5.dp.toPx(),
-                    center = Offset(srodek.x + 112.dp.toPx(), srodek.y))
+                drawCircle(kolorWskazowki, radius = bok * KULKA_R,
+                    center = Offset(srodek.x + bok * KULKA_OD, srodek.y))
             }
         }
 
@@ -388,6 +411,7 @@ private fun NajblizszeDni(
     dni: List<DayEntry>,
     wybrany: LocalDate,
     wpis: DayEntry,
+    wydarzenia: List<EventRow>,
     naWybor: (LocalDate) -> Unit
 ) {
     val pNag by postepWejscia(Motion.RISE_MS, 750)
@@ -406,23 +430,74 @@ private fun NajblizszeDni(
             }
         }
 
-        val k = Paleta.of(typDniaZ(wpis.shift))
+        PlanDnia(wpis, wydarzenia, Modifier.wejscie(pOpis))
+    }
+}
+
+/**
+ * Wszystko, co na wybrany dzień zaplanowane — jedno pod drugim: zmiana z godzinami,
+ * nadgodziny i wydarzenia z kalendarza. Maciej poprosił, żeby pasek pokazywał cały
+ * dzień, a nie samą nazwę zmiany (zgłoszenie z 17.09.2026).
+ */
+@Composable
+private fun PlanDnia(wpis: DayEntry, wydarzenia: List<EventRow>, modifier: Modifier = Modifier) {
+    val k = Paleta.of(typDniaZ(wpis.shift))
+
+    Column(
+        modifier.fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(Tokeny.surface)
+            .border(1.dp, Tokeny.line, RoundedCornerShape(14.dp))
+            .padding(horizontal = 14.dp, vertical = 11.dp),
+        verticalArrangement = Arrangement.spacedBy(7.dp)
+    ) {
         Row(
-            Modifier.wejscie(pOpis).fillMaxWidth()
-                .clip(RoundedCornerShape(14.dp))
-                .background(Tokeny.surface)
-                .border(1.dp, Tokeny.line, RoundedCornerShape(14.dp))
-                .padding(horizontal = 14.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Box(Modifier.size(7.dp).clip(RoundedCornerShape(999.dp)).background(k.solid))
             Text(
-                "${dzienTygodnia(wpis.date)} ${wpis.date.dayOfMonth} ${miesiacDopelniacz(wpis.date)} · ${opisDnia(wpis.shift)}",
-                fontSize = 12.sp, fontFamily = Jakarta, color = Tokeny.ink2,
-                maxLines = 2, overflow = TextOverflow.Ellipsis
+                "${dzienTygodnia(wpis.date)} ${wpis.date.dayOfMonth} ${miesiacDopelniacz(wpis.date)}",
+                fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+                fontFamily = Jakarta, color = Tokeny.ink
             )
         }
+
+        WierszPlanu(opisDnia(wpis.shift), k.ink)
+
+        if (wpis.otHours > 0) {
+            WierszPlanu(
+                "nadgodziny +${wpis.otHours} h · ${wpis.otRate.percent} %",
+                Paleta.II.ink
+            )
+        }
+
+        wydarzenia.forEach { ev ->
+            WierszPlanu(
+                listOfNotNull(ev.time.ifEmpty { null }, ev.text).joinToString(" · "),
+                Tokeny.warnInk
+            )
+        }
+
+        if (wpis.note.isNotBlank()) WierszPlanu(wpis.note, Tokeny.inkMuted)
+    }
+}
+
+/** Jedna pozycja planu dnia: kropka w kolorze i tekst. */
+@Composable
+private fun WierszPlanu(tekst: String, kolor: androidx.compose.ui.graphics.Color) {
+    Row(
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Box(
+            Modifier.padding(start = 2.dp, top = 6.dp).size(4.dp)
+                .clip(RoundedCornerShape(999.dp)).background(kolor)
+        )
+        Text(
+            tekst, fontSize = 12.sp, lineHeight = 17.sp,
+            fontFamily = Jakarta, color = Tokeny.ink2
+        )
     }
 }
 

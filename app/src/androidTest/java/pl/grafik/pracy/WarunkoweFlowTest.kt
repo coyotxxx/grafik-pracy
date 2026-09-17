@@ -62,6 +62,22 @@ class WarunkoweFlowTest {
             it.notification.extras.getCharSequence("android.title")?.toString()
         }
 
+    /**
+     * Czeka chwilę na powiadomienie o podanym tytule.
+     *
+     * Na świeżo uruchomionym systemie pierwsze powiadomienie potrafi pojawić się
+     * z opóźnieniem — bez tego czekania test bywał kapryśny.
+     */
+    private fun poczekajNa(fragment: String, msMax: Long = 3000): List<String> {
+        val koniec = System.currentTimeMillis() + msMax
+        while (System.currentTimeMillis() < koniec) {
+            val teraz = powiadomienia()
+            if (teraz.any { it.contains(fragment) }) return teraz
+            Thread.sleep(100)
+        }
+        return powiadomienia()
+    }
+
     @Test
     fun limit_nadgodzin_dociera_gdy_przekroczony_prog() = runBlocking {
         assumeTrue("system blokuje powiadomienia", nm.areNotificationsEnabled())
@@ -87,7 +103,7 @@ class WarunkoweFlowTest {
 
         PowiadomieniaWarunkowe.sprawdz(ctx, LocalDate.of(2026, 9, 15))
 
-        val tytuly = powiadomienia()
+        val tytuly = poczekajNa("Limit nadgodzin")
         assertTrue("brak powiadomienia o limicie: $tytuly",
             tytuly.any { it.contains("Limit nadgodzin") })
     }
@@ -125,8 +141,9 @@ class WarunkoweFlowTest {
         SettingsStore(ctx).saveVacation(VacationCfg(wymiar = 26, zalegly = 4))
 
         PowiadomieniaWarunkowe.sprawdz(ctx, LocalDate.of(2026, 8, 5))
-        assertTrue("brak przypomnienia o urlopie: ${powiadomienia()}",
-            powiadomienia().any { it.contains("Zaległy urlop") })
+        val oUrlopie = poczekajNa("Zaległy urlop")
+        assertTrue("brak przypomnienia o urlopie: $oUrlopie",
+            oUrlopie.any { it.contains("Zaległy urlop") })
 
         nm.cancelAll()
         PowiadomieniaWarunkowe.sprawdz(ctx, LocalDate.of(2026, 6, 5))
