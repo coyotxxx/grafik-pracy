@@ -104,6 +104,22 @@ class PresenceVm(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /**
+     * Zakłada strefę, jeśli wykrywanie jest włączone, a uprawnienie do lokalizacji
+     * w tle właśnie się pojawiło. Bez tego po nadaniu „Zezwalaj zawsze" w ustawieniach
+     * Androida trzeba było ręcznie przełączyć wykrywanie — apka nigdy sama nie próbowała
+     * ponownie i cicho nie wykrywała niczego.
+     */
+    fun ensureGeofence() = viewModelScope.launch {
+        val app = getApplication<Application>()
+        val wp = settings.workPlace.first()
+        if (!wp.enabled || !wp.isSet) return@launch
+        if (!GeofenceManager.hasBackgroundLocation(app)) return@launch
+        val err = GeofenceManager.register(app, wp)
+        _error.value = err
+        if (err == null) PresenceWatchdog.schedule(app)
+    }
+
     fun accept(id: Long) = viewModelScope.launch { PresenceRepo.accept(getApplication(), id) }
     fun reject(id: Long) = viewModelScope.launch { PresenceRepo.reject(getApplication(), id) }
 

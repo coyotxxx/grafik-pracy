@@ -31,6 +31,16 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent { GrafikTheme { App(vm, pvm, uvm) } }
     }
+
+    /**
+     * Powrót do aplikacji to jedyny moment, w którym możemy wychwycić uprawnienie
+     * nadane ręcznie w ustawieniach Androida. Rejestracja strefy jest idempotentna —
+     * ta sama strefa po prostu się nadpisuje.
+     */
+    override fun onResume() {
+        super.onResume()
+        pvm.ensureGeofence()
+    }
 }
 
 private data class Tab(val label: String, val icon: ImageVector)

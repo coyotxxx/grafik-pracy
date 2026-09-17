@@ -22,6 +22,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -52,11 +55,20 @@ fun WorkPlaceScreen(vm: PresenceVm) {
         notifGranted = notificationsAllowed(ctx)
     }
 
-    // Odświeżenie po powrocie z ustawień systemowych — nic tu nie pytamy z zaskoczenia.
-    LaunchedEffect(Unit) {
-        fineGranted = GeofenceManager.hasFineLocation(ctx)
-        bgGranted = GeofenceManager.hasBackgroundLocation(ctx)
-        notifGranted = notificationsAllowed(ctx)
+    // Odświeżenie po powrocie z ustawień systemowych. Samo LaunchedEffect(Unit) tu nie
+    // wystarczało — ekran zostaje żywy, gdy odchodzisz do ustawień Androida, więc ptaszki
+    // pokazywały stary stan uprawnień jeszcze długo po ich nadaniu.
+    val zycie = LocalLifecycleOwner.current.lifecycle
+    DisposableEffect(zycie) {
+        val obs = LifecycleEventObserver { _, zdarzenie ->
+            if (zdarzenie == Lifecycle.Event.ON_RESUME) {
+                fineGranted = GeofenceManager.hasFineLocation(ctx)
+                bgGranted = GeofenceManager.hasBackgroundLocation(ctx)
+                notifGranted = notificationsAllowed(ctx)
+            }
+        }
+        zycie.addObserver(obs)
+        onDispose { zycie.removeObserver(obs) }
     }
 
     Column(
