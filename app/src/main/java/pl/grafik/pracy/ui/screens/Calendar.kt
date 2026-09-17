@@ -239,15 +239,22 @@ private fun DayCell(
             .border(bw, border, RoundedCornerShape(10.dp))
             .combinedClickable(onClick = onTap, onLongClick = onLong)
     ) {
-        // Wszystko leży NA sobie w jednej warstwie: numer u góry, etykieta na środku,
-        // pasek nadgodzin na dole. Dzięki temu dołożenie paska niczego nie przesuwa
-        // i kafelki trzymają jedną linię niezależnie od zawartości.
+        // Wszystko leży NA sobie w jednej warstwie: numer u góry, pasek nadgodzin
+        // na środku, etykieta zmiany na dole. Dzięki temu dołożenie paska niczego
+        // nie przesuwa i kafelki trzymają jedną linię niezależnie od zawartości.
         val lbl = e?.shift?.code ?: ""
+        val zPaskiem = (e?.otHours ?: 0) > 0
         if (lbl.isNotEmpty()) {
             Text(
                 lbl,
-                Modifier.align(Alignment.Center),
-                fontSize = if (lbl.length > 3) 11.sp else 18.sp,
+                Modifier.align(Alignment.BottomCenter).padding(bottom = 2.dp),
+                // Z paskiem na środku etykieta musi zejść z drogi — przy sześciu
+                // tygodniach w miesiącu kafelek ma ledwie 55 dp wysokości.
+                fontSize = when {
+                    lbl.length > 3 -> 11.sp
+                    zPaskiem -> 13.sp
+                    else -> 18.sp
+                },
                 fontWeight = FontWeight.Bold, color = sw.text, maxLines = 1
             )
         }
@@ -294,13 +301,13 @@ private fun DayCell(
         }
         if ((e?.otHours ?: 0) > 0) {
             Box(
-                Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                Modifier.align(Alignment.Center).fillMaxWidth()
                     .background(if (e!!.otRate == OtRate.P100) OtColor100 else OtColor50)
             ) {
                 Text(
                     "+${e.otHours}h ${e.otRate.percent}%",
-                    Modifier.fillMaxWidth().padding(vertical = 1.dp),
-                    fontSize = 8.sp, fontWeight = FontWeight.Bold,
+                    Modifier.fillMaxWidth(),
+                    fontSize = 7.sp, fontWeight = FontWeight.Bold,
                     color = Color(0xFF2A1C06), textAlign = TextAlign.Center, maxLines = 1
                 )
             }
