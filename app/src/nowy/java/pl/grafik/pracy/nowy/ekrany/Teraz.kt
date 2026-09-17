@@ -382,22 +382,19 @@ private fun SrodekTarczy(
                         .background(Tokeny.accent)
                 )
                 Text(
-                    tekstObecnosciWTarczy(obecnosc),
+                    // Sama informacja, bez godziny — dłuższy napis nie mieścił się
+                    // w okręgu. Godzinę wejścia widać na pasku dnia.
+                    "JESTEŚ W PRACY",
                     style = TextStyle(
                         fontSize = 10.5.sp, fontWeight = FontWeight.Bold,
                         fontFamily = Jakarta, letterSpacing = 0.6.sp
                     ),
+                    maxLines = 1,
                     color = Tokeny.accent
                 )
             }
         }
     }
-}
-
-/** „JESTEŚ W PRACY · OD 21:52" — krótko, bo miejsca w tarczy jest niewiele. */
-private fun tekstObecnosciWTarczy(o: DayPresence): String {
-    val od = o.od?.let { " · OD %02d:%02d".format(it.hour, it.minute) } ?: ""
-    return "JESTEŚ W PRACY$od"
 }
 
 // ─────────────────────────────────────────────────────────────
