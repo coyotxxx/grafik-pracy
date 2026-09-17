@@ -22,6 +22,7 @@ import pl.grafik.pracy.nowy.ekrany.EkranBilans
 import pl.grafik.pracy.nowy.ekrany.EkranGrafik
 import pl.grafik.pracy.nowy.ekrany.EkranTeraz
 import pl.grafik.pracy.nowy.ekrany.KartaDnia
+import pl.grafik.pracy.nowy.ekrany.EkranMojCykl
 import pl.grafik.pracy.nowy.ekrany.EkranUstawienia
 import pl.grafik.pracy.nowy.ekrany.TrybEdycji
 import java.time.LocalDate
@@ -54,6 +55,9 @@ class NowaActivity : ComponentActivity() {
     }
 }
 
+/** Podstrony ustawień — dochodzą po kolei, każda z własnej makiety. */
+enum class Podstrona { CYKL }
+
 private enum class Zakladka(val etykieta: String, val ikona: ImageVector) {
     TERAZ("Teraz", IkonaTeraz),
     GRAFIK("Grafik", IkonaGrafik),
@@ -66,12 +70,18 @@ private fun NowaApp(vm: Vm, pvm: PresenceVm, uvm: UpdateVm) {
     var zakladka by remember { mutableStateOf(Zakladka.TERAZ) }
     var otwartyDzien by remember { mutableStateOf<LocalDate?>(null) }
     var edycja by remember { mutableStateOf(false) }
+    var podstrona by remember { mutableStateOf<Podstrona?>(null) }
 
     otwartyDzien?.let { d -> KartaDnia(vm, d) { otwartyDzien = null } }
 
     if (edycja) {
         TrybEdycji(vm) { edycja = false }
         return
+    }
+
+    when (podstrona) {
+        Podstrona.CYKL -> { EkranMojCykl(vm) { podstrona = null }; return }
+        null -> {}
     }
 
     Column(Modifier.fillMaxSize().background(DarkTokens.bg)) {
@@ -87,7 +97,7 @@ private fun NowaApp(vm: Vm, pvm: PresenceVm, uvm: UpdateVm) {
                 )
                 Zakladka.GRAFIK -> EkranGrafik(vm, naDzien = { otwartyDzien = it }, naEdycje = { edycja = true })
                 Zakladka.BILANS -> EkranBilans(vm)
-                Zakladka.USTAWIENIA -> EkranUstawienia(vm, pvm, uvm)
+                Zakladka.USTAWIENIA -> EkranUstawienia(vm, pvm, uvm) { podstrona = it }
                 else -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(zakladka.etykieta, style = GrafikType.h1, color = DarkTokens.ink)
                 }

@@ -259,3 +259,8 @@ val IkonaInfo: ImageVector = ikona(1.8f) {
     moveTo(12f, 11f); verticalLineToRelative(5f)
     moveTo(12f, 8f); lineToRelative(0.01f, 0f)
 }
+
+/** Ptaszek — wybrany system pracy, potwierdzenia. */
+val IkonaPtaszek: ImageVector = ikona(3f) {
+    moveTo(5f, 12.5f); lineToRelative(5f, 5f); lineToRelative(9f, -11f)
+}

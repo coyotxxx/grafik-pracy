@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import pl.grafik.pracy.nowy.theme.*
+import pl.grafik.pracy.nowy.Podstrona
 import pl.grafik.pracy.nowy.ui.*
 import pl.grafik.pracy.ui.PresenceVm
 import pl.grafik.pracy.ui.UiState
@@ -41,7 +42,7 @@ private val PL_UST = Locale.forLanguageTag("pl-PL")
  * Podpisy pod nazwami pokazują prawdziwy stan aplikacji, nie przykłady z makiety.
  */
 @Composable
-fun EkranUstawienia(vm: Vm, pvm: PresenceVm, uvm: UpdateVm) {
+fun EkranUstawienia(vm: Vm, pvm: PresenceVm, uvm: UpdateVm, naPodstrone: (Podstrona) -> Unit) {
     val s by vm.state.collectAsState()
     val p by pvm.state.collectAsState()
     val u by uvm.state.collectAsState()
@@ -61,7 +62,7 @@ fun EkranUstawienia(vm: Vm, pvm: PresenceVm, uvm: UpdateVm) {
                 modifier = Modifier.wejscie(pNag).padding(horizontal = Dim.screenGutter)
             )
 
-            KartaCyklu(s)
+            KartaCyklu(s) { naPodstrone(Podstrona.CYKL) }
 
             Grupa("ROZLICZANIE", 80) {
                 Wiersz(
@@ -115,7 +116,7 @@ fun EkranUstawienia(vm: Vm, pvm: PresenceVm, uvm: UpdateVm) {
 // ─────────────────────────────────────────────────────────────
 
 @Composable
-private fun KartaCyklu(s: UiState) {
+private fun KartaCyklu(s: UiState, naKlik: () -> Unit) {
     val p by postepWejscia(Motion.RISE_MS, 40)
     Row(
         Modifier.wejscie(p).padding(horizontal = Dim.screenGutter).fillMaxWidth()
@@ -126,7 +127,7 @@ private fun KartaCyklu(s: UiState) {
                 )
             )
             .border(1.dp, Color(0x4052D0B3), RoundedCornerShape(Dim.rCard))
-            .alpha(0.55f)
+            .clickable(onClick = naKlik)
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp)
