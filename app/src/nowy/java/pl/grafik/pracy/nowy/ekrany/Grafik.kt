@@ -21,6 +21,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import pl.grafik.pracy.domain.OtRate
 import pl.grafik.pracy.domain.Shift
 import pl.grafik.pracy.nowy.theme.*
 import pl.grafik.pracy.nowy.ui.*
@@ -283,8 +284,18 @@ private fun KafelekDnia(
         Row(Modifier.fillMaxWidth().align(Alignment.TopStart), verticalAlignment = Alignment.Bottom) {
             Text("${data.dayOfMonth}", style = GrafikType.dayNumber, color = numer)
             Spacer(Modifier.weight(1f))
-            if (godziny != null && !poza) {
-                Text(
+            // Nadgodziny mają pierwszeństwo przed godzinami obecności: to wpis własny,
+            // a bez niego dzień z nadgodzinami wyglądał w grafiku jak każdy inny.
+            val ot = e?.otHours ?: 0
+            when {
+                ot > 0 && !poza -> Text(
+                    "+$ot",
+                    fontSize = 9.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                    fontFamily = Jakarta,
+                    color = if (e?.otRate == OtRate.P100) ShiftPaletteDark.I.ink
+                    else ShiftPaletteDark.I.ink.copy(alpha = 0.65f)
+                )
+                godziny != null && !poza -> Text(
                     if (godziny.trwa) "praca" else "${godziny.hours}h",
                     fontSize = 9.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
                     fontFamily = Jakarta, color = Color(0xFF7E878E)
@@ -314,7 +325,7 @@ private fun PasekWybranego(s: UiState, dzien: LocalDate, naSzczegoly: () -> Unit
     val p by postepWejscia(Motion.RISE_MS, 900)
     val e = s.entries[dzien]
     val k = ShiftPaletteDark.of(typDniaZ(e?.shift))
-    val opis = when (e?.shift) {
+    val opisZmiany = when (e?.shift) {
         Shift.I -> "Zmiana ranna · 06:00–14:00 · 8 h"
         Shift.II -> "Zmiana popołudniowa · 14:00–22:00 · 8 h"
         Shift.III -> "Zmiana nocna · 22:00–06:00 · 8 h"
@@ -322,6 +333,8 @@ private fun PasekWybranego(s: UiState, dzien: LocalDate, naSzczegoly: () -> Unit
         null -> "Brak wpisu w grafiku"
         else -> e.shift!!.label
     }
+    val opis = if ((e?.otHours ?: 0) > 0)
+        "$opisZmiany · +${e!!.otHours} h ${e.otRate.percent} %" else opisZmiany
 
     Row(
         Modifier.wejscie(p).padding(horizontal = Dim.screenGutter, vertical = 2.dp)
