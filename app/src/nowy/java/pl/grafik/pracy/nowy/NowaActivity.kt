@@ -2,6 +2,7 @@ package pl.grafik.pracy.nowy
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
@@ -25,6 +26,7 @@ import pl.grafik.pracy.nowy.ekrany.KartaDnia
 import pl.grafik.pracy.nowy.ekrany.EkranCzasPracy
 import pl.grafik.pracy.nowy.ekrany.EkranMojCykl
 import pl.grafik.pracy.nowy.ekrany.EkranUrlop
+import pl.grafik.pracy.nowy.ekrany.EkranWykrywanie
 import pl.grafik.pracy.nowy.ekrany.EkranUstawienia
 import pl.grafik.pracy.nowy.ekrany.TrybEdycji
 import java.time.LocalDate
@@ -58,7 +60,7 @@ class NowaActivity : ComponentActivity() {
 }
 
 /** Podstrony ustawień — dochodzą po kolei, każda z własnej makiety. */
-enum class Podstrona { CYKL, CZAS_PRACY, URLOP }
+enum class Podstrona { CYKL, CZAS_PRACY, URLOP, WYKRYWANIE }
 
 private enum class Zakladka(val etykieta: String, val ikona: ImageVector) {
     TERAZ("Teraz", IkonaTeraz),
@@ -76,6 +78,13 @@ private fun NowaApp(vm: Vm, pvm: PresenceVm, uvm: UpdateVm) {
 
     otwartyDzien?.let { d -> KartaDnia(vm, d) { otwartyDzien = null } }
 
+    // Systemowe „wstecz" ma cofać o jeden krok w aplikacji, a nie od razu z niej wychodzić.
+    BackHandler(enabled = edycja) { edycja = false }
+    BackHandler(enabled = !edycja && podstrona != null) { podstrona = null }
+    BackHandler(enabled = !edycja && podstrona == null && zakladka != Zakladka.TERAZ) {
+        zakladka = Zakladka.TERAZ
+    }
+
     if (edycja) {
         TrybEdycji(vm) { edycja = false }
         return
@@ -85,6 +94,7 @@ private fun NowaApp(vm: Vm, pvm: PresenceVm, uvm: UpdateVm) {
         Podstrona.CYKL -> { EkranMojCykl(vm) { podstrona = null }; return }
         Podstrona.CZAS_PRACY -> { EkranCzasPracy(vm) { podstrona = null }; return }
         Podstrona.URLOP -> { EkranUrlop(vm) { podstrona = null }; return }
+        Podstrona.WYKRYWANIE -> { EkranWykrywanie(pvm) { podstrona = null }; return }
         null -> {}
     }
 

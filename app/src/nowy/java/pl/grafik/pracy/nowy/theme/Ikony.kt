@@ -264,3 +264,21 @@ val IkonaInfo: ImageVector = ikona(1.8f) {
 val IkonaPtaszek: ImageVector = ikona(3f) {
     moveTo(5f, 12.5f); lineToRelative(5f, 5f); lineToRelative(9f, -11f)
 }
+
+/** Celownik — „zapisz miejsce pracy". */
+val IkonaCelownik: ImageVector = ikona(2f) {
+    okrag(12f, 12f, 3f)
+    okrag(12f, 12f, 8f)
+    moveTo(12f, 2f); verticalLineToRelative(2f)
+    moveTo(12f, 20f); verticalLineToRelative(2f)
+    moveTo(2f, 12f); horizontalLineToRelative(2f)
+    moveTo(20f, 12f); horizontalLineToRelative(2f)
+}
+
+/** Fale Wi-Fi — firmowa sieć. */
+val IkonaWifi: ImageVector = ikona(1.9f) {
+    moveTo(4.5f, 9.5f); arcToRelative(11f, 11f, 0f, false, true, 15f, 0f)
+    moveTo(7.5f, 13f); arcToRelative(7f, 7f, 0f, false, true, 9f, 0f)
+    moveTo(10.5f, 16.5f); arcToRelative(3f, 3f, 0f, false, true, 3f, 0f)
+    moveTo(12f, 20f); lineToRelative(0.01f, 0f)
+}

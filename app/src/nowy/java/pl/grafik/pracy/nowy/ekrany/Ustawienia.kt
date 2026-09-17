@@ -86,7 +86,8 @@ fun EkranUstawienia(vm: Vm, pvm: PresenceVm, uvm: UpdateVm, naPodstrone: (Podstr
             Grupa("AUTOMATYKA", 160) {
                 Wiersz(
                     IkonaLokalizacja, ShiftPaletteDark.III.ink, "Wykrywanie pracy",
-                    opisWykrywania(p.place), gotowe = false,
+                    opisWykrywania(p.place), gotowe = true,
+                    akcja = { naPodstrone(Podstrona.WYKRYWANIE) },
                     kropka = if (p.place.enabled) DarkTokens.ok else null
                 )
                 Wiersz(

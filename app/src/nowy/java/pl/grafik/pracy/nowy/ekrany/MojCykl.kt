@@ -266,25 +266,21 @@ private fun SystemPracy(cfg: CycleConfig, vm: Vm) {
 @Composable
 private fun KierunekRotacji(cfg: CycleConfig, vm: Vm) {
     val p by postepWejscia(Motion.RISE_MS, 140)
-    val kolejnosc = remember(cfg.pattern, cfg.reverse) { CycleGenerator.rotationLabel(cfg) }
-    val odwrotna = remember(cfg.pattern) {
-        CycleGenerator.rotationLabel(cfg.copy(reverse = !cfg.reverse))
-    }
+    // Obie etykiety liczymy niezależnie od bieżącego ustawienia — inaczej po przełączeniu
+    // kierunku klucz remembera się nie zmieniał i oba kafelki pokazywały tę samą kolejność.
+    val zwykla = remember(cfg.pattern) { CycleGenerator.rotationLabel(cfg.copy(reverse = false)) }
+    val odwrotna = remember(cfg.pattern) { CycleGenerator.rotationLabel(cfg.copy(reverse = true)) }
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("KIERUNEK ROTACJI", style = GrafikType.sectionLabel, color = DarkTokens.inkFaint,
             modifier = Modifier.wejscie(p))
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            KafelekKierunku(
-                Modifier.weight(1f),
-                if (cfg.reverse) odwrotna else kolejnosc,
-                "zwykła kolejność", !cfg.reverse
-            ) { vm.saveConfig(cfg.copy(reverse = false)) }
-            KafelekKierunku(
-                Modifier.weight(1f),
-                if (cfg.reverse) kolejnosc else odwrotna,
-                "odwrotna kolejność", cfg.reverse
-            ) { vm.saveConfig(cfg.copy(reverse = true)) }
+            KafelekKierunku(Modifier.weight(1f), zwykla, "zwykła kolejność", !cfg.reverse) {
+                vm.saveConfig(cfg.copy(reverse = false))
+            }
+            KafelekKierunku(Modifier.weight(1f), odwrotna, "odwrotna kolejność", cfg.reverse) {
+                vm.saveConfig(cfg.copy(reverse = true))
+            }
         }
     }
 }

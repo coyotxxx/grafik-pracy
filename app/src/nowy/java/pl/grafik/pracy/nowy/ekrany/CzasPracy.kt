@@ -49,6 +49,7 @@ fun EkranCzasPracy(vm: Vm, naPowrot: () -> Unit) {
 
         Column(
             Modifier.fillMaxSize()
+                .imePadding()
                 .verticalScroll(rememberScrollState())
                 .padding(top = gornaKrawedz(), bottom = 22.dp)
                 .padding(horizontal = Dim.screenGutter),
