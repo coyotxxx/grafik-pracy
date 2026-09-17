@@ -25,6 +25,7 @@ import pl.grafik.pracy.nowy.ekrany.KartaDnia
 import pl.grafik.pracy.nowy.ekrany.TrybEdycji
 import java.time.LocalDate
 import pl.grafik.pracy.nowy.theme.*
+import pl.grafik.pracy.nowy.ui.dolnaKrawedz
 import pl.grafik.pracy.ui.PresenceVm
 import pl.grafik.pracy.ui.UpdateVm
 import pl.grafik.pracy.ui.Vm
@@ -105,7 +106,7 @@ private fun PasekNawigacji(wybrana: Zakladka, naZmiane: (Zakladka) -> Unit) {
         Box(Modifier.fillMaxWidth().height(1.dp).background(DarkTokens.navLine))
         Row(
             Modifier.fillMaxWidth().background(DarkTokens.navBg)
-                .padding(start = 10.dp, end = 10.dp, top = 8.dp, bottom = 18.dp),
+                .padding(start = 10.dp, end = 10.dp, top = 8.dp, bottom = dolnaKrawedz()),
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Zakladka.entries.forEach { z ->

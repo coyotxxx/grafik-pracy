@@ -76,7 +76,7 @@ fun TrybEdycji(vm: Vm, naGotowe: () -> Unit) {
     val kolory = ShiftPaletteDark.of(typDniaZ(wybrane.shift))
 
     Box(Modifier.fillMaxSize().background(DarkTokens.bg)) {
-        Column(Modifier.fillMaxSize().padding(top = Dim.topSafe)) {
+        Column(Modifier.fillMaxSize().padding(top = gornaKrawedz())) {
             Column(
                 Modifier.weight(1f).verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -278,7 +278,8 @@ private fun PanelNarzedzi(
         Modifier.fillMaxWidth()
             .clip(RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp))
             .background(Color(0xF50F1214))
-            .padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 20.dp),
+            .padding(start = 16.dp, end = 16.dp, top = 14.dp,
+                bottom = 20.dp + dolnaKrawedz(minimum = 0.dp)),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {

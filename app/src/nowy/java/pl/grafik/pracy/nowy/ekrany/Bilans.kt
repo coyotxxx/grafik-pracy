@@ -58,7 +58,7 @@ fun EkranBilans(vm: Vm) {
         Column(
             Modifier.fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(top = Dim.topSafe, bottom = 12.dp),
+                .padding(top = gornaKrawedz(), bottom = 12.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Naglowek(s, vm, wyborMiesiaca) { wyborMiesiaca = !wyborMiesiaca }

@@ -82,7 +82,7 @@ fun KartaDnia(vm: Vm, dzien: LocalDate, naZamkniecie: () -> Unit) {
     ) {
         Column(
             Modifier.fillMaxWidth().imePadding().verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp).padding(bottom = 22.dp),
+                .padding(horizontal = 16.dp).padding(bottom = 22.dp + dolnaKrawedz(minimum = 0.dp)),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             NaglowekDnia(dzien, naZamkniecie)

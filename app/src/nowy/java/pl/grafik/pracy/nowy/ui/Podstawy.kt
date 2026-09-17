@@ -5,6 +5,10 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -332,3 +336,39 @@ fun Modifier.wejscie(p: Float): Modifier = this
             placeable.placeRelative(0, ((1f - p) * 14.dp.toPx()).toInt())
         }
     }
+
+/**
+ * Górna krawędź ekranu przy rysowaniu edge-to-edge.
+ *
+ * Makiety są rysowane na 390 × 900 dla telefonu z gestami — tam 44 dp u góry akurat
+ * pokrywa pasek stanu. Na telefonie z wyższym paskiem (dziurka, trzy przyciski) sama
+ * liczba z makiety już nie wystarcza i tekst wchodzi pod zegarek. Dlatego bierzemy
+ * to, co większe: odstęp z makiety albo prawdziwy pasek stanu z odetchnięciem.
+ */
+@Composable
+fun gornaKrawedz(): Dp =
+    krawedz(WindowInsets.statusBars.asPaddingValues().calculateTopPadding(), Dim.topSafe, ODDECH_GORA)
+
+/**
+ * Dolna krawędź — tyle, ile zajmuje nawigacja systemowa, ale nie mniej niż
+ * 18 dp z makiety. Przy gestach wychodzi wartość z makiety, przy trzech przyciskach
+ * tyle, żeby nic się nie przykrywało.
+ */
+@Composable
+fun dolnaKrawedz(minimum: Dp = MIN_DOL): Dp =
+    krawedz(WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding(), minimum)
+
+/** Odstęp z makiety, gdy nawigacja systemowa nic nie zajmuje (gesty, sprzętowe klawisze). */
+val MIN_DOL = 18.dp
+
+/** Ile powietrza zostawiamy pod paskiem stanu, gdy jest wyższy niż odstęp z makiety. */
+val ODDECH_GORA = 10.dp
+
+/**
+ * Reguła krawędzi: bierzemy to, co większe — odstęp z makiety albo miejsce zajęte
+ * przez pasek systemowy (z odetchnięciem, jeśli podane). Na telefonie z gestami
+ * wychodzą dokładnie wartości z makiety, na telefonie z trzema przyciskami tyle,
+ * żeby nic nie zostało przykryte.
+ */
+fun krawedz(inset: Dp, minimum: Dp, oddech: Dp = 0.dp): Dp =
+    maxOf(minimum, inset + oddech)

@@ -52,7 +52,7 @@ fun EkranGrafik(vm: Vm, naDzien: (LocalDate) -> Unit, naEdycje: () -> Unit) {
         Column(
             Modifier.fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(top = Dim.topSafe, bottom = 12.dp),
+                .padding(top = gornaKrawedz(), bottom = 12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Naglowek(s, vm)
