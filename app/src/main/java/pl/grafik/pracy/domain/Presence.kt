@@ -172,9 +172,61 @@ object PresenceEngine {
     fun filterShort(spans: List<PresenceSpan>, minMinutes: Int): List<PresenceSpan> =
         spans.filter { it.minutes >= minMinutes }
 
-    /** Stawka dodatku wg charakteru dnia. Dzień wolny / niedziela / święto → 100 %. */
-    fun rateFor(kind: DayKind, onFreeDay: Boolean): OtRate =
-        if (onFreeDay || kind == DayKind.NIEDZIELA || kind == DayKind.SWIETO) OtRate.P100 else OtRate.P50
+    /** Pora nocna z art. 151-7 KP — u Macieja pokrywa się ze zmianą III. */
+    val PORA_NOCNA_OD: LocalTime = LocalTime.of(22, 0)
+    val PORA_NOCNA_DO: LocalTime = LocalTime.of(6, 0)
+
+    /**
+     * Stawka dodatku za nadgodziny.
+     *
+     * 100 % należy się za pracę w dniu wolnym, w niedzielę i święto (art. 151-1 § 1 pkt 1
+     * lit. b) oraz za nadgodziny w porze nocnej (lit. a).
+     *
+     * Przy nocce liczymy 100 % za **każdą** nadgodzinę, także tę wypadającą po 6:00.
+     * Sama pora nocna nie wystarczy: nocka zajmuje ją w całości, więc nadgodziny zawsze
+     * lądują na brzegach — przed 22:00 albo po 6:00 — i reguła z samej litery przepisu
+     * nigdy by się nie odpaliła. Tak też płaci zakład Macieja: „100 % mam płacone
+     * za nocki, jeśli zostaję na nadgodziny".
+     */
+    fun rateFor(
+        kind: DayKind,
+        onFreeDay: Boolean,
+        naNocce: Boolean = false,
+        wPorzeNocnej: Boolean = false
+    ): OtRate =
+        if (onFreeDay || naNocce || wPorzeNocnej ||
+            kind == DayKind.NIEDZIELA || kind == DayKind.SWIETO
+        ) OtRate.P100 else OtRate.P50
+
+    /** Czy przedział choć w części wpada w porę nocną (22:00–6:00). */
+    fun wPorzeNocnej(od: LocalDateTime, doKiedy: LocalDateTime): Boolean {
+        if (!doKiedy.isAfter(od)) return false
+        var dzien = od.toLocalDate().minusDays(1)
+        val koniec = doKiedy.toLocalDate()
+        while (!dzien.isAfter(koniec)) {
+            val nocOd = dzien.atTime(PORA_NOCNA_OD)
+            val nocDo = dzien.plusDays(1).atTime(PORA_NOCNA_DO)
+            if (od.isBefore(nocDo) && doKiedy.isAfter(nocOd)) return true
+            dzien = dzien.plusDays(1)
+        }
+        return false
+    }
+
+    /**
+     * Godziny nadliczbowe pobytu jako przedziały czasu — wszystko poza oknem zmiany.
+     * Przy dniu wolnym nadgodziną jest cały pobyt.
+     */
+    fun przedzialyNadgodzin(
+        od: LocalDateTime,
+        doKiedy: LocalDateTime,
+        okno: Pair<LocalDateTime, LocalDateTime>?
+    ): List<Pair<LocalDateTime, LocalDateTime>> {
+        if (okno == null) return listOf(od to doKiedy)
+        val out = mutableListOf<Pair<LocalDateTime, LocalDateTime>>()
+        if (od.isBefore(okno.first)) out += od to minOf(doKiedy, okno.first)
+        if (doKiedy.isAfter(okno.second)) out += maxOf(od, okno.second) to doKiedy
+        return out.filter { it.second.isAfter(it.first) }
+    }
 
     /**
      * Analiza jednego pobytu.
@@ -236,6 +288,11 @@ object PresenceEngine {
 
         val counted = if (to.isAfter(from)) Duration.between(from, to).toHours().toInt() else 0
         val ot = (counted - norm).coerceAtLeast(0)
+        // Nadgodziny w porze nocnej idą po 100 % — sprawdzamy to na przedziałach,
+        // a nie na całym pobycie, żeby dniówka kończąca się o 22:30 nie dostała setki.
+        val naNocce = ot > 0 && zmiana == Shift.III
+        val nocneGodziny = ot > 0 &&
+            przedzialyNadgodzin(from, to, window).any { wPorzeNocnej(it.first, it.second) }
         return PresenceResult(
             date = date,
             span = span,
@@ -244,7 +301,7 @@ object PresenceEngine {
             countedHours = counted,
             normHours = norm,
             otHours = ot,
-            otRate = rateFor(kind, onFree),
+            otRate = rateFor(kind, onFree, naNocce, nocneGodziny),
             shift = zmiana,
             onFreeDay = onFree,
             recognized = rozpoznana
