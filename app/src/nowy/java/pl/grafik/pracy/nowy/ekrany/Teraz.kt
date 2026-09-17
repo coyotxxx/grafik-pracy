@@ -37,6 +37,7 @@ import pl.grafik.pracy.domain.Shift
 import pl.grafik.pracy.data.EventRow
 import pl.grafik.pracy.nowy.theme.*
 import pl.grafik.pracy.nowy.ui.*
+import pl.grafik.pracy.ui.DayPresence
 import pl.grafik.pracy.ui.UiState
 import pl.grafik.pracy.ui.Vm
 import java.time.Duration
@@ -106,9 +107,12 @@ fun EkranTeraz(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             PasekGorny(s, dzis, naUstawienia)
-            TarczaDoby(zmiana, teraz, Modifier.align(Alignment.CenterHorizontally))
+            TarczaDoby(zmiana, teraz, s.obecnosc[dzis], Modifier.align(Alignment.CenterHorizontally))
             TrzyKafelki(s, naBilans)
-            NajblizszeDni(kolejne, wybrany, wybranyWpis, s.events[wybrany].orEmpty()) { wybrany = it }
+            NajblizszeDni(
+                kolejne, wybrany, wybranyWpis,
+                s.events[wybrany].orEmpty(), s.obecnosc[wybrany]
+            ) { wybrany = it }
             KartaWydarzenia(s, dni, dzis, naDzien)
             RzadAkcji(naGrafik) { naDzien(dzis) }
         }
@@ -199,7 +203,12 @@ private const val KULKA_OD = 0.4667f
 private const val KULKA_R = 0.01875f
 
 @Composable
-private fun TarczaDoby(zm: NajblizszaZmiana?, teraz: LocalDateTime, modifier: Modifier = Modifier) {
+private fun TarczaDoby(
+    zm: NajblizszaZmiana?,
+    teraz: LocalDateTime,
+    obecnosc: DayPresence?,
+    modifier: Modifier = Modifier
+) {
     val kolory = Paleta.of(typDniaZ(zm?.shift))
     val pLuk by postepWejscia(Motion.ARC_DRAW_MS, Motion.ARC_DRAW_DELAY_MS)
     val pWsk by postepWejscia(Motion.SWEEP_MS, Motion.SWEEP_DELAY_MS)
@@ -285,12 +294,17 @@ private fun TarczaDoby(zm: NajblizszaZmiana?, teraz: LocalDateTime, modifier: Mo
             }
         }
 
-        SrodekTarczy(zm, teraz, kolory)
+        SrodekTarczy(zm, teraz, kolory, obecnosc)
     }
 }
 
 @Composable
-private fun SrodekTarczy(zm: NajblizszaZmiana?, teraz: LocalDateTime, kolory: DayColors) {
+private fun SrodekTarczy(
+    zm: NajblizszaZmiana?,
+    teraz: LocalDateTime,
+    kolory: DayColors,
+    obecnosc: DayPresence?
+) {
     val p1 by postepWejscia(Motion.RISE_MS, 350)
     val p2 by postepWejscia(Motion.RISE_MS, 450)
     val p3 by postepWejscia(Motion.RISE_MS, 550)
@@ -350,7 +364,40 @@ private fun SrodekTarczy(zm: NajblizszaZmiana?, teraz: LocalDateTime, kolory: Da
                 )
             }
         }
+
+        // Wykryta obecność — Maciej chciał wiedzieć wprost, że aplikacja widzi go w pracy.
+        if (obecnosc?.trwa == true) {
+            val p5 by postepWejscia(Motion.RISE_MS, 750)
+            Row(
+                Modifier.padding(top = 2.dp).wejscie(p5)
+                    .height(24.dp).clip(RoundedCornerShape(999.dp))
+                    .background(Tokeny.accent.copy(alpha = 0.16f))
+                    .border(1.dp, Tokeny.accent.copy(alpha = 0.40f), RoundedCornerShape(999.dp))
+                    .padding(horizontal = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Box(
+                    Modifier.size(6.dp).clip(RoundedCornerShape(999.dp))
+                        .background(Tokeny.accent)
+                )
+                Text(
+                    tekstObecnosciWTarczy(obecnosc),
+                    style = TextStyle(
+                        fontSize = 10.5.sp, fontWeight = FontWeight.Bold,
+                        fontFamily = Jakarta, letterSpacing = 0.6.sp
+                    ),
+                    color = Tokeny.accent
+                )
+            }
+        }
     }
+}
+
+/** „JESTEŚ W PRACY · OD 21:52" — krótko, bo miejsca w tarczy jest niewiele. */
+private fun tekstObecnosciWTarczy(o: DayPresence): String {
+    val od = o.od?.let { " · OD %02d:%02d".format(it.hour, it.minute) } ?: ""
+    return "JESTEŚ W PRACY$od"
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -412,6 +459,7 @@ private fun NajblizszeDni(
     wybrany: LocalDate,
     wpis: DayEntry,
     wydarzenia: List<EventRow>,
+    obecnosc: DayPresence?,
     naWybor: (LocalDate) -> Unit
 ) {
     val pNag by postepWejscia(Motion.RISE_MS, 750)
@@ -430,7 +478,7 @@ private fun NajblizszeDni(
             }
         }
 
-        PlanDnia(wpis, wydarzenia, Modifier.wejscie(pOpis))
+        PlanDnia(wpis, wydarzenia, obecnosc, Modifier.wejscie(pOpis))
     }
 }
 
@@ -440,7 +488,12 @@ private fun NajblizszeDni(
  * dzień, a nie samą nazwę zmiany (zgłoszenie z 17.09.2026).
  */
 @Composable
-private fun PlanDnia(wpis: DayEntry, wydarzenia: List<EventRow>, modifier: Modifier = Modifier) {
+private fun PlanDnia(
+    wpis: DayEntry,
+    wydarzenia: List<EventRow>,
+    obecnosc: DayPresence?,
+    modifier: Modifier = Modifier
+) {
     val k = Paleta.of(typDniaZ(wpis.shift))
 
     Column(
@@ -471,6 +524,8 @@ private fun PlanDnia(wpis: DayEntry, wydarzenia: List<EventRow>, modifier: Modif
                 Paleta.II.ink
             )
         }
+
+        opisObecnosci(obecnosc)?.let { WierszPlanu(it, Tokeny.accent) }
 
         wydarzenia.forEach { ev ->
             WierszPlanu(
@@ -676,6 +731,38 @@ private fun godzinyZmiany(s: Shift): String = when (s) {
     Shift.II -> "14:00 – 22:00"
     Shift.III -> "22:00 – 06:00"
     else -> ""
+}
+
+/**
+ * Zdanie o wykrytej obecności w pracy: „jesteś w pracy od 21:52 · Wi-Fi",
+ * a po wyjściu „byłeś w pracy 21:52–06:05 · 8 h".
+ *
+ * Wykrywanie ma dwa źródła — lokalizację i sieć Wi-Fi — więc piszemy, które
+ * rozpoznało pobyt. Wpisy zrobione ręcznie nie udają wykrycia.
+ */
+fun opisObecnosci(o: DayPresence?): String? {
+    if (o == null) return null
+    val zrodlo = when {
+        o.reczne || o.zrodlo == "manual" -> null
+        o.zrodlo.contains("wifi") && o.zrodlo.contains("geo") -> "lokalizacja i Wi-Fi"
+        o.zrodlo.contains("wifi") -> "Wi-Fi"
+        o.zrodlo.contains("geo") -> "lokalizacja"
+        else -> null
+    }
+    val ogon = zrodlo?.let { " · $it" } ?: ""
+
+    if (o.trwa) {
+        val od = o.od?.let { " od %02d:%02d".format(it.hour, it.minute) } ?: ""
+        return "jesteś w pracy$od$ogon"
+    }
+    if (o.hours <= 0 && o.od == null) return null
+
+    val zakres = if (o.od != null && o.doKiedy != null)
+        " %02d:%02d–%02d:%02d".format(o.od!!.hour, o.od!!.minute, o.doKiedy!!.hour, o.doKiedy!!.minute)
+    else ""
+    val godziny = if (o.hours > 0) " · ${o.hours} h" else ""
+    val czasownik = if (o.reczne) "obecność wpisana ręcznie" else "byłeś w pracy"
+    return "$czasownik$zakres$godziny$ogon"
 }
 
 private fun opisDnia(s: Shift?): String = when (s) {

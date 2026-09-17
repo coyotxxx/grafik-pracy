@@ -28,7 +28,9 @@ data class DayPresence(
     /** Czy wszystkie wpisy tego dnia są wpisane ręcznie, a nie wykryte. */
     val reczne: Boolean = false,
     val od: LocalDateTime? = null,
-    val doKiedy: LocalDateTime? = null
+    val doKiedy: LocalDateTime? = null,
+    /** Czym wykryto pobyt: geo | wifi | geo+wifi | manual. Puste = nie wiadomo. */
+    val zrodlo: String = ""
 )
 
 data class UiState(
@@ -314,7 +316,8 @@ class Vm(app: Application) : AndroidViewModel(app) {
                 trwa = było?.trwa ?: false,
                 reczne = (było?.reczne ?: true) && r.source == "manual",
                 od = listOfNotNull(było?.od, od).minOrNull(),
-                doKiedy = listOfNotNull(było?.doKiedy, doK).maxOrNull()
+                doKiedy = listOfNotNull(było?.doKiedy, doK).maxOrNull(),
+                zrodlo = r.source
             )
         }
         // Trwający pobyt trafia na ten dzień grafiku, do którego należy — po nocce

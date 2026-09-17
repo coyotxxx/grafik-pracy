@@ -12,7 +12,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
@@ -64,7 +67,11 @@ fun EkranGrafik(
             Naglowek(s, vm)
             KartaGodzin(s)
             PasekOdpoczynku(s, naOdpoczynek)
-            SiatkaMiesiaca(s, dzis, wybrany) { wybrany = it }
+            SiatkaMiesiaca(
+                s, dzis, wybrany,
+                naPoprzedni = { vm.prevMonth() },
+                naNastepny = { vm.nextMonth() }
+            ) { wybrany = it }
             PasekWybranego(s, wybrany) { naDzien(wybrany) }
             RzadPrzyciskow(naEdycje)
         }
@@ -178,7 +185,14 @@ private fun PasekOdpoczynku(s: UiState, naOdpoczynek: () -> Unit) {
 private val DNI_TYGODNIA = listOf("PN", "WT", "ŚR", "CZ", "PT", "SO", "ND")
 
 @Composable
-private fun SiatkaMiesiaca(s: UiState, dzis: LocalDate, wybrany: LocalDate, naWybor: (LocalDate) -> Unit) {
+private fun SiatkaMiesiaca(
+    s: UiState,
+    dzis: LocalDate,
+    wybrany: LocalDate,
+    naPoprzedni: () -> Unit,
+    naNastepny: () -> Unit,
+    naWybor: (LocalDate) -> Unit
+) {
     val pNag by postepWejscia(Motion.RISE_MS, 100)
     // Jedna animacja na całą siatkę; kaskadę liczymy per kafelek z jej postępu.
     val calosc = Motion.CELL_START_MS + 41 * Motion.CELL_STAGGER_MS + Motion.CELL_IN_MS
@@ -189,8 +203,25 @@ private fun SiatkaMiesiaca(s: UiState, dzis: LocalDate, wybrany: LocalDate, naWy
     val start = pierwszy.minusDays((pierwszy.dayOfWeek.value - 1).toLong())
     val tygodnie = 6
 
+    // Przesunięcie palcem zmienia miesiąc — w lewo następny, w prawo poprzedni.
+    // Próg 60 dp, żeby lekkie drgnięcie przy dotykaniu dnia nie przewijało kalendarza.
+    val prog = with(LocalDensity.current) { 60.dp.toPx() }
+    var przesuniecie by remember(s.ym) { mutableFloatStateOf(0f) }
+
     Column(
-        Modifier.padding(horizontal = Dim.screenGutter),
+        Modifier.padding(horizontal = Dim.screenGutter)
+            .pointerInput(s.ym) {
+                detectHorizontalDragGestures(
+                    onDragEnd = {
+                        when {
+                            przesuniecie <= -prog -> naNastepny()
+                            przesuniecie >= prog -> naPoprzedni()
+                        }
+                        przesuniecie = 0f
+                    },
+                    onDragCancel = { przesuniecie = 0f }
+                ) { _, delta -> przesuniecie += delta }
+            },
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         Row(Modifier.wejscie(pNag).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -337,8 +368,23 @@ private fun PasekWybranego(s: UiState, dzien: LocalDate, naSzczegoly: () -> Unit
         null -> "Brak wpisu w grafiku"
         else -> e.shift!!.label
     }
-    val opis = if ((e?.otHours ?: 0) > 0)
-        "$opisZmiany · +${e!!.otHours} h ${e.otRate.percent} %" else opisZmiany
+    // Wszystko, co tego dnia było albo jest zaplanowane — jedno pod drugim.
+    // Maciej poprosił o to samo, co na ekranie „Teraz" (zgłoszenie z 17.09.2026).
+    val pozycje = buildList {
+        add(opisZmiany to Tokeny.inkMuted)
+        if ((e?.otHours ?: 0) > 0) {
+            add("Nadgodziny +${e!!.otHours} h · ${e.otRate.percent} %" to Paleta.II.ink)
+        }
+        opisObecnosci(s.obecnosc[dzien])?.let {
+            add(it.replaceFirstChar { z -> z.uppercase() } to Tokeny.accent)
+        }
+        s.events[dzien].orEmpty().forEach { ev ->
+            add(
+                listOfNotNull(ev.time.ifEmpty { null }, ev.text).joinToString(" · ") to Tokeny.warnInk
+            )
+        }
+        if (!e?.note.isNullOrBlank()) add(e!!.note to Tokeny.inkFaint)
+    }
 
     Row(
         Modifier.wejscie(p).padding(horizontal = Dim.screenGutter, vertical = 2.dp)
@@ -347,7 +393,7 @@ private fun PasekWybranego(s: UiState, dzien: LocalDate, naSzczegoly: () -> Unit
             .background(Tokeny.surfaceStrong)
             .border(1.dp, Tokeny.lineStrong, RoundedCornerShape(Dim.rCardSmall))
             .padding(horizontal = 12.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = if (pozycje.size > 1) Alignment.Top else Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Box(
@@ -366,8 +412,10 @@ private fun PasekWybranego(s: UiState, dzien: LocalDate, naSzczegoly: () -> Unit
                     dzien.month.getDisplayName(JavaTextStyle.FULL, PL),
                 style = GrafikType.cardTitle, color = Tokeny.ink, maxLines = 1, overflow = TextOverflow.Ellipsis
             )
-            Text(opis, style = GrafikType.caption, color = Tokeny.inkMuted,
-                maxLines = 1, overflow = TextOverflow.Ellipsis)
+            pozycje.forEach { (tekst, kolor) ->
+                Text(tekst, style = GrafikType.caption, color = kolor,
+                    maxLines = 2, overflow = TextOverflow.Ellipsis)
+            }
         }
         Box(
             Modifier.size(38.dp).clip(RoundedCornerShape(12.dp))
