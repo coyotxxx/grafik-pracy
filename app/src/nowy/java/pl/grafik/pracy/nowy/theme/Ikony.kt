@@ -178,3 +178,13 @@ val IkonaZegarek: ImageVector = ikona(1.9f) {
     okrag(12f, 12f, 9f)
 }
 
+
+/** Strzałka w dół — rozwijany wybór miesiąca. */
+val IkonaWDol: ImageVector = ikona(2f) {
+    moveTo(6f, 9f); lineToRelative(6f, 6f); lineToRelative(6f, -6f)
+}
+
+/** Strzałka w górę — zwijanie rozwiniętej sekcji. */
+val IkonaWGore: ImageVector = ikona(2f) {
+    moveTo(6f, 15f); lineToRelative(6f, -6f); lineToRelative(6f, 6f)
+}

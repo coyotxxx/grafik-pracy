@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import pl.grafik.pracy.nowy.ekrany.EkranBilans
 import pl.grafik.pracy.nowy.ekrany.EkranGrafik
 import pl.grafik.pracy.nowy.ekrany.EkranTeraz
 import pl.grafik.pracy.nowy.ekrany.KartaDnia
@@ -83,6 +84,7 @@ private fun NowaApp(vm: Vm, pvm: PresenceVm, uvm: UpdateVm) {
                     naDzien = { otwartyDzien = it }
                 )
                 Zakladka.GRAFIK -> EkranGrafik(vm, naDzien = { otwartyDzien = it }, naEdycje = { edycja = true })
+                Zakladka.BILANS -> EkranBilans(vm)
                 else -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(zakladka.etykieta, style = GrafikType.h1, color = DarkTokens.ink)
                 }
