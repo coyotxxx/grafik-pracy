@@ -83,6 +83,8 @@ dependencies {
     implementation(libs.androidx.datastore)
     implementation(libs.play.services.location)
     implementation(libs.androidx.work)
+    // Widzety ma tylko nowy wyglad — klasyczny wariant nie dostaje ani kodu, ani biblioteki.
+    "nowyImplementation"(libs.glance.appwidget)
     debugImplementation(libs.androidx.ui.tooling)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.junit)

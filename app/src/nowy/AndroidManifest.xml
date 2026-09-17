@@ -23,5 +23,45 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!--
+            Widżety ekranu głównego. Ma je tylko nowy wygląd — klasyczna aplikacja
+            nie zna ani tych klas, ani biblioteki Glance.
+        -->
+        <receiver
+            android:name=".nowy.widzety.WidzetDzisReceiver"
+            android:exported="false"
+            android:label="@string/widzet_dzis_etykieta">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widzet_dzis" />
+        </receiver>
+
+        <receiver
+            android:name=".nowy.widzety.WidzetDoStartuReceiver"
+            android:exported="false"
+            android:label="@string/widzet_do_startu_etykieta">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widzet_do_startu" />
+        </receiver>
+
+        <receiver
+            android:name=".nowy.widzety.WidzetTydzienReceiver"
+            android:exported="false"
+            android:label="@string/widzet_tydzien_etykieta">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widzet_tydzien" />
+        </receiver>
     </application>
 </manifest>

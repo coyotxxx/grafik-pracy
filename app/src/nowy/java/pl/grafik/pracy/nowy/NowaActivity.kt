@@ -46,6 +46,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import pl.grafik.pracy.data.SettingsStore
 import pl.grafik.pracy.events.PowiadomieniaWarunkowe
+import pl.grafik.pracy.nowy.widzety.OdswiezanieWidzetow
 
 /**
  * Ekran startowy wariantu „nowy".
@@ -65,6 +66,10 @@ class NowaActivity : ComponentActivity() {
         lifecycleScope.launch {
             val cfg = SettingsStore(applicationContext).powiadomienia.first()
             PowiadomieniaWarunkowe.ustaw(applicationContext, cfg)
+            // Widżety odświeżamy przy każdym wejściu do aplikacji — po zmianach w grafiku
+            // mają pokazywać to samo co ekran.
+            OdswiezanieWidzetow.odswiez(applicationContext)
+            OdswiezanieWidzetow.zaplanuj(applicationContext)
         }
         setContent { NowaApp(vm, pvm, uvm) }
     }

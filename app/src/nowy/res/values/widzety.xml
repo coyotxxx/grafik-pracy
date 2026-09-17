@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widzet_dzis_opis">Dzisiejsza zmiana i godziny, pod kreską jutro</string>
+    <string name="widzet_do_startu_opis">Ile zostało do startu zmiany i godziny miesiąca</string>
+    <string name="widzet_tydzien_opis">Cały tydzień z oznaczeniami zmian</string>
+    <string name="widzet_dzis_etykieta">Grafik — dziś</string>
+    <string name="widzet_do_startu_etykieta">Grafik — do startu</string>
+    <string name="widzet_tydzien_etykieta">Grafik — tydzień</string>
+</resources>
