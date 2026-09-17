@@ -67,7 +67,7 @@ fun EkranUstawienia(vm: Vm, pvm: PresenceVm, uvm: UpdateVm, naPodstrone: (Podstr
             Grupa("ROZLICZANIE", 80) {
                 Wiersz(
                     IkonaCzasPracy, ShiftPaletteDark.I.ink, "Czas pracy i nadgodziny",
-                    opisOkresu(s), gotowe = false
+                    opisOkresu(s), gotowe = true, akcja = { naPodstrone(Podstrona.CZAS_PRACY) }
                 )
                 Wiersz(
                     IkonaWyplata, ShiftPaletteDark.I.ink, "Stawki i wypłata",

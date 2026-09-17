@@ -276,6 +276,8 @@ fun PoleTekstowe(
     wartosc: String,
     podpowiedz: String,
     cyfry: Boolean = false,
+    modifier: Modifier = Modifier.fillMaxWidth(),
+    wyrownanie: androidx.compose.ui.text.style.TextAlign = androidx.compose.ui.text.style.TextAlign.Start,
     naZmiane: (String) -> Unit
 ) {
     androidx.compose.foundation.text.BasicTextField(
@@ -283,21 +285,23 @@ fun PoleTekstowe(
         onValueChange = naZmiane,
         singleLine = true,
         textStyle = androidx.compose.ui.text.TextStyle(
-            color = DarkTokens.ink, fontSize = 14.sp, fontFamily = Jakarta
+            color = DarkTokens.ink, fontSize = 14.sp, fontFamily = Jakarta,
+            textAlign = wyrownanie, fontFeatureSettings = if (cyfry) TNUM else null
         ),
         cursorBrush = androidx.compose.ui.graphics.SolidColor(DarkTokens.accent),
         keyboardOptions = if (cyfry)
             androidx.compose.foundation.text.KeyboardOptions(
                 keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
             ) else androidx.compose.foundation.text.KeyboardOptions.Default,
-        modifier = Modifier.fillMaxWidth().height(44.dp)
+        modifier = modifier.height(44.dp)
     ) { pole ->
         Box(
             Modifier.fillMaxSize().clip(RoundedCornerShape(12.dp))
                 .background(DarkTokens.surfaceInput)
                 .border(1.dp, DarkTokens.lineInput, RoundedCornerShape(12.dp))
                 .padding(horizontal = 12.dp),
-            contentAlignment = Alignment.CenterStart
+            contentAlignment = if (wyrownanie == androidx.compose.ui.text.style.TextAlign.End)
+                Alignment.CenterEnd else Alignment.CenterStart
         ) {
             if (wartosc.isEmpty()) {
                 androidx.compose.material3.Text(
@@ -372,3 +376,26 @@ val ODDECH_GORA = 10.dp
  */
 fun krawedz(inset: Dp, minimum: Dp, oddech: Dp = 0.dp): Dp =
     maxOf(minimum, inset + oddech)
+
+/** Powrót z podstrony ustawień — „‹ Ustawienia" z makiet podstron. */
+@Composable
+fun PowrotDoUstawien(naPowrot: () -> Unit) {
+    androidx.compose.foundation.layout.Row(
+        Modifier.height(40.dp).offset(x = (-6).dp)
+            .clip(RoundedCornerShape(11.dp))
+            .clickable(onClick = naPowrot)
+            .padding(horizontal = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp)
+    ) {
+        androidx.compose.material3.Icon(
+            pl.grafik.pracy.nowy.theme.IkonaWLewo, null,
+            Modifier.size(17.dp), tint = DarkTokens.inkMuted
+        )
+        androidx.compose.material3.Text(
+            "Ustawienia", fontSize = 13.sp,
+            fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+            fontFamily = Jakarta, color = DarkTokens.inkMuted
+        )
+    }
+}

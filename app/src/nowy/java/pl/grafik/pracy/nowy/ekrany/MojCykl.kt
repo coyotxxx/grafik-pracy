@@ -86,22 +86,6 @@ fun EkranMojCykl(vm: Vm, naPowrot: () -> Unit) {
     }
 }
 
-@Composable
-private fun PowrotDoUstawien(naPowrot: () -> Unit) {
-    Row(
-        Modifier.height(40.dp).offset(x = (-6).dp)
-            .clip(RoundedCornerShape(11.dp))
-            .clickable(onClick = naPowrot)
-            .padding(horizontal = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        Icon(IkonaWLewo, null, Modifier.size(17.dp), tint = DarkTokens.inkMuted)
-        Text("Ustawienia", fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
-            fontFamily = Jakarta, color = DarkTokens.inkMuted)
-    }
-}
-
 // ─────────────────────────────────────────────────────────────
 // WYPEŁNIANIE Z CYKLU
 // ─────────────────────────────────────────────────────────────
