@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import pl.grafik.pracy.nowy.ekrany.EkranGrafik
+import pl.grafik.pracy.nowy.ekrany.KartaDnia
+import java.time.LocalDate
 import pl.grafik.pracy.nowy.theme.*
 import pl.grafik.pracy.ui.PresenceVm
 import pl.grafik.pracy.ui.UpdateVm
@@ -57,12 +59,15 @@ private enum class Zakladka(val etykieta: String, val ikona: ImageVector) {
 @Composable
 private fun NowaApp(vm: Vm, pvm: PresenceVm, uvm: UpdateVm) {
     var zakladka by remember { mutableStateOf(Zakladka.GRAFIK) }
+    var otwartyDzien by remember { mutableStateOf<LocalDate?>(null) }
+
+    otwartyDzien?.let { d -> KartaDnia(vm, d) { otwartyDzien = null } }
 
     Column(Modifier.fillMaxSize().background(DarkTokens.bg)) {
         Box(Modifier.weight(1f).fillMaxWidth()) {
             // Ekrany dochodzą po kolei, jeden na commit — patrz design/README.md.
             when (zakladka) {
-                Zakladka.GRAFIK -> EkranGrafik(vm, naDzien = {}, naEdycje = {})
+                Zakladka.GRAFIK -> EkranGrafik(vm, naDzien = { otwartyDzien = it }, naEdycje = {})
                 else -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(zakladka.etykieta, style = GrafikType.h1, color = DarkTokens.ink)
                 }

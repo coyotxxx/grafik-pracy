@@ -7,6 +7,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
@@ -17,6 +18,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.clickable
+import pl.grafik.pracy.nowy.theme.Jakarta
+import pl.grafik.pracy.nowy.theme.TNUM
 import pl.grafik.pracy.nowy.theme.DarkTokens
 import pl.grafik.pracy.nowy.theme.Dim
 import pl.grafik.pracy.nowy.theme.Motion
@@ -157,4 +163,160 @@ fun PasekPostepu(
 fun licznikDo(wartosc: Int, czasMs: Int = Motion.COUNT_UP_MS): Int {
     val p by postepWejscia(czasMs)
     return (wartosc * Motion.easeOutCubic(p)).toInt()
+}
+
+/**
+ * Przełącznik z DESIGN_SPEC 4.4: tor 46×28, tło `#262B30`, obrys `#333A40`,
+ * uchwyt 20 dp z odstępem 4 dp. Włączony: tor i obrys w akcencie, przesunięcie 18 dp,
+ * animacja 160 ms. Klikalny jest cały wiersz, nie sam przełącznik.
+ */
+@Composable
+fun Przelacznik(wlaczony: Boolean, naZmiane: (Boolean) -> Unit) {
+    val gramy = animacjeWlaczone()
+    val przesun by animateDpAsState(
+        if (wlaczony) 18.dp else 0.dp,
+        tween(if (gramy) 160 else 0, easing = Motion.Ease),
+        label = "przelacznik"
+    )
+    Box(
+        Modifier.size(46.dp, 28.dp)
+            .clip(RoundedCornerShape(999.dp))
+            .background(if (wlaczony) DarkTokens.accent.copy(alpha = 0.22f) else Color(0xFF262B30))
+            .border(
+                1.dp,
+                if (wlaczony) DarkTokens.accent.copy(alpha = 0.5f) else Color(0xFF333A40),
+                RoundedCornerShape(999.dp)
+            )
+            .clickable { naZmiane(!wlaczony) }
+    ) {
+        Box(
+            Modifier.padding(start = 4.dp + przesun, top = 4.dp)
+                .size(20.dp)
+                .clip(RoundedCornerShape(999.dp))
+                .background(if (wlaczony) DarkTokens.accent else Color(0xFF8A939B))
+        )
+    }
+}
+
+/** Kwadratowy przycisk steppera: 36 dp, r12, `surfaceInput`, obrys `lineInput`. */
+@Composable
+fun PrzyciskKwadrat(
+    ikona: androidx.compose.ui.graphics.vector.ImageVector,
+    opis: String,
+    rozmiar: Dp = 36.dp,
+    tlo: Color = DarkTokens.surfaceInput,
+    obrys: Color = DarkTokens.lineInput,
+    kolorIkony: Color = DarkTokens.ink2,
+    akcja: () -> Unit
+) {
+    Box(
+        Modifier.size(rozmiar).clip(RoundedCornerShape(12.dp))
+            .background(tlo).border(1.dp, obrys, RoundedCornerShape(12.dp))
+            .clickable(onClick = akcja),
+        contentAlignment = Alignment.Center
+    ) {
+        androidx.compose.material3.Icon(ikona, opis, Modifier.size(15.dp), tint = kolorIkony)
+    }
+}
+
+/** Pigułka z sumą godzin: wysokość 28, padding 0/10, tło `#0E1113`, obrys `lineSoft`. */
+@Composable
+fun Pigulka(tekst: String) {
+    Box(
+        Modifier.height(28.dp).clip(RoundedCornerShape(999.dp))
+            .background(Color(0xFF0E1113))
+            .border(1.dp, DarkTokens.lineSoft, RoundedCornerShape(999.dp))
+            .padding(horizontal = 10.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        androidx.compose.material3.Text(
+            tekst,
+            style = androidx.compose.ui.text.TextStyle(
+                fontSize = 12.sp,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                fontFamily = Jakarta,
+                fontFeatureSettings = TNUM
+            ),
+            color = DarkTokens.ink
+        )
+    }
+}
+
+/** Przycisk główny: 50 dp, r16, akcent, tekst `accentOn` 15 sp/700, cień akcentowy. */
+@Composable
+fun PrzyciskGlowny(tekst: String, modifier: Modifier = Modifier, akcja: () -> Unit) {
+    Box(
+        modifier.fillMaxWidth().height(50.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(DarkTokens.accent)
+            .clickable(onClick = akcja),
+        contentAlignment = Alignment.Center
+    ) {
+        androidx.compose.material3.Text(
+            tekst, fontSize = 15.sp,
+            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+            fontFamily = Jakarta, color = DarkTokens.accentOn
+        )
+    }
+}
+
+/**
+ * Pole tekstowe `.fld` z makiet: 44 dp, r12, `surfaceInput`, obrys `lineInput`.
+ * Zbudowane z `BasicTextField`, bo `OutlinedTextField` wymusza własne odstępy
+ * i przy 44 dp przycina tekst w pionie.
+ */
+@Composable
+fun PoleTekstowe(
+    wartosc: String,
+    podpowiedz: String,
+    cyfry: Boolean = false,
+    naZmiane: (String) -> Unit
+) {
+    androidx.compose.foundation.text.BasicTextField(
+        value = wartosc,
+        onValueChange = naZmiane,
+        singleLine = true,
+        textStyle = androidx.compose.ui.text.TextStyle(
+            color = DarkTokens.ink, fontSize = 14.sp, fontFamily = Jakarta
+        ),
+        cursorBrush = androidx.compose.ui.graphics.SolidColor(DarkTokens.accent),
+        keyboardOptions = if (cyfry)
+            androidx.compose.foundation.text.KeyboardOptions(
+                keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+            ) else androidx.compose.foundation.text.KeyboardOptions.Default,
+        modifier = Modifier.fillMaxWidth().height(44.dp)
+    ) { pole ->
+        Box(
+            Modifier.fillMaxSize().clip(RoundedCornerShape(12.dp))
+                .background(DarkTokens.surfaceInput)
+                .border(1.dp, DarkTokens.lineInput, RoundedCornerShape(12.dp))
+                .padding(horizontal = 12.dp),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            if (wartosc.isEmpty()) {
+                androidx.compose.material3.Text(
+                    podpowiedz, fontSize = 14.sp, fontFamily = Jakarta,
+                    color = DarkTokens.inkFaint, maxLines = 1
+                )
+            }
+            pole()
+        }
+    }
+}
+
+/** Przycisk drugorzędny: przezroczyste tło, obrys `lineSoft`, tekst `ink2`. */
+@Composable
+fun PrzyciskDrugorzedny(tekst: String, modifier: Modifier = Modifier, akcja: () -> Unit) {
+    Box(
+        modifier.height(44.dp).clip(RoundedCornerShape(13.dp))
+            .border(1.dp, DarkTokens.lineSoft, RoundedCornerShape(13.dp))
+            .clickable(onClick = akcja),
+        contentAlignment = Alignment.Center
+    ) {
+        androidx.compose.material3.Text(
+            tekst, fontSize = 13.sp,
+            fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+            fontFamily = Jakarta, color = DarkTokens.ink2
+        )
+    }
 }

@@ -118,3 +118,47 @@ val IkonaFiltr: ImageVector = ikona(1.7f) {
     moveTo(10f, 17f); horizontalLineToRelative(4f)
 }
 
+// ─── ikony karty dnia (Day.html) ───────────────────────────────
+
+/** Krzyżyk — zamknięcie arkusza. Obrys 2. */
+val IkonaZamknij: ImageVector = ikona(2f) {
+    moveTo(6f, 6f); lineToRelative(12f, 12f)
+    moveTo(18f, 6f); lineTo(6f, 18f)
+}
+
+/** Minus — mniej nadgodzin. Obrys 2.2. */
+val IkonaMinus: ImageVector = ikona(2.2f) {
+    moveTo(5f, 12f); horizontalLineToRelative(14f)
+}
+
+/** Plus — więcej nadgodzin. Obrys 2.2. */
+val IkonaPlus: ImageVector = ikona(2.2f) {
+    moveTo(12f, 5f); verticalLineToRelative(14f)
+    moveTo(5f, 12f); horizontalLineToRelative(14f)
+}
+
+/** Plus cieńszy — „Dodaj wydarzenie". Obrys 2. */
+val IkonaPlusCienki: ImageVector = ikona(2f) {
+    moveTo(12f, 5f); verticalLineToRelative(14f)
+    moveTo(5f, 12f); horizontalLineToRelative(14f)
+}
+
+/** Dzwonek — przypomnienie przy wydarzeniu. */
+val IkonaDzwonek: ImageVector = ikona(1.9f) {
+    moveTo(18f, 8f)
+    arcToRelative(6f, 6f, 0f, true, false, -12f, 0f)
+    curveToRelative(0f, 6f, -2f, 7f, -2f, 7f)
+    horizontalLineToRelative(16f)
+    reflectiveCurveToRelative(-2f, -1f, -2f, -7f)
+    close()
+    moveTo(10.5f, 21f)
+    arcToRelative(2f, 2f, 0f, false, false, 3f, 0f)
+}
+
+/** Kosz — usunięcie wydarzenia. */
+val IkonaKosz: ImageVector = ikona(1.8f) {
+    moveTo(4f, 7f); horizontalLineToRelative(16f)
+    moveTo(9f, 7f); verticalLineTo(5f); horizontalLineToRelative(6f); verticalLineToRelative(2f)
+    moveTo(7f, 7f); lineToRelative(1f, 13f); horizontalLineToRelative(8f); lineToRelative(1f, -13f)
+}
+

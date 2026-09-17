@@ -34,16 +34,6 @@ import java.util.Locale
 
 private val PL = Locale.forLanguageTag("pl-PL")
 
-/** Typ dnia dla kolorów kafelka — mapowanie z modelu domeny na paletę projektu. */
-private fun typDnia(s: Shift?): TypDnia = when (s) {
-    Shift.I -> TypDnia.I
-    Shift.II -> TypDnia.II
-    Shift.III -> TypDnia.III
-    Shift.URLOP -> TypDnia.URLOP
-    null -> TypDnia.WOLNE
-    else -> TypDnia.WOLNE
-}
-
 /**
  * Ekran „Grafik" — odtworzony z design/mockups/Main.html.
  * Wszystkie wartości pochodzą z makiety; dane z tego samego modelu widoku,
@@ -218,7 +208,7 @@ private fun KafelekDnia(
     val odMs = Motion.CELL_START_MS + indeks * Motion.CELL_STAGGER_MS
     val lokalny = (((postepSiatki * calosc) - odMs) / Motion.CELL_IN_MS).coerceIn(0f, 1f)
 
-    val kolory = ShiftPaletteDark.of(typDnia(e?.shift))
+    val kolory = ShiftPaletteDark.of(typDniaZ(e?.shift))
     val tlo = if (poza) Color.Transparent else kolory.fill
     val obrys = if (poza) Color(0xFF171B1E) else kolory.line
     val atrament = if (poza) DarkTokens.inkDisabled else kolory.ink
@@ -278,7 +268,7 @@ private fun KafelekDnia(
 private fun PasekWybranego(s: UiState, dzien: LocalDate, naSzczegoly: () -> Unit) {
     val p by postepWejscia(Motion.RISE_MS, 900)
     val e = s.entries[dzien]
-    val k = ShiftPaletteDark.of(typDnia(e?.shift))
+    val k = ShiftPaletteDark.of(typDniaZ(e?.shift))
     val opis = when (e?.shift) {
         Shift.I -> "Zmiana ranna · 06:00–14:00 · 8 h"
         Shift.II -> "Zmiana popołudniowa · 14:00–22:00 · 8 h"
