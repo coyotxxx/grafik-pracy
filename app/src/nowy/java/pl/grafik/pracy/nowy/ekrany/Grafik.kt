@@ -281,21 +281,21 @@ private fun KafelekDnia(
             .clickable(enabled = !poza, onClick = naKlik)
             .padding(horizontal = 6.dp, vertical = 7.dp)
     ) {
+        // Każda informacja ma swój róg i nie wchodzi w drogę pozostałym:
+        // numer i kropka kolizji u góry z lewej, obecność u góry z prawej,
+        // oznaczenie zmiany na dole z lewej, nadgodziny na dole z prawej.
         Row(Modifier.fillMaxWidth().align(Alignment.TopStart), verticalAlignment = Alignment.Bottom) {
             Text("${data.dayOfMonth}", style = GrafikType.dayNumber, color = numer)
-            Spacer(Modifier.weight(1f))
-            // Nadgodziny mają pierwszeństwo przed godzinami obecności: to wpis własny,
-            // a bez niego dzień z nadgodzinami wyglądał w grafiku jak każdy inny.
-            val ot = e?.otHours ?: 0
-            when {
-                ot > 0 && !poza -> Text(
-                    "+$ot",
-                    fontSize = 9.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                    fontFamily = Jakarta,
-                    color = if (e?.otRate == OtRate.P100) ShiftPaletteDark.I.ink
-                    else ShiftPaletteDark.I.ink.copy(alpha = 0.65f)
+            if (kolizja && !poza) {
+                Box(
+                    Modifier.padding(start = 3.dp, bottom = 3.dp).size(5.dp)
+                        .clip(RoundedCornerShape(999.dp))
+                        .background(DarkTokens.warnInk)
                 )
-                godziny != null && !poza -> Text(
+            }
+            Spacer(Modifier.weight(1f))
+            if (godziny != null && !poza) {
+                Text(
                     if (godziny.trwa) "praca" else "${godziny.hours}h",
                     fontSize = 9.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
                     fontFamily = Jakarta, color = Color(0xFF7E878E)
@@ -303,18 +303,22 @@ private fun KafelekDnia(
             }
         }
         if (!poza) {
-            val etykieta = e?.shift?.code.orEmpty()
-            if (etykieta.isNotEmpty()) {
-                Text(etykieta, Modifier.align(Alignment.BottomStart),
-                    style = GrafikType.dayLabel, color = atrament)
-            }
-            // Znacznik zbyt krótkiej przerwy — art. 132 KP. Włączany w „Odpoczynku".
-            if (kolizja) {
-                Box(
-                    Modifier.align(Alignment.BottomEnd).size(5.dp)
-                        .clip(RoundedCornerShape(999.dp))
-                        .background(DarkTokens.warnInk)
-                )
+            Row(
+                Modifier.fillMaxWidth().align(Alignment.BottomStart),
+                verticalAlignment = Alignment.Bottom
+            ) {
+                Text(e?.shift?.code.orEmpty(), style = GrafikType.dayLabel, color = atrament)
+                Spacer(Modifier.weight(1f))
+                val ot = e?.otHours ?: 0
+                if (ot > 0) {
+                    Text(
+                        "+$ot",
+                        fontSize = 9.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                        fontFamily = Jakarta,
+                        color = if (e?.otRate == OtRate.P100) ShiftPaletteDark.I.ink
+                        else ShiftPaletteDark.I.ink.copy(alpha = 0.65f)
+                    )
+                }
             }
         }
     }
