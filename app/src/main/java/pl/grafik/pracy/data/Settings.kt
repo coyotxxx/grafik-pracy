@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import pl.grafik.pracy.domain.PowiadomieniaCfg
 import pl.grafik.pracy.domain.StawkiCfg
@@ -64,6 +65,8 @@ class SettingsStore(private val ctx: Context) {
     private val kWpAuto = booleanPreferencesKey("wp_auto_save")
     private val kOkrDl = intPreferencesKey("okres_dlugosc")
     private val kOkrLimity = stringPreferencesKey("okres_limity")
+    /** Automatyczna kopia zapasowa co niedzielę, do pamięci telefonu. */
+    private val kKopiaAuto = booleanPreferencesKey("kopia_auto")
 
     val config: Flow<CycleConfig> = ctx.ds.data.map { p ->
         CycleConfig(
@@ -254,5 +257,38 @@ class SettingsStore(private val ctx: Context) {
 
     suspend fun saveColors(m: Map<String, String>) {
         ctx.ds.edit { p -> p[kColors] = m.entries.joinToString(",") { "${it.key}:${it.value}" } }
+    }
+
+    val kopiaAuto: Flow<Boolean> = ctx.ds.data.map { p -> p[kKopiaAuto] ?: false }
+
+    suspend fun saveKopiaAuto(wlaczona: Boolean) {
+        ctx.ds.edit { p -> p[kKopiaAuto] = wlaczona }
+    }
+
+    /**
+     * Wszystkie ustawienia jako pary nazwa → wartość, do kopii zapasowej.
+     *
+     * Czytamy je hurtem, bez wymieniania kluczy po nazwie — dzięki temu ustawienie
+     * dodane w przyszłości trafi do kopii samo, bez poprawiania tego miejsca.
+     */
+    suspend fun zrzucWszystko(): Map<String, Any> =
+        ctx.ds.data.first().asMap().entries.associate { (k, v) -> k.name to v }
+
+    /** Wstawia ustawienia z kopii. Typ bierzemy z odczytanej wartości. */
+    suspend fun wczytajWszystko(dane: Map<String, Any>) {
+        ctx.ds.edit { p ->
+            p.clear()
+            dane.forEach { (nazwa, wartosc) ->
+                when (wartosc) {
+                    is Boolean -> p[booleanPreferencesKey(nazwa)] = wartosc
+                    is Int -> p[intPreferencesKey(nazwa)] = wartosc
+                    is Long -> p[longPreferencesKey(nazwa)] = wartosc
+                    is Float -> p[floatPreferencesKey(nazwa)] = wartosc
+                    is Double -> p[doublePreferencesKey(nazwa)] = wartosc
+                    is String -> p[stringPreferencesKey(nazwa)] = wartosc
+                    else -> Unit                     // typów spoza tej listy nie zapisujemy
+                }
+            }
+        }
     }
 }

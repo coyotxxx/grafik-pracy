@@ -282,3 +282,50 @@ val IkonaWifi: ImageVector = ikona(1.9f) {
     moveTo(10.5f, 16.5f); arcToRelative(3f, 3f, 0f, false, true, 3f, 0f)
     moveTo(12f, 20f); lineToRelative(0.01f, 0f)
 }
+
+// ─── ikony ekranu „Dane i kopia" (Data.html) ───────────────────
+
+/** Strzałka w dół nad kreską — „Zapisz kopię". */
+val IkonaZapisz: ImageVector = ikona(2f) {
+    moveTo(12f, 4f); verticalLineToRelative(11f)
+    moveTo(8f, 11f); lineToRelative(4f, 4f); lineToRelative(4f, -4f)
+    moveTo(5f, 19f); horizontalLineToRelative(14f)
+}
+
+/** Strzałka w górę nad kreską — „Wyślij kopię". */
+val IkonaWyslij: ImageVector = ikona(1.8f) {
+    moveTo(12f, 16f); verticalLineTo(4f)
+    moveTo(8f, 8f); lineToRelative(4f, -4f); lineToRelative(4f, 4f)
+    moveTo(5f, 20f); horizontalLineToRelative(14f)
+}
+
+/** Strzałka w górę spod kreski — „Wczytaj z pliku". */
+val IkonaWczytaj: ImageVector = ikona(1.8f) {
+    moveTo(12f, 20f); verticalLineTo(9f)
+    moveTo(8f, 13f); lineToRelative(4f, -4f); lineToRelative(4f, 4f)
+    moveTo(5f, 4f); horizontalLineToRelative(14f)
+}
+
+/** Kartka z zagiętym rogiem — pozycja na liście kopii. */
+val IkonaPlik: ImageVector = ikona(1.7f) {
+    moveTo(5f, 4f); horizontalLineToRelative(9f); lineToRelative(5f, 5f); verticalLineToRelative(11f)
+    arcToRelative(1f, 1f, 0f, false, true, -1f, 1f)
+    horizontalLineTo(5f)
+    arcToRelative(1f, 1f, 0f, false, true, -1f, -1f)
+    verticalLineTo(5f)
+    arcToRelative(1f, 1f, 0f, false, true, 1f, -1f)
+    close()
+    moveTo(14f, 4f); verticalLineToRelative(5f); horizontalLineToRelative(5f)
+}
+
+/** Dwie strzałki w kole — „Przywróć cały grafik do cyklu". */
+val IkonaOdswiez: ImageVector = ikona(1.8f) {
+    moveTo(4f, 11f)
+    arcToRelative(8f, 8f, 0f, false, true, 13.7f, -5.6f)
+    lineTo(21f, 8f)
+    moveTo(21f, 4f); verticalLineToRelative(4f); horizontalLineToRelative(-4f)
+    moveTo(20f, 13f)
+    arcToRelative(8f, 8f, 0f, false, true, -13.7f, 5.6f)
+    lineTo(3f, 16f)
+    moveTo(3f, 20f); verticalLineToRelative(-4f); horizontalLineToRelative(4f)
+}

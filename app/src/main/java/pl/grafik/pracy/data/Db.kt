@@ -71,6 +71,10 @@ interface PresenceDao {
     @Query("SELECT * FROM presence WHERE status = 'pending' ORDER BY enterAt")
     suspend fun pending(): List<PresenceRow>
 
+    /** Cała historia wykryć — do kopii zapasowej. */
+    @Query("SELECT * FROM presence ORDER BY enterAt")
+    suspend fun wszystkie(): List<PresenceRow>
+
     @Query("SELECT * FROM presence WHERE id = :id LIMIT 1")
     suspend fun byId(id: Long): PresenceRow?
 
@@ -189,6 +193,10 @@ interface PayslipDao {
 
     @Query("SELECT * FROM payslips WHERE ym = :ym LIMIT 1")
     suspend fun forMonth(ym: String): PayslipRow?
+
+    /** Wszystkie odcinki — do kopii zapasowej i czyszczenia archiwum. */
+    @Query("SELECT * FROM payslips ORDER BY ym")
+    suspend fun wszystkie(): List<PayslipRow>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(row: PayslipRow)

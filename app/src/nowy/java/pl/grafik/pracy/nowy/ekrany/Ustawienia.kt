@@ -109,7 +109,8 @@ fun EkranUstawienia(vm: Vm, pvm: PresenceVm, uvm: UpdateVm, naPodstrone: (Podstr
                 )
                 Wiersz(
                     IkonaDane, DarkTokens.ink2, "Dane i kopia",
-                    "eksport, import, czyszczenie ręcznych zmian", gotowe = false
+                    "eksport, import, czyszczenie ręcznych zmian", gotowe = true,
+                    akcja = { naPodstrone(Podstrona.DANE) }
                 )
                 WierszAplikacji(u, uvm)
             }
