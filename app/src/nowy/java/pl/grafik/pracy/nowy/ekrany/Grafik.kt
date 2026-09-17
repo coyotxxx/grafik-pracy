@@ -17,7 +17,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -345,13 +344,3 @@ private fun RzadPrzyciskow(naEdycje: () -> Unit) {
         ) { Icon(IkonaFiltr, "Filtr i widok", Modifier.size(17.dp), tint = DarkTokens.ink2) }
     }
 }
-
-/** Animacja `rise` z makiet: opacity 0→1 i przesunięcie 14 px w górę. */
-private fun Modifier.wejscie(p: Float): Modifier = this
-    .alpha(p)
-    .layout { measurable, constraints ->
-        val placeable = measurable.measure(constraints)
-        layout(placeable.width, placeable.height) {
-            placeable.placeRelative(0, ((1f - p) * 14.dp.toPx()).toInt())
-        }
-    }

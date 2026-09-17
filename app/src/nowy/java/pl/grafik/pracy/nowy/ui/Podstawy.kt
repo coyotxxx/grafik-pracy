@@ -9,12 +9,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -320,3 +322,13 @@ fun PrzyciskDrugorzedny(tekst: String, modifier: Modifier = Modifier, akcja: () 
         )
     }
 }
+
+/** Animacja `rise` z makiet: opacity 0→1 i przesunięcie 14 px w górę. */
+fun Modifier.wejscie(p: Float): Modifier = this
+    .alpha(p)
+    .layout { measurable, constraints ->
+        val placeable = measurable.measure(constraints)
+        layout(placeable.width, placeable.height) {
+            placeable.placeRelative(0, ((1f - p) * 14.dp.toPx()).toInt())
+        }
+    }

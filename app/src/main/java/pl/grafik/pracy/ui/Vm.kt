@@ -373,6 +373,30 @@ class Vm(app: Application) : AndroidViewModel(app) {
 
     fun saveVacation(v: VacationCfg) = viewModelScope.launch { settings.saveVacation(v) }
 
+    /**
+     * Dni od wczoraj na trzy tygodnie w przód. Ekran „Teraz" w nowym wyglądzie odlicza
+     * do startu najbliższej zmiany i pokazuje pięć kolejnych dni — a te potrafią wypaść
+     * poza siatkę wyświetlanego miesiąca, której pilnuje `state`.
+     *
+     * Kolejność jak w kalendarzu: wpis własny wygrywa z cyklem.
+     */
+    val najblizszeDni: StateFlow<List<DayEntry>> = run {
+        val od = LocalDate.now().minusDays(1)
+        val doKiedy = od.plusDays(23)
+        combine(
+            settings.config,
+            dao.observeRange(od.toString(), doKiedy.toString())
+        ) { cfg, rows ->
+            val saved = rows.associate { LocalDate.parse(it.date) to it.toEntry() }
+            val merged = LinkedHashMap<LocalDate, DayEntry>()
+            CycleGenerator.range(cfg, od, doKiedy).forEach { (d, s) ->
+                merged[d] = saved[d] ?: DayEntry(date = d, shift = s)
+            }
+            saved.forEach { (d, e) -> merged[d] = e }
+            merged.values.sortedBy { it.date }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    }
+
     /** Wejście w podsumowanie — zawsze startujemy od bieżącego miesiąca. */
     fun onEnterSummary() { _ym.value = YearMonth.now() }
 

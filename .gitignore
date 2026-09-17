@@ -14,3 +14,6 @@ app/build/
 *.jks
 *.bak
 *.bak-*
+
+# katalog roboczy kompilatora Kotlin
+.kotlin/
