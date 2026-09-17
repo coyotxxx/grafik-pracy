@@ -1,5 +1,7 @@
 package pl.grafik.pracy.nowy.ekrany
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -13,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -20,6 +23,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
+import pl.grafik.pracy.data.AppDb
+import pl.grafik.pracy.data.Odcinki
 import pl.grafik.pracy.domain.KalkulatorWyplaty
 import pl.grafik.pracy.domain.SkladnikWyplaty
 import pl.grafik.pracy.domain.StawkiCfg
@@ -67,6 +73,7 @@ fun EkranWyplata(vm: Vm, naPowrot: () -> Unit) {
             KartaKwoty(wyplata, cfg)
             if (cfg.ustawiona) KartaSkladnikow(wyplata)
             KartaStawek(wyplata, cfg) { vm.saveStawki(it) }
+            KartaOdcinkow(s.ym)
             KartaCzegoNieLiczymy()
         }
     }
@@ -307,6 +314,131 @@ private fun KartaStawek(w: Wyplata, cfg: StawkiCfg, zapisz: (StawkiCfg) -> Unit)
         }
     }
 }
+
+/**
+ * Archiwum odcinków. Plik kopiujemy do pamięci aplikacji — zostaje nawet wtedy, gdy
+ * oryginał zniknie z telefonu, i nie wychodzi nigdzie poza urządzenie.
+ */
+@Composable
+private fun KartaOdcinkow(ym: YearMonth) {
+    val ctx = LocalContext.current
+    val zakres = rememberCoroutineScope()
+    val p by postepWejscia(Motion.RISE_MS, 150)
+    val odcinki by remember { AppDb.get(ctx).payslipDao().observeAll() }
+        .collectAsState(initial = emptyList())
+    val tegoMiesiaca = odcinki.firstOrNull { it.ym == ym.toString() }
+    var blad by remember { mutableStateOf<String?>(null) }
+
+    val wybierz = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        zakres.launch {
+            val wynik = Odcinki.dodaj(ctx, uri, ym)
+            blad = if (wynik.isFailure) "Nie udało się wczytać pliku." else null
+        }
+    }
+
+    Column(
+        Modifier.wejscie(p).fillMaxWidth()
+            .clip(RoundedCornerShape(Dim.rCard))
+            .background(DarkTokens.surface)
+            .border(1.dp, DarkTokens.line, RoundedCornerShape(Dim.rCard))
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
+            Text("ODCINKI", style = GrafikType.sectionLabel,
+                color = DarkTokens.inkFaint, modifier = Modifier.weight(1f))
+            Text(
+                if (odcinki.isEmpty()) "nic nie wgrano" else ileZapisanych(odcinki.size),
+                fontSize = 10.sp, fontFamily = Jakarta, color = DarkTokens.inkFaint
+            )
+        }
+        Text(
+            "Wgraj kartkę od wypłaty, a zostanie w aplikacji — będzie pod ręką, " +
+                "gdybyś chciał sprawdzić, jak zakład policzył dany miesiąc.",
+            fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta,
+            color = DarkTokens.inkMuted
+        )
+
+        Row(
+            Modifier.fillMaxWidth().height(44.dp).clip(RoundedCornerShape(14.dp))
+                .background(Color.White.copy(alpha = 0.04f))
+                .border(1.dp, DarkTokens.lineSoft, RoundedCornerShape(14.dp))
+                .clickable { wybierz.launch(arrayOf("application/pdf", "image/*")) },
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
+        ) {
+            Icon(IkonaPlus, null, Modifier.size(15.dp), tint = DarkTokens.ink2)
+            Text(
+                if (tegoMiesiaca == null) "Dodaj odcinek za ${miesiacPay(ym)}"
+                else "Zastąp odcinek za ${miesiacPay(ym)}",
+                fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+                fontFamily = Jakarta, color = DarkTokens.ink2
+            )
+        }
+
+        blad?.let {
+            Text(it, fontSize = 11.sp, fontFamily = Jakarta, color = DarkTokens.warnInk)
+        }
+
+        odcinki.forEach { row -> WierszOdcinka(row, ctx, zakres) }
+    }
+}
+
+@Composable
+private fun WierszOdcinka(
+    row: pl.grafik.pracy.data.PayslipRow,
+    ctx: android.content.Context,
+    zakres: kotlinx.coroutines.CoroutineScope
+) {
+    val ym = remember(row.ym) { runCatching { YearMonth.parse(row.ym) }.getOrNull() }
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(13.dp))
+            .background(DarkTokens.surfaceInput)
+            .border(1.dp, DarkTokens.lineInput, RoundedCornerShape(13.dp))
+            .clickable {
+                Odcinki.intencjaOtwarcia(ctx, row)?.let { runCatching { ctx.startActivity(it) } }
+            }
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Box(
+            Modifier.size(34.dp).clip(RoundedCornerShape(11.dp))
+                .background(Color(0x1FDAC559)),
+            contentAlignment = Alignment.Center
+        ) { Icon(IkonaWyplata, null, Modifier.size(16.dp), tint = ShiftPaletteDark.I.ink) }
+
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                ym?.let { miesiacPay(it) } ?: row.ym,
+                fontSize = 13.sp, fontWeight = FontWeight.SemiBold, fontFamily = Jakarta,
+                color = DarkTokens.ink, maxLines = 1, overflow = TextOverflow.Ellipsis
+            )
+            Text(row.originalName, fontSize = 10.sp, fontFamily = Jakarta,
+                color = DarkTokens.inkFaint, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+
+        Box(
+            Modifier.size(32.dp).clip(RoundedCornerShape(10.dp))
+                .clickable { zakres.launch { Odcinki.usun(ctx, row) } },
+            contentAlignment = Alignment.Center
+        ) { Icon(IkonaKosz, "Usuń odcinek", Modifier.size(15.dp), tint = DarkTokens.inkMuted) }
+    }
+}
+
+/** „1 zapisany", „3 zapisane", „5 zapisanych" — polska odmiana. */
+private fun ileZapisanych(ile: Int): String = when {
+    ile == 1 -> "1 zapisany"
+    ile % 10 in 2..4 && ile % 100 !in 12..14 -> "$ile zapisane"
+    else -> "$ile zapisanych"
+}
+
+private fun miesiacPay(ym: YearMonth): String =
+    ym.month.getDisplayName(JavaTextStyle.FULL_STANDALONE, PL_PAY)
+        .replaceFirstChar { it.uppercase(PL_PAY) } + " " + ym.year
 
 /** Czego świadomie nie liczymy — żeby różnica wobec paska była zrozumiała. */
 @Composable

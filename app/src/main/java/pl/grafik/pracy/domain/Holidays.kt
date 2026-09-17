@@ -56,21 +56,26 @@ object Holidays {
         else -> DayKind.ZWYKLY
     }
 
-    /** Norma godzin wg Kodeksu pracy dla danego miesiąca. */
+    /**
+     * Norma godzin wg art. 130 KP: 8 h za każdy dzień od poniedziałku do piątku,
+     * minus 8 h za **każde** święto przypadające w innym dniu niż niedziela.
+     *
+     * Święto w sobotę też obniża wymiar (art. 130 § 2) — sierpień 2026 ma przez to
+     * 160 h, nie 168. Wcześniej liczyliśmy tylko święta z poniedziałku–piątku,
+     * co zawyżało normę w miesiącach ze świętem wypadającym w sobotę.
+     */
     fun monthlyNorm(year: Int, month: Int): Int {
         var d = LocalDate.of(year, month, 1)
         val end = d.plusMonths(1)
         var workdays = 0
-        var holidaysOnWorkdays = 0
+        var holidays = 0
         val hol = all(year)
         while (d.isBefore(end)) {
             val dow = d.dayOfWeek.value
-            if (dow <= 5) {
-                workdays++
-                if (hol.containsKey(d)) holidaysOnWorkdays++
-            }
+            if (dow <= 5) workdays++
+            if (dow != 7 && hol.containsKey(d)) holidays++
             d = d.plusDays(1)
         }
-        return (workdays - holidaysOnWorkdays) * 8
+        return (workdays - holidays) * 8
     }
 }

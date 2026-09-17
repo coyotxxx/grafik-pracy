@@ -166,11 +166,46 @@ interface DayDao {
     suspend fun clearAll()
 }
 
-@Database(entities = [DayRow::class, PresenceRow::class, EventRow::class], version = 4, exportSchema = false)
+/**
+ * Odcinek wypłaty wgrany przez użytkownika. Sam plik leży w pamięci aplikacji,
+ * tu trzymamy tylko, czego dotyczy i jak się nazywa.
+ */
+@Entity(tableName = "payslips")
+data class PayslipRow(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    /** Miesiąc, którego dotyczy odcinek — „2026-08". */
+    @ColumnInfo(index = true) val ym: String,
+    /** Nazwa pliku w katalogu `odcinki/`. */
+    val fileName: String,
+    /** Nazwa, jaką plik miał na telefonie — pokazujemy ją na liście. */
+    val originalName: String,
+    val addedAt: String
+)
+
+@Dao
+interface PayslipDao {
+    @Query("SELECT * FROM payslips ORDER BY ym DESC")
+    fun observeAll(): Flow<List<PayslipRow>>
+
+    @Query("SELECT * FROM payslips WHERE ym = :ym LIMIT 1")
+    suspend fun forMonth(ym: String): PayslipRow?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(row: PayslipRow)
+
+    @Query("DELETE FROM payslips WHERE id = :id")
+    suspend fun delete(id: Long)
+}
+
+@Database(
+    entities = [DayRow::class, PresenceRow::class, EventRow::class, PayslipRow::class],
+    version = 5, exportSchema = false
+)
 abstract class AppDb : RoomDatabase() {
     abstract fun dayDao(): DayDao
     abstract fun presenceDao(): PresenceDao
     abstract fun eventDao(): EventDao
+    abstract fun payslipDao(): PayslipDao
 
     companion object {
         /**
@@ -227,10 +262,28 @@ abstract class AppDb : RoomDatabase() {
             }
         }
 
+        /** v4 -> v5: archiwum odcinków wypłaty. Same pliki leżą w pamięci aplikacji. */
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `payslips` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `ym` TEXT NOT NULL,
+                        `fileName` TEXT NOT NULL,
+                        `originalName` TEXT NOT NULL,
+                        `addedAt` TEXT NOT NULL
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_payslips_ym` ON `payslips` (`ym`)")
+            }
+        }
+
         @Volatile private var inst: AppDb? = null
         fun get(ctx: Context): AppDb = inst ?: synchronized(this) {
             inst ?: Room.databaseBuilder(ctx.applicationContext, AppDb::class.java, "grafik.db")
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                 .build().also { inst = it }
         }
     }
