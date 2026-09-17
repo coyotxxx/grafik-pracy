@@ -239,16 +239,6 @@ private fun DayCell(
             .border(bw, border, RoundedCornerShape(10.dp))
             .combinedClickable(onClick = onTap, onLongClick = onLong)
     ) {
-        if ((e?.otHours ?: 0) > 0) {
-            Box(Modifier.fillMaxWidth().background(if (e!!.otRate == OtRate.P100) OtColor100 else OtColor50)) {
-                Text(
-                    "+${e.otHours}h ${e.otRate.percent}%",
-                    Modifier.fillMaxWidth().padding(vertical = 1.dp),
-                    fontSize = 8.sp, fontWeight = FontWeight.Bold,
-                    color = Color(0xFF2A1C06), textAlign = TextAlign.Center, maxLines = 1
-                )
-            }
-        }
         // Numer dnia leży NA polu etykiety, a nie nad nim — dzięki temu etykieta
         // zawsze ma całą wysokość komórki i nigdy nie zostaje przycięta.
         Box(Modifier.fillMaxWidth().weight(1f)) {
@@ -300,6 +290,18 @@ private fun DayCell(
                         maxLines = 1, softWrap = false
                     )
                 }
+            }
+        }
+        // Pasek nadgodzin NA DOLE, nie nad numerem — u góry spychał numer dnia
+        // w dół i kafelki z nadgodzinami nie trzymały linii z resztą miesiąca.
+        if ((e?.otHours ?: 0) > 0) {
+            Box(Modifier.fillMaxWidth().background(if (e!!.otRate == OtRate.P100) OtColor100 else OtColor50)) {
+                Text(
+                    "+${e.otHours}h ${e.otRate.percent}%",
+                    Modifier.fillMaxWidth().padding(vertical = 1.dp),
+                    fontSize = 8.sp, fontWeight = FontWeight.Bold,
+                    color = Color(0xFF2A1C06), textAlign = TextAlign.Center, maxLines = 1
+                )
             }
         }
     }
