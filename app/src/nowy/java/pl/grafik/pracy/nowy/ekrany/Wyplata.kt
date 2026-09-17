@@ -152,11 +152,57 @@ private fun KartaKwoty(w: Wyplata, cfg: StawkiCfg) {
 
         PasekSkladnikow(w)
 
+        val n = KalkulatorWyplaty.netto(w.razem, cfg)
+        Box(Modifier.fillMaxWidth().height(1.dp).background(Color(0x24DAC559)))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text("Na rękę", fontSize = 13.sp, fontWeight = FontWeight.Bold,
+                    fontFamily = Jakarta, color = DarkTokens.ink)
+                Text(
+                    "po składkach i zaliczce" +
+                        (if (cfg.stalePotracenia > 0) " oraz stałych potrąceniach" else ""),
+                    fontSize = 10.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted
+                )
+            }
+            Text(
+                "≈ ${KalkulatorWyplaty.zlote(n.naReke)} zł",
+                style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold,
+                    fontFamily = Jakarta, fontFeatureSettings = TNUM),
+                color = DarkTokens.accent
+            )
+        }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            listOf(
+                "składki" to n.spoleczne,
+                "zdrowotna" to n.zdrowotna,
+                "zaliczka" to n.zaliczka
+            ).forEach { (nazwa, kwota) ->
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                    Text("− ${KalkulatorWyplaty.zlote(kwota)}",
+                        style = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.SemiBold,
+                            fontFamily = Jakarta, fontFeatureSettings = TNUM),
+                        color = DarkTokens.ink3)
+                    Text(nazwa, fontSize = 9.sp, fontFamily = Jakarta, color = DarkTokens.inkFaint)
+                }
+            }
+            if (cfg.stalePotracenia > 0) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                    Text("− ${KalkulatorWyplaty.zlote(n.potracenia)}",
+                        style = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.SemiBold,
+                            fontFamily = Jakarta, fontFeatureSettings = TNUM),
+                        color = DarkTokens.ink3)
+                    Text("potrącenia", fontSize = 9.sp, fontFamily = Jakarta,
+                        color = DarkTokens.inkFaint)
+                }
+            }
+        }
+
         Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
             Icon(IkonaInfo, null, Modifier.size(15.dp).padding(top = 1.dp), tint = DarkTokens.inkMuted)
             Text(
-                "To wyliczenie z grafiku i Twoich stawek. Kwoty do ręki nie policzymy — " +
-                    "aplikacja nie zna Twoich składek, ulg ani premii regulaminowej.",
+                "Szacunek z grafiku i Twoich stawek. Na rękę liczymy ze składek ustawowych, " +
+                    "kosztów i ulgi — bez premii i bez świadczeń doliczanych przez zakład, " +
+                    "więc na odcinku kwota bywa o około procent inna.",
                 fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta,
                 color = DarkTokens.inkMuted
             )
@@ -297,6 +343,23 @@ private fun KartaStawek(w: Wyplata, cfg: StawkiCfg, zapisz: (StawkiCfg) -> Unit)
         PoleStawki(
             "Dodatek za nocki", "kwota za godzinę III zmiany, z regulaminu", cfg.dodatekNocny
         ) { zapisz(cfg.copy(dodatekNocny = it)) }
+
+        Box(Modifier.fillMaxWidth().height(1.dp).background(DarkTokens.line))
+
+        Text("DO KWOTY NA RĘKĘ", style = GrafikType.sectionLabel, color = DarkTokens.inkFaint)
+
+        PoleStawki(
+            "Koszty uzyskania", "250 zł podstawowe, 300 zł przy dojazdach", cfg.kosztyUzyskania
+        ) { zapisz(cfg.copy(kosztyUzyskania = it)) }
+
+        PoleStawki(
+            "Ulga podatkowa", "300 zł miesięcznie, gdy złożyłeś PIT-2", cfg.ulgaPodatkowa
+        ) { zapisz(cfg.copy(ulgaPodatkowa = it)) }
+
+        PoleStawki(
+            "Stałe potrącenia", "opieka medyczna, PZU, kasa zapomogowa, związki",
+            cfg.stalePotracenia
+        ) { zapisz(cfg.copy(stalePotracenia = it)) }
 
         Box(Modifier.fillMaxWidth().height(1.dp).background(DarkTokens.line))
 
@@ -511,7 +574,8 @@ private fun KartaCzegoNieLiczymy() {
         listOf(
             "Premii — jest uznaniowa, raz jest, raz jej nie ma.",
             "Dodatku urlopowego i nadgodzin ze średniej — liczą się z poprzednich miesięcy.",
-            "Potrąceń: składek, zaliczki na podatek, PZU, kasy zapomogowej."
+            "Świadczeń doliczanych przez zakład — opieka medyczna czy kafeteria " +
+                "podnoszą podstawę składek."
         ).forEach { zdanie ->
             Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
                 Box(

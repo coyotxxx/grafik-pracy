@@ -180,4 +180,13 @@ class WyplataTest {
         assertEquals("49,69", KalkulatorWyplaty.zlote(49.6875))
         assertEquals("0,00", KalkulatorWyplaty.zlote(0.0))
     }
+
+    @Test
+    fun grosze_nie_przelewaja_sie_na_setke() {
+        // 6 152,9955 zł pokazywało się jako „6 152,100" — całość ucięta w dół,
+        // a grosze zaokrąglone w górę do setki
+        assertEquals("6 153,00", KalkulatorWyplaty.zlote(6152.9955))
+        assertEquals("1 000,00", KalkulatorWyplaty.zlote(999.999))
+        assertEquals("7,00", KalkulatorWyplaty.zlote(6.996))
+    }
 }

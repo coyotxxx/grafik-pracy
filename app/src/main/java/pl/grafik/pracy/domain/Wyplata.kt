@@ -29,9 +29,30 @@ data class StawkiCfg(
     /** Dodatek za godzinę pracy na zmianie nocnej — kwota z regulaminu zakładu. */
     val dodatekNocny: Double = 0.0,
     /** Czy pokazywać kwoty w Bilansie. */
-    val pokazujWBilansie: Boolean = true
+    val pokazujWBilansie: Boolean = true,
+    /** Koszty uzyskania przychodu — 250 zł podstawowe, 300 zł przy dojazdach. */
+    val kosztyUzyskania: Double = 250.0,
+    /** Miesięczna ulga podatkowa z PIT-2 — 300 zł przy jednym pracodawcy. */
+    val ulgaPodatkowa: Double = 300.0,
+    /** Stałe potrącenia zakładowe: ubezpieczenie, opieka medyczna, kasa, związki. */
+    val stalePotracenia: Double = 0.0
 ) {
     val ustawiona: Boolean get() = zasadnicza > 0.0
+}
+
+/**
+ * Rozbicie drogi od brutto do kwoty na koncie. Stawki składek są ustawowe,
+ * a próg podatku, koszty i ulga biorą się z ustawień.
+ */
+data class Netto(
+    val brutto: Double,
+    val spoleczne: Double,
+    val zdrowotna: Double,
+    val zaliczka: Double,
+    val potracenia: Double
+) {
+    /** Tyle wpływa na konto. */
+    val naReke: Double get() = brutto - spoleczne - zdrowotna - zaliczka - potracenia
 }
 
 /** Jeden składnik wypłaty — nazwa, ile godzin, po ile i ile z tego wychodzi. */
@@ -150,11 +171,42 @@ object KalkulatorWyplaty {
     fun godziny100(dni: Collection<DayEntry>): Int =
         dni.filter { it.otHours > 0 && it.otRate == OtRate.P100 }.sumOf { it.otHours }
 
-    /** „5 667,00" — kwota po polsku, ze spacją co trzy cyfry i przecinkiem. */
+    /** Składki pracownika: emerytalna 9,76 %, rentowa 1,5 %, chorobowa 2,45 %. */
+    const val SKLADKI_SPOLECZNE = 0.1371
+    const val SKLADKA_ZDROWOTNA = 0.09
+    /** Pierwszy próg PIT. */
+    const val PODATEK = 0.12
+
+    /**
+     * Droga od brutto do kwoty na koncie.
+     *
+     * Szacunek, nie przelew: prawdziwa podstawa bywa nieco wyższa o świadczenia
+     * doliczane przez zakład (opieka medyczna, kafeteria), których aplikacja nie zna.
+     * Na odcinkach Macieja różnica wychodzi około procenta.
+     */
+    fun netto(brutto: Double, cfg: StawkiCfg): Netto {
+        val spoleczne = brutto * SKLADKI_SPOLECZNE
+        val zdrowotna = (brutto - spoleczne) * SKLADKA_ZDROWOTNA
+        val podstawaPit = (brutto - spoleczne - cfg.kosztyUzyskania).coerceAtLeast(0.0)
+        val zaliczka = (Math.round(podstawaPit) * PODATEK - cfg.ulgaPodatkowa)
+            .coerceAtLeast(0.0)
+            .let { Math.round(it).toDouble() }
+        return Netto(brutto, spoleczne, zdrowotna, zaliczka, cfg.stalePotracenia)
+    }
+
+    /**
+     * „5 667,00" — kwota po polsku, ze spacją co trzy cyfry i przecinkiem.
+     *
+     * Zaokrąglamy najpierw całą kwotę do groszy, a dopiero potem ją rozbijamy.
+     * Inaczej 6 152,9955 zł pokazałoby się jako „6 152,100" — część całkowita
+     * ucięta w dół, a grosze zaokrąglone w górę do setki.
+     */
     fun zlote(kwota: Double): String {
-        val calosc = kwota.toLong()
-        val grosze = Math.round((kwota - calosc) * 100).toInt()
+        val wGroszach = Math.round(Math.abs(kwota) * 100)
+        val calosc = wGroszach / 100
+        val grosze = (wGroszach % 100).toInt()
         val cyfry = calosc.toString().reversed().chunked(3).joinToString(" ").reversed()
-        return "%s,%02d".format(cyfry, grosze)
+        val znak = if (kwota < 0 && wGroszach > 0) "−" else ""
+        return "%s%s,%02d".format(znak, cyfry, grosze)
     }
 }

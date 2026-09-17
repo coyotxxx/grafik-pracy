@@ -33,6 +33,9 @@ class SettingsStore(private val ctx: Context) {
     private val kZasadnicza = stringPreferencesKey("zasadnicza")
     private val kDodatekNocny = stringPreferencesKey("dodatek_nocny")
     private val kPokazWyplate = booleanPreferencesKey("pokaz_wyplate")
+    private val kKoszty = stringPreferencesKey("koszty_uzyskania")
+    private val kUlga = stringPreferencesKey("ulga_podatkowa")
+    private val kPotracenia = stringPreferencesKey("stale_potracenia")
     /** Powiadomienia: krótko przed wydarzeniem, przed zmianą, cisza na nocce. */
     private val kNotifWDniu = booleanPreferencesKey("notif_w_dniu")
     private val kNotifWyprzedzenie = intPreferencesKey("notif_wyprzedzenie")
@@ -132,7 +135,10 @@ class SettingsStore(private val ctx: Context) {
         StawkiCfg(
             zasadnicza = p[kZasadnicza]?.toDoubleOrNull() ?: 0.0,
             dodatekNocny = p[kDodatekNocny]?.toDoubleOrNull() ?: 0.0,
-            pokazujWBilansie = p[kPokazWyplate] ?: true
+            pokazujWBilansie = p[kPokazWyplate] ?: true,
+            kosztyUzyskania = p[kKoszty]?.toDoubleOrNull() ?: 250.0,
+            ulgaPodatkowa = p[kUlga]?.toDoubleOrNull() ?: 300.0,
+            stalePotracenia = p[kPotracenia]?.toDoubleOrNull() ?: 0.0
         )
     }
 
@@ -141,6 +147,9 @@ class SettingsStore(private val ctx: Context) {
             p[kZasadnicza] = c.zasadnicza.coerceIn(0.0, 99999.0).toString()
             p[kDodatekNocny] = c.dodatekNocny.coerceIn(0.0, 999.0).toString()
             p[kPokazWyplate] = c.pokazujWBilansie
+            p[kKoszty] = c.kosztyUzyskania.coerceIn(0.0, 9999.0).toString()
+            p[kUlga] = c.ulgaPodatkowa.coerceIn(0.0, 9999.0).toString()
+            p[kPotracenia] = c.stalePotracenia.coerceIn(0.0, 99999.0).toString()
         }
     }
 
