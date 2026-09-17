@@ -24,6 +24,7 @@ import pl.grafik.pracy.nowy.ekrany.EkranTeraz
 import pl.grafik.pracy.nowy.ekrany.KartaDnia
 import pl.grafik.pracy.nowy.ekrany.EkranCzasPracy
 import pl.grafik.pracy.nowy.ekrany.EkranMojCykl
+import pl.grafik.pracy.nowy.ekrany.EkranUrlop
 import pl.grafik.pracy.nowy.ekrany.EkranUstawienia
 import pl.grafik.pracy.nowy.ekrany.TrybEdycji
 import java.time.LocalDate
@@ -57,7 +58,7 @@ class NowaActivity : ComponentActivity() {
 }
 
 /** Podstrony ustawień — dochodzą po kolei, każda z własnej makiety. */
-enum class Podstrona { CYKL, CZAS_PRACY }
+enum class Podstrona { CYKL, CZAS_PRACY, URLOP }
 
 private enum class Zakladka(val etykieta: String, val ikona: ImageVector) {
     TERAZ("Teraz", IkonaTeraz),
@@ -83,6 +84,7 @@ private fun NowaApp(vm: Vm, pvm: PresenceVm, uvm: UpdateVm) {
     when (podstrona) {
         Podstrona.CYKL -> { EkranMojCykl(vm) { podstrona = null }; return }
         Podstrona.CZAS_PRACY -> { EkranCzasPracy(vm) { podstrona = null }; return }
+        Podstrona.URLOP -> { EkranUrlop(vm) { podstrona = null }; return }
         null -> {}
     }
 

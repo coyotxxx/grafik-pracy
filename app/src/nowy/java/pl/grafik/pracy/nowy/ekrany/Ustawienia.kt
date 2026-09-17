@@ -79,7 +79,7 @@ fun EkranUstawienia(vm: Vm, pvm: PresenceVm, uvm: UpdateVm, naPodstrone: (Podstr
                 )
                 Wiersz(
                     IkonaUrlop, ShiftPaletteDark.URLOP.ink, "Urlop",
-                    opisUrlopu(s), gotowe = false
+                    opisUrlopu(s), gotowe = true, akcja = { naPodstrone(Podstrona.URLOP) }
                 )
             }
 
