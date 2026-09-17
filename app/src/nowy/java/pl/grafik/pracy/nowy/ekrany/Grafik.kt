@@ -83,14 +83,14 @@ private fun Naglowek(s: UiState, vm: Vm) {
                 Text(
                     s.ym.month.getDisplayName(JavaTextStyle.FULL_STANDALONE, PL)
                         .replaceFirstChar { it.uppercase() } + " ",
-                    style = GrafikType.h1, color = DarkTokens.ink
+                    style = GrafikType.h1, color = Tokeny.ink
                 )
-                Text("${s.ym.year}", style = GrafikType.h1, color = DarkTokens.inkFaint)
+                Text("${s.ym.year}", style = GrafikType.h1, color = Tokeny.inkFaint)
             }
             Text(
                 "Brygada ${s.cfg.brigade} · ${s.cfg.pattern.label}",
                 style = GrafikType.caption.copy(fontSize = 11.sp),
-                color = DarkTokens.inkMuted, maxLines = 1, overflow = TextOverflow.Ellipsis
+                color = Tokeny.inkMuted, maxLines = 1, overflow = TextOverflow.Ellipsis
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -104,11 +104,11 @@ private fun Naglowek(s: UiState, vm: Vm) {
 private fun PrzyciskIkonowy(ikona: androidx.compose.ui.graphics.vector.ImageVector, opis: String, akcja: () -> Unit) {
     Box(
         Modifier.size(40.dp).clip(RoundedCornerShape(13.dp))
-            .background(Color.White.copy(alpha = 0.04f))
-            .border(1.dp, DarkTokens.lineStrong, RoundedCornerShape(13.dp))
+            .background(Tokeny.surface)
+            .border(1.dp, Tokeny.lineStrong, RoundedCornerShape(13.dp))
             .clickable(onClick = akcja),
         contentAlignment = Alignment.Center
-    ) { Icon(ikona, opis, Modifier.size(17.dp), tint = DarkTokens.ink2) }
+    ) { Icon(ikona, opis, Modifier.size(17.dp), tint = Tokeny.ink2) }
 }
 
 @Composable
@@ -121,13 +121,13 @@ private fun KartaGodzin(s: UiState) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
             Row(Modifier.weight(1f), verticalAlignment = Alignment.Bottom,
                 horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("$licznik", style = GrafikType.counter, color = DarkTokens.ink)
+                Text("$licznik", style = GrafikType.counter, color = Tokeny.ink)
                 Text("/ ${s.stats.norm} h", fontSize = 13.sp,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
-                    fontFamily = Jakarta, color = DarkTokens.inkMuted)
+                    fontFamily = Jakarta, color = Tokeny.inkMuted)
             }
             Text(if (s.stats.biezacyMiesiac) "do dziś" else "razem",
-                style = GrafikType.caption, color = DarkTokens.inkMuted)
+                style = GrafikType.caption, color = Tokeny.inkMuted)
         }
         Spacer(Modifier.height(10.dp))
         PasekPostepu(if (s.stats.norm > 0) doDzis.toFloat() / s.stats.norm else 0f)
@@ -137,10 +137,10 @@ private fun KartaGodzin(s: UiState) {
             Text(
                 "cały miesiąc ${s.stats.rozliczone} h · bilans " +
                     (if (bilans > 0) "+$bilans" else "$bilans") + " h",
-                style = GrafikType.caption, color = DarkTokens.inkMuted
+                style = GrafikType.caption, color = Tokeny.inkMuted
             )
             if (s.stats.urlopH > 0) {
-                Text("urlop ${s.stats.urlopH} h", style = GrafikType.caption, color = DarkTokens.inkMuted)
+                Text("urlop ${s.stats.urlopH} h", style = GrafikType.caption, color = Tokeny.inkMuted)
             }
         }
     }
@@ -156,22 +156,22 @@ private fun PasekOdpoczynku(s: UiState, naOdpoczynek: () -> Unit) {
     Row(
         Modifier.padding(horizontal = Dim.screenGutter).fillMaxWidth()
             .clip(RoundedCornerShape(15.dp))
-            .background(Color(0x14FF937E))
-            .border(1.dp, Color(0x42FF937E), RoundedCornerShape(15.dp))
+            .background(Tokeny.warnBg)
+            .border(1.dp, Tokeny.warnLine, RoundedCornerShape(15.dp))
             .clickable(onClick = naOdpoczynek)
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Icon(IkonaOstrzezenie, null, Modifier.size(16.dp), tint = DarkTokens.warnInk)
+        Icon(IkonaOstrzezenie, null, Modifier.size(16.dp), tint = Tokeny.warnInk)
         Text(
             "%02d.%02d — tylko %d h przerwy między zmianami".format(
                 pierwsza.date.dayOfMonth, pierwsza.date.monthValue, pierwsza.przerwaH
             ) + if (s.kolizje.size > 1) " (+${s.kolizje.size - 1})" else "",
-            style = GrafikType.caption, color = DarkTokens.warnInk2,
+            style = GrafikType.caption, color = Tokeny.warnInk2,
             modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis
         )
-        Icon(IkonaWPrawo, null, Modifier.size(15.dp), tint = Color(0xFFB08578))
+        Icon(IkonaWPrawo, null, Modifier.size(15.dp), tint = Tokeny.warnInk2)
     }
 }
 
@@ -199,7 +199,7 @@ private fun SiatkaMiesiaca(s: UiState, dzis: LocalDate, wybrany: LocalDate, naWy
                     d, Modifier.weight(1f), textAlign = TextAlign.Center,
                     fontSize = 10.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
                     letterSpacing = 0.8.sp, fontFamily = Jakarta,
-                    color = if (i >= 5) DarkTokens.inkFaint else DarkTokens.inkMuted
+                    color = if (i >= 5) Tokeny.inkFaint else Tokeny.inkMuted
                 )
             }
         }
@@ -246,14 +246,14 @@ private fun KafelekDnia(
     val odMs = Motion.CELL_START_MS + indeks * Motion.CELL_STAGGER_MS
     val lokalny = (((postepSiatki * calosc) - odMs) / Motion.CELL_IN_MS).coerceIn(0f, 1f)
 
-    val kolory = ShiftPaletteDark.of(typDniaZ(e?.shift))
+    val kolory = Paleta.of(typDniaZ(e?.shift))
     val tlo = if (poza) Color.Transparent else kolory.fill
-    val obrys = if (poza) Color(0xFF171B1E) else kolory.line
-    val atrament = if (poza) DarkTokens.inkDisabled else kolory.ink
+    val obrys = if (poza) Paleta.POZA.line else kolory.line
+    val atrament = if (poza) Tokeny.inkDisabled else kolory.ink
     val numer = when {
-        poza -> DarkTokens.inkDisabled
-        e?.shift?.isWork != true -> DarkTokens.inkMuted
-        else -> DarkTokens.inkStrong
+        poza -> Tokeny.inkDisabled
+        e?.shift?.isWork != true -> Tokeny.inkMuted
+        else -> Tokeny.inkStrong
     }
 
     val pulsGramy = animacjeWlaczone() && dzisiaj
@@ -265,8 +265,8 @@ private fun KafelekDnia(
     ) else remember { mutableFloatStateOf(0.9f) }
 
     val pierscien = when {
-        zaznaczony -> DarkTokens.accent
-        dzisiaj -> DarkTokens.accent.copy(alpha = mocPulsu)
+        zaznaczony -> Tokeny.accent
+        dzisiaj -> Tokeny.accent.copy(alpha = mocPulsu)
         else -> null
     }
 
@@ -290,7 +290,7 @@ private fun KafelekDnia(
                 Box(
                     Modifier.padding(start = 3.dp, bottom = 3.dp).size(5.dp)
                         .clip(RoundedCornerShape(999.dp))
-                        .background(DarkTokens.warnInk)
+                        .background(Tokeny.warnInk)
                 )
             }
             Spacer(Modifier.weight(1f))
@@ -298,7 +298,7 @@ private fun KafelekDnia(
                 Text(
                     if (godziny.trwa) "praca" else "${godziny.hours}h",
                     fontSize = 9.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
-                    fontFamily = Jakarta, color = Color(0xFF7E878E)
+                    fontFamily = Jakarta, color = Tokeny.inkMuted
                 )
             }
         }
@@ -315,8 +315,8 @@ private fun KafelekDnia(
                         "+$ot",
                         fontSize = 9.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                         fontFamily = Jakarta,
-                        color = if (e?.otRate == OtRate.P100) ShiftPaletteDark.I.ink
-                        else ShiftPaletteDark.I.ink.copy(alpha = 0.65f)
+                        color = if (e?.otRate == OtRate.P100) Paleta.I.ink
+                        else Paleta.I.ink.copy(alpha = 0.65f)
                     )
                 }
             }
@@ -328,7 +328,7 @@ private fun KafelekDnia(
 private fun PasekWybranego(s: UiState, dzien: LocalDate, naSzczegoly: () -> Unit) {
     val p by postepWejscia(Motion.RISE_MS, 900)
     val e = s.entries[dzien]
-    val k = ShiftPaletteDark.of(typDniaZ(e?.shift))
+    val k = Paleta.of(typDniaZ(e?.shift))
     val opisZmiany = when (e?.shift) {
         Shift.I -> "Zmiana ranna · 06:00–14:00 · 8 h"
         Shift.II -> "Zmiana popołudniowa · 14:00–22:00 · 8 h"
@@ -344,8 +344,8 @@ private fun PasekWybranego(s: UiState, dzien: LocalDate, naSzczegoly: () -> Unit
         Modifier.wejscie(p).padding(horizontal = Dim.screenGutter, vertical = 2.dp)
             .fillMaxWidth()
             .clip(RoundedCornerShape(Dim.rCardSmall))
-            .background(DarkTokens.surfaceStrong)
-            .border(1.dp, DarkTokens.lineStrong, RoundedCornerShape(Dim.rCardSmall))
+            .background(Tokeny.surfaceStrong)
+            .border(1.dp, Tokeny.lineStrong, RoundedCornerShape(Dim.rCardSmall))
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -364,18 +364,18 @@ private fun PasekWybranego(s: UiState, dzien: LocalDate, naSzczegoly: () -> Unit
                 dzien.dayOfWeek.getDisplayName(JavaTextStyle.FULL_STANDALONE, PL)
                     .replaceFirstChar { it.uppercase() } + ", ${dzien.dayOfMonth} " +
                     dzien.month.getDisplayName(JavaTextStyle.FULL, PL),
-                style = GrafikType.cardTitle, color = DarkTokens.ink, maxLines = 1, overflow = TextOverflow.Ellipsis
+                style = GrafikType.cardTitle, color = Tokeny.ink, maxLines = 1, overflow = TextOverflow.Ellipsis
             )
-            Text(opis, style = GrafikType.caption, color = DarkTokens.inkMuted,
+            Text(opis, style = GrafikType.caption, color = Tokeny.inkMuted,
                 maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         Box(
             Modifier.size(38.dp).clip(RoundedCornerShape(12.dp))
-                .background(DarkTokens.accentTintBg)
-                .border(1.dp, DarkTokens.accentTintLine, RoundedCornerShape(12.dp))
+                .background(Tokeny.accentTintBg)
+                .border(1.dp, Tokeny.accentTintLine, RoundedCornerShape(12.dp))
                 .clickable(onClick = naSzczegoly),
             contentAlignment = Alignment.Center
-        ) { Icon(IkonaWPrawo, "Szczegóły dnia", Modifier.size(17.dp), tint = DarkTokens.accent) }
+        ) { Icon(IkonaWPrawo, "Szczegóły dnia", Modifier.size(17.dp), tint = Tokeny.accent) }
     }
 }
 
@@ -388,22 +388,22 @@ private fun RzadPrzyciskow(naEdycje: () -> Unit) {
     ) {
         Row(
             Modifier.weight(1f).height(46.dp).clip(RoundedCornerShape(Dim.rCell))
-                .background(Color.White.copy(alpha = 0.05f))
-                .border(1.dp, DarkTokens.lineStrong, RoundedCornerShape(Dim.rCell))
+                .background(Tokeny.surface)
+                .border(1.dp, Tokeny.lineStrong, RoundedCornerShape(Dim.rCell))
                 .clickable(onClick = naEdycje),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
         ) {
-            Icon(IkonaOlowek, null, Modifier.size(17.dp), tint = DarkTokens.inkStrong)
+            Icon(IkonaOlowek, null, Modifier.size(17.dp), tint = Tokeny.inkStrong)
             Text("Edytuj grafik", fontSize = 13.sp,
                 fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
-                fontFamily = Jakarta, color = DarkTokens.inkStrong)
+                fontFamily = Jakarta, color = Tokeny.inkStrong)
         }
         Box(
             Modifier.size(46.dp).clip(RoundedCornerShape(Dim.rCell))
-                .background(Color.White.copy(alpha = 0.05f))
-                .border(1.dp, DarkTokens.lineStrong, RoundedCornerShape(Dim.rCell)),
+                .background(Tokeny.surface)
+                .border(1.dp, Tokeny.lineStrong, RoundedCornerShape(Dim.rCell)),
             contentAlignment = Alignment.Center
-        ) { Icon(IkonaFiltr, "Filtr i widok", Modifier.size(17.dp), tint = DarkTokens.ink2) }
+        ) { Icon(IkonaFiltr, "Filtr i widok", Modifier.size(17.dp), tint = Tokeny.ink2) }
     }
 }

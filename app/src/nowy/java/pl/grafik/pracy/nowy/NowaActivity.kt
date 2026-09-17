@@ -47,6 +47,17 @@ import kotlinx.coroutines.launch
 import pl.grafik.pracy.data.SettingsStore
 import pl.grafik.pracy.events.PowiadomieniaWarunkowe
 import pl.grafik.pracy.nowy.widzety.OdswiezanieWidzetow
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.platform.LocalContext
+import pl.grafik.pracy.nowy.theme.LocalPaleta
+import pl.grafik.pracy.nowy.theme.LocalTokeny
+import pl.grafik.pracy.nowy.theme.PALETA_CIEMNA
+import pl.grafik.pracy.nowy.theme.PALETA_JASNA
+import pl.grafik.pracy.nowy.theme.TOKENY_CIEMNE
+import pl.grafik.pracy.nowy.theme.TOKENY_JASNE
+import pl.grafik.pracy.nowy.theme.TrybMotywu
 
 /**
  * Ekran startowy wariantu „nowy".
@@ -71,7 +82,7 @@ class NowaActivity : ComponentActivity() {
             OdswiezanieWidzetow.odswiez(applicationContext)
             OdswiezanieWidzetow.zaplanuj(applicationContext)
         }
-        setContent { NowaApp(vm, pvm, uvm) }
+        setContent { MotywAplikacji { NowaApp(vm, pvm, uvm) } }
     }
 
     override fun onResume() {
@@ -136,7 +147,7 @@ private fun NowaApp(vm: Vm, pvm: PresenceVm, uvm: UpdateVm) {
         null -> {}
     }
 
-    Column(Modifier.fillMaxSize().background(DarkTokens.bg)) {
+    Column(Modifier.fillMaxSize().background(Tokeny.bg)) {
         Box(Modifier.weight(1f).fillMaxWidth()) {
             // Ekrany dochodzą po kolei, jeden na commit — patrz design/README.md.
             when (zakladka) {
@@ -160,7 +171,7 @@ private fun NowaApp(vm: Vm, pvm: PresenceVm, uvm: UpdateVm) {
                 )
                 Zakladka.USTAWIENIA -> EkranUstawienia(vm, pvm, uvm) { podstrona = it }
                 else -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(zakladka.etykieta, style = GrafikType.h1, color = DarkTokens.ink)
+                    Text(zakladka.etykieta, style = GrafikType.h1, color = Tokeny.ink)
                 }
             }
         }
@@ -176,9 +187,9 @@ private fun NowaApp(vm: Vm, pvm: PresenceVm, uvm: UpdateVm) {
 @Composable
 private fun PasekNawigacji(wybrana: Zakladka, naZmiane: (Zakladka) -> Unit) {
     Column(Modifier.fillMaxWidth()) {
-        Box(Modifier.fillMaxWidth().height(1.dp).background(DarkTokens.navLine))
+        Box(Modifier.fillMaxWidth().height(1.dp).background(Tokeny.navLine))
         Row(
-            Modifier.fillMaxWidth().background(DarkTokens.navBg)
+            Modifier.fillMaxWidth().background(Tokeny.navBg)
                 .padding(start = 10.dp, end = 10.dp, top = 8.dp, bottom = dolnaKrawedz()),
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
@@ -187,7 +198,7 @@ private fun PasekNawigacji(wybrana: Zakladka, naZmiane: (Zakladka) -> Unit) {
                 Column(
                     Modifier.weight(1f).heightIn(min = Dim.navItemMin)
                         .clip(RoundedCornerShape(13.dp))
-                        .background(if (aktywna) DarkTokens.navActiveBg else Color.Transparent)
+                        .background(if (aktywna) Tokeny.navActiveBg else Color.Transparent)
                         .clickable { naZmiane(z) }
                         .padding(vertical = 6.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -196,15 +207,42 @@ private fun PasekNawigacji(wybrana: Zakladka, naZmiane: (Zakladka) -> Unit) {
                     Icon(
                         z.ikona, z.etykieta,
                         Modifier.size(20.dp),
-                        tint = if (aktywna) DarkTokens.accent else DarkTokens.inkMuted
+                        tint = if (aktywna) Tokeny.accent else Tokeny.inkMuted
                     )
                     Text(
                         z.etykieta,
                         style = GrafikType.micro,
-                        color = if (aktywna) DarkTokens.accent else DarkTokens.inkMuted
+                        color = if (aktywna) Tokeny.accent else Tokeny.inkMuted
                     )
                 }
             }
         }
     }
+}
+
+/**
+ * Owija ekrany zestawem tokenów wybranego motywu.
+ *
+ * „Systemowy" idzie za ustawieniem telefonu, więc przy przełączeniu trybu ciemnego
+ * w Androidzie aplikacja zmienia się razem z nim, bez wchodzenia w ustawienia.
+ */
+@Composable
+private fun MotywAplikacji(tresc: @Composable () -> Unit) {
+    val ctx = LocalContext.current
+    val ustawienia = remember { SettingsStore(ctx) }
+    val nazwa by ustawienia.trybMotywu.collectAsState(initial = TrybMotywu.CIEMNY.name)
+    val tryb = remember(nazwa) {
+        runCatching { TrybMotywu.valueOf(nazwa) }.getOrDefault(TrybMotywu.CIEMNY)
+    }
+    val jasny = when (tryb) {
+        TrybMotywu.JASNY -> true
+        TrybMotywu.CIEMNY -> false
+        TrybMotywu.SYSTEMOWY -> !isSystemInDarkTheme()
+    }
+
+    CompositionLocalProvider(
+        LocalTokeny provides if (jasny) TOKENY_JASNE else TOKENY_CIEMNE,
+        LocalPaleta provides if (jasny) PALETA_JASNA else PALETA_CIEMNA,
+        content = tresc
+    )
 }

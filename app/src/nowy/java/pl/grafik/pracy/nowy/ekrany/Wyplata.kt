@@ -90,11 +90,11 @@ private fun Naglowek(s: UiState) {
     ) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
             Text("Wypłata", style = GrafikType.h1.copy(fontSize = 26.sp, lineHeight = 26.sp),
-                color = DarkTokens.ink)
+                color = Tokeny.ink)
             Text(
                 "szacunek z grafiku · " + s.ym.month.getDisplayName(JavaTextStyle.FULL_STANDALONE, PL_PAY)
                     .replaceFirstChar { it.uppercase(PL_PAY) }.lowercase(PL_PAY) + " ${s.ym.year}",
-                fontSize = 12.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted
+                fontSize = 12.sp, fontFamily = Jakarta, color = Tokeny.inkMuted
             )
         }
         Box(
@@ -105,7 +105,7 @@ private fun Naglowek(s: UiState) {
             contentAlignment = Alignment.Center
         ) {
             Text("brutto", fontSize = 11.sp, fontWeight = FontWeight.Bold,
-                fontFamily = Jakarta, color = ShiftPaletteDark.I.ink)
+                fontFamily = Jakarta, color = Paleta.I.ink)
         }
     }
 }
@@ -128,26 +128,26 @@ private fun KartaKwoty(w: Wyplata, cfg: StawkiCfg) {
     ) {
         if (!cfg.ustawiona) {
             Text("Ustaw stawkę", fontSize = 18.sp, fontWeight = FontWeight.Bold,
-                fontFamily = Jakarta, color = DarkTokens.ink)
+                fontFamily = Jakarta, color = Tokeny.ink)
             Text(
                 "Bez stawki zasadniczej nie ma z czego liczyć. Wpisz ją niżej — " +
                     "resztę weźmiemy z grafiku.",
                 fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta,
-                color = DarkTokens.inkMuted
+                color = Tokeny.inkMuted
             )
             return@Column
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("≈", fontSize = 20.sp, fontWeight = FontWeight.SemiBold, fontFamily = Jakarta,
-                color = DarkTokens.inkMuted, modifier = Modifier.alignByBaseline())
+                color = Tokeny.inkMuted, modifier = Modifier.alignByBaseline())
             Text(
                 KalkulatorWyplaty.zlote(w.razem),
                 style = GrafikType.heroNumber.copy(fontSize = 44.sp, lineHeight = 40.sp),
-                color = DarkTokens.ink, modifier = Modifier.alignByBaseline()
+                color = Tokeny.ink, modifier = Modifier.alignByBaseline()
             )
             Text("zł", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, fontFamily = Jakarta,
-                color = Color(0xFFD7DBDE), modifier = Modifier.alignByBaseline())
+                color = Tokeny.inkNaKarcie, modifier = Modifier.alignByBaseline())
         }
 
         PasekSkladnikow(w)
@@ -157,18 +157,18 @@ private fun KartaKwoty(w: Wyplata, cfg: StawkiCfg) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text("Na rękę", fontSize = 13.sp, fontWeight = FontWeight.Bold,
-                    fontFamily = Jakarta, color = DarkTokens.ink)
+                    fontFamily = Jakarta, color = Tokeny.ink)
                 Text(
                     "po składkach i zaliczce" +
                         (if (cfg.stalePotracenia > 0) " oraz stałych potrąceniach" else ""),
-                    fontSize = 10.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted
+                    fontSize = 10.sp, fontFamily = Jakarta, color = Tokeny.inkMuted
                 )
             }
             Text(
                 "≈ ${KalkulatorWyplaty.zlote(n.naReke)} zł",
                 style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold,
                     fontFamily = Jakarta, fontFeatureSettings = TNUM),
-                color = DarkTokens.accent
+                color = Tokeny.accent
             )
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -181,8 +181,8 @@ private fun KartaKwoty(w: Wyplata, cfg: StawkiCfg) {
                     Text("− ${KalkulatorWyplaty.zlote(kwota)}",
                         style = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.SemiBold,
                             fontFamily = Jakarta, fontFeatureSettings = TNUM),
-                        color = DarkTokens.ink3)
-                    Text(nazwa, fontSize = 9.sp, fontFamily = Jakarta, color = DarkTokens.inkFaint)
+                        color = Tokeny.ink3)
+                    Text(nazwa, fontSize = 9.sp, fontFamily = Jakarta, color = Tokeny.inkFaint)
                 }
             }
             if (cfg.stalePotracenia > 0) {
@@ -190,21 +190,21 @@ private fun KartaKwoty(w: Wyplata, cfg: StawkiCfg) {
                     Text("− ${KalkulatorWyplaty.zlote(n.potracenia)}",
                         style = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.SemiBold,
                             fontFamily = Jakarta, fontFeatureSettings = TNUM),
-                        color = DarkTokens.ink3)
+                        color = Tokeny.ink3)
                     Text("potrącenia", fontSize = 9.sp, fontFamily = Jakarta,
-                        color = DarkTokens.inkFaint)
+                        color = Tokeny.inkFaint)
                 }
             }
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-            Icon(IkonaInfo, null, Modifier.size(15.dp).padding(top = 1.dp), tint = DarkTokens.inkMuted)
+            Icon(IkonaInfo, null, Modifier.size(15.dp).padding(top = 1.dp), tint = Tokeny.inkMuted)
             Text(
                 "Szacunek z grafiku i Twoich stawek. Na rękę liczymy ze składek ustawowych, " +
                     "kosztów i ulgi — bez premii i bez świadczeń doliczanych przez zakład, " +
                     "więc na odcinku kwota bywa o około procent inna.",
                 fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta,
-                color = DarkTokens.inkMuted
+                color = Tokeny.inkMuted
             )
         }
     }
@@ -226,11 +226,12 @@ private fun PasekSkladnikow(w: Wyplata) {
     }
 }
 
+@Composable
 private fun kolorSkladnika(nazwa: String): Color = when {
-    nazwa.startsWith("Zasadnicza") -> ShiftPaletteDark.I.solid
-    nazwa.startsWith("Nadgodziny") -> ShiftPaletteDark.II.solid
-    nazwa.startsWith("Dodatek") -> ShiftPaletteDark.III.solid
-    else -> DarkTokens.ok
+    nazwa.startsWith("Zasadnicza") -> Paleta.I.solid
+    nazwa.startsWith("Nadgodziny") -> Paleta.II.solid
+    nazwa.startsWith("Dodatek") -> Paleta.III.solid
+    else -> Tokeny.ok
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -244,25 +245,25 @@ private fun KartaSkladnikow(w: Wyplata) {
     Column(
         Modifier.wejscie(p).fillMaxWidth()
             .clip(RoundedCornerShape(Dim.rCard))
-            .background(DarkTokens.surface)
-            .border(1.dp, DarkTokens.line, RoundedCornerShape(Dim.rCard))
+            .background(Tokeny.surface)
+            .border(1.dp, Tokeny.line, RoundedCornerShape(Dim.rCard))
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("Z czego się składa", style = GrafikType.cardTitle, color = DarkTokens.ink)
+        Text("Z czego się składa", style = GrafikType.cardTitle, color = Tokeny.ink)
 
         w.skladniki.forEach { s -> WierszSkladnika(s) }
 
-        Box(Modifier.fillMaxWidth().height(1.dp).background(DarkTokens.line))
+        Box(Modifier.fillMaxWidth().height(1.dp).background(Tokeny.line))
 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Razem brutto", fontSize = 13.sp, fontWeight = FontWeight.Bold,
-                fontFamily = Jakarta, color = DarkTokens.ink, modifier = Modifier.weight(1f))
+                fontFamily = Jakarta, color = Tokeny.ink, modifier = Modifier.weight(1f))
             Text(
                 "${KalkulatorWyplaty.zlote(w.razem)} zł",
                 style = TextStyle(fontSize = 17.sp, fontWeight = FontWeight.Bold,
                     fontFamily = Jakarta, fontFeatureSettings = TNUM),
-                color = DarkTokens.ink
+                color = Tokeny.ink
             )
         }
     }
@@ -280,13 +281,13 @@ private fun WierszSkladnika(s: SkladnikWyplaty) {
                 .background(kolorSkladnika(s.nazwa))
         )
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(s.nazwa, fontSize = 13.sp, fontFamily = Jakarta, color = DarkTokens.inkStrong,
+            Text(s.nazwa, fontSize = 13.sp, fontFamily = Jakarta, color = Tokeny.inkStrong,
                 maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(
                 if (s.nazwa.startsWith("Zasadnicza")) "${s.godziny} h planu · ${KalkulatorWyplaty.zlote(s.stawka)} zł/h"
                 else "${s.godziny} h × ${KalkulatorWyplaty.zlote(s.stawka)} zł",
                 style = TextStyle(fontSize = 10.sp, fontFamily = Jakarta, fontFeatureSettings = TNUM),
-                color = DarkTokens.inkFaint
+                color = Tokeny.inkFaint
             )
         }
         Text(
@@ -309,12 +310,12 @@ private fun KartaStawek(w: Wyplata, cfg: StawkiCfg, zapisz: (StawkiCfg) -> Unit)
     Column(
         Modifier.wejscie(p).fillMaxWidth()
             .clip(RoundedCornerShape(Dim.rCard))
-            .background(DarkTokens.surface)
-            .border(1.dp, DarkTokens.line, RoundedCornerShape(Dim.rCard))
+            .background(Tokeny.surface)
+            .border(1.dp, Tokeny.line, RoundedCornerShape(Dim.rCard))
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        Text("TWOJE STAWKI", style = GrafikType.sectionLabel, color = DarkTokens.inkFaint)
+        Text("TWOJE STAWKI", style = GrafikType.sectionLabel, color = Tokeny.inkFaint)
 
         PoleStawki(
             "Wynagrodzenie zasadnicze", "brutto za miesiąc, z umowy", cfg.zasadnicza
@@ -333,20 +334,20 @@ private fun KartaStawek(w: Wyplata, cfg: StawkiCfg, zapisz: (StawkiCfg) -> Unit)
                         "${KalkulatorWyplaty.zlote(w.stawkaGodzinowa)} zł " +
                         "(zasadnicza ÷ ${w.normaMiesiaca} h planu)",
                     fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta,
-                    color = ShiftPaletteDark.I.ink
+                    color = Paleta.I.ink
                 )
             }
         }
 
-        Box(Modifier.fillMaxWidth().height(1.dp).background(DarkTokens.line))
+        Box(Modifier.fillMaxWidth().height(1.dp).background(Tokeny.line))
 
         PoleStawki(
             "Dodatek za nocki", "kwota za godzinę III zmiany, z regulaminu", cfg.dodatekNocny
         ) { zapisz(cfg.copy(dodatekNocny = it)) }
 
-        Box(Modifier.fillMaxWidth().height(1.dp).background(DarkTokens.line))
+        Box(Modifier.fillMaxWidth().height(1.dp).background(Tokeny.line))
 
-        Text("DO KWOTY NA RĘKĘ", style = GrafikType.sectionLabel, color = DarkTokens.inkFaint)
+        Text("DO KWOTY NA RĘKĘ", style = GrafikType.sectionLabel, color = Tokeny.inkFaint)
 
         PoleStawki(
             "Koszty uzyskania", "250 zł podstawowe, 300 zł przy dojazdach", cfg.kosztyUzyskania
@@ -361,7 +362,7 @@ private fun KartaStawek(w: Wyplata, cfg: StawkiCfg, zapisz: (StawkiCfg) -> Unit)
             cfg.stalePotracenia
         ) { zapisz(cfg.copy(stalePotracenia = it)) }
 
-        Box(Modifier.fillMaxWidth().height(1.dp).background(DarkTokens.line))
+        Box(Modifier.fillMaxWidth().height(1.dp).background(Tokeny.line))
 
         Row(
             Modifier.fillMaxWidth().clickable {
@@ -371,9 +372,9 @@ private fun KartaStawek(w: Wyplata, cfg: StawkiCfg, zapisz: (StawkiCfg) -> Unit)
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text("Pokazuj wypłatę w Bilansie", style = GrafikType.cardTitle, color = DarkTokens.ink)
+                Text("Pokazuj wypłatę w Bilansie", style = GrafikType.cardTitle, color = Tokeny.ink)
                 Text("jeśli wolisz, żeby kwoty nie świeciły się na wierzchu",
-                    fontSize = 11.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted)
+                    fontSize = 11.sp, fontFamily = Jakarta, color = Tokeny.inkMuted)
             }
             Przelacznik(cfg.pokazujWBilansie) { zapisz(cfg.copy(pokazujWBilansie = it)) }
         }
@@ -404,18 +405,18 @@ private fun KartaCzekajacych(w: Wyplata, s: UiState) {
             Modifier.size(42.dp).clip(RoundedCornerShape(14.dp))
                 .background(Color(0x297ABDFF)),
             contentAlignment = Alignment.Center
-        ) { Icon(IkonaCzasPracy, null, Modifier.size(20.dp), tint = ShiftPaletteDark.III.ink) }
+        ) { Icon(IkonaCzasPracy, null, Modifier.size(20.dp), tint = Paleta.III.ink) }
 
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("Czeka na koniec okresu", fontSize = 14.sp, fontWeight = FontWeight.Bold,
-                    fontFamily = Jakarta, color = DarkTokens.ink,
+                    fontFamily = Jakarta, color = Tokeny.ink,
                     modifier = Modifier.weight(1f).alignByBaseline())
                 Text(
                     "${KalkulatorWyplaty.zlote(czekaja.kwota)} zł",
                     style = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Bold,
                         fontFamily = Jakarta, fontFeatureSettings = TNUM),
-                    color = ShiftPaletteDark.III.ink, modifier = Modifier.alignByBaseline()
+                    color = Paleta.III.ink, modifier = Modifier.alignByBaseline()
                 )
             }
             Text(
@@ -423,7 +424,7 @@ private fun KartaCzekajacych(w: Wyplata, s: UiState) {
                     "Zakład wypłaca je zbiorczo" +
                     (okres?.let { " w wypłacie za ${ostatniMiesiacOkresu(it)}" } ?: "") + ".",
                 fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta,
-                color = DarkTokens.ink3
+                color = Tokeny.ink3
             )
         }
     }
@@ -460,45 +461,45 @@ private fun KartaOdcinkow(ym: YearMonth) {
     Column(
         Modifier.wejscie(p).fillMaxWidth()
             .clip(RoundedCornerShape(Dim.rCard))
-            .background(DarkTokens.surface)
-            .border(1.dp, DarkTokens.line, RoundedCornerShape(Dim.rCard))
+            .background(Tokeny.surface)
+            .border(1.dp, Tokeny.line, RoundedCornerShape(Dim.rCard))
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
             Text("ODCINKI", style = GrafikType.sectionLabel,
-                color = DarkTokens.inkFaint, modifier = Modifier.weight(1f))
+                color = Tokeny.inkFaint, modifier = Modifier.weight(1f))
             Text(
                 if (odcinki.isEmpty()) "nic nie wgrano" else ileZapisanych(odcinki.size),
-                fontSize = 10.sp, fontFamily = Jakarta, color = DarkTokens.inkFaint
+                fontSize = 10.sp, fontFamily = Jakarta, color = Tokeny.inkFaint
             )
         }
         Text(
             "Wgraj kartkę od wypłaty, a zostanie w aplikacji — będzie pod ręką, " +
                 "gdybyś chciał sprawdzić, jak zakład policzył dany miesiąc.",
             fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta,
-            color = DarkTokens.inkMuted
+            color = Tokeny.inkMuted
         )
 
         Row(
             Modifier.fillMaxWidth().height(44.dp).clip(RoundedCornerShape(14.dp))
-                .background(Color.White.copy(alpha = 0.04f))
-                .border(1.dp, DarkTokens.lineSoft, RoundedCornerShape(14.dp))
+                .background(Tokeny.surface)
+                .border(1.dp, Tokeny.lineSoft, RoundedCornerShape(14.dp))
                 .clickable { wybierz.launch(arrayOf("application/pdf", "image/*")) },
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
         ) {
-            Icon(IkonaPlus, null, Modifier.size(15.dp), tint = DarkTokens.ink2)
+            Icon(IkonaPlus, null, Modifier.size(15.dp), tint = Tokeny.ink2)
             Text(
                 if (tegoMiesiaca == null) "Dodaj odcinek za ${miesiacPay(ym)}"
                 else "Zastąp odcinek za ${miesiacPay(ym)}",
                 fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
-                fontFamily = Jakarta, color = DarkTokens.ink2
+                fontFamily = Jakarta, color = Tokeny.ink2
             )
         }
 
         blad?.let {
-            Text(it, fontSize = 11.sp, fontFamily = Jakarta, color = DarkTokens.warnInk)
+            Text(it, fontSize = 11.sp, fontFamily = Jakarta, color = Tokeny.warnInk)
         }
 
         odcinki.forEach { row -> WierszOdcinka(row, ctx, zakres) }
@@ -514,8 +515,8 @@ private fun WierszOdcinka(
     val ym = remember(row.ym) { runCatching { YearMonth.parse(row.ym) }.getOrNull() }
     Row(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(13.dp))
-            .background(DarkTokens.surfaceInput)
-            .border(1.dp, DarkTokens.lineInput, RoundedCornerShape(13.dp))
+            .background(Tokeny.surfaceInput)
+            .border(1.dp, Tokeny.lineInput, RoundedCornerShape(13.dp))
             .clickable {
                 Odcinki.intencjaOtwarcia(ctx, row)?.let { runCatching { ctx.startActivity(it) } }
             }
@@ -527,23 +528,23 @@ private fun WierszOdcinka(
             Modifier.size(34.dp).clip(RoundedCornerShape(11.dp))
                 .background(Color(0x1FDAC559)),
             contentAlignment = Alignment.Center
-        ) { Icon(IkonaWyplata, null, Modifier.size(16.dp), tint = ShiftPaletteDark.I.ink) }
+        ) { Icon(IkonaWyplata, null, Modifier.size(16.dp), tint = Paleta.I.ink) }
 
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
                 ym?.let { miesiacPay(it) } ?: row.ym,
                 fontSize = 13.sp, fontWeight = FontWeight.SemiBold, fontFamily = Jakarta,
-                color = DarkTokens.ink, maxLines = 1, overflow = TextOverflow.Ellipsis
+                color = Tokeny.ink, maxLines = 1, overflow = TextOverflow.Ellipsis
             )
             Text(row.originalName, fontSize = 10.sp, fontFamily = Jakarta,
-                color = DarkTokens.inkFaint, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                color = Tokeny.inkFaint, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
 
         Box(
             Modifier.size(32.dp).clip(RoundedCornerShape(10.dp))
                 .clickable { zakres.launch { Odcinki.usun(ctx, row) } },
             contentAlignment = Alignment.Center
-        ) { Icon(IkonaKosz, "Usuń odcinek", Modifier.size(15.dp), tint = DarkTokens.inkMuted) }
+        ) { Icon(IkonaKosz, "Usuń odcinek", Modifier.size(15.dp), tint = Tokeny.inkMuted) }
     }
 }
 
@@ -566,11 +567,11 @@ private fun KartaCzegoNieLiczymy() {
         Modifier.wejscie(p).fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(Color(0x08FFFFFF))
-            .border(1.dp, DarkTokens.line, RoundedCornerShape(20.dp))
+            .border(1.dp, Tokeny.line, RoundedCornerShape(20.dp))
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Text("CZEGO NIE LICZYMY", style = GrafikType.sectionLabel, color = DarkTokens.inkFaint)
+        Text("CZEGO NIE LICZYMY", style = GrafikType.sectionLabel, color = Tokeny.inkFaint)
         listOf(
             "Premii — jest uznaniowa, raz jest, raz jej nie ma.",
             "Dodatku urlopowego i nadgodzin ze średniej — liczą się z poprzednich miesięcy.",
@@ -581,17 +582,17 @@ private fun KartaCzegoNieLiczymy() {
                 Box(
                     Modifier.padding(top = 6.dp).size(5.dp)
                         .clip(RoundedCornerShape(999.dp))
-                        .background(DarkTokens.inkDisabled)
+                        .background(Tokeny.inkDisabled)
                 )
                 Text(zdanie, fontSize = 12.sp, lineHeight = 18.sp,
-                    fontFamily = Jakarta, color = DarkTokens.ink3)
+                    fontFamily = Jakarta, color = Tokeny.ink3)
             }
         }
         Text(
             "Dlatego kwota z aplikacji jest niższa niż suma naliczeń na pasku — " +
                 "pokazujemy tylko to, co da się policzyć z grafiku i umowy.",
             fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta,
-            color = DarkTokens.inkMuted
+            color = Tokeny.inkMuted
         )
     }
 }
@@ -620,8 +621,8 @@ private fun PoleStawki(
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text(tytul, style = GrafikType.cardTitle, color = DarkTokens.ink)
-            Text(podpis, fontSize = 11.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted,
+            Text(tytul, style = GrafikType.cardTitle, color = Tokeny.ink)
+            Text(podpis, fontSize = 11.sp, fontFamily = Jakarta, color = Tokeny.inkMuted,
                 maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
         Row(
@@ -640,7 +641,7 @@ private fun PoleStawki(
                     }
                 }
             )
-            Text("zł", fontSize = 13.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted)
+            Text("zł", fontSize = 13.sp, fontFamily = Jakarta, color = Tokeny.inkMuted)
         }
     }
 }

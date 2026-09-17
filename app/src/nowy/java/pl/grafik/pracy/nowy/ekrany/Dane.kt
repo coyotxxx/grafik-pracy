@@ -105,11 +105,11 @@ fun EkranDane(uvm: UpdateVm, naPowrot: () -> Unit) {
 
             val pTytul by postepWejscia(Motion.RISE_MS)
             Column(Modifier.wejscie(pTytul), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("Dane i kopia", style = GrafikType.h1.copy(fontSize = 26.sp, lineHeight = 26.sp), color = DarkTokens.ink)
+                Text("Dane i kopia", style = GrafikType.h1.copy(fontSize = 26.sp, lineHeight = 26.sp), color = Tokeny.ink)
                 Text(
                     "Wszystko jest w telefonie. Nic nie leci na żaden serwer.",
                     fontSize = 12.sp, lineHeight = 18.sp,
-                    fontFamily = Jakarta, color = DarkTokens.inkMuted
+                    fontFamily = Jakarta, color = Tokeny.inkMuted
                 )
             }
 
@@ -220,12 +220,12 @@ private fun KartaCoZapisane(stan: Kopia.StanDanych) {
     Column(
         Modifier.wejscie(p).fillMaxWidth()
             .clip(RoundedCornerShape(Dim.rCard))
-            .background(Color.White.copy(alpha = 0.04f))
-            .border(1.dp, DarkTokens.line, RoundedCornerShape(Dim.rCard))
+            .background(Tokeny.surface)
+            .border(1.dp, Tokeny.line, RoundedCornerShape(Dim.rCard))
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("CO JEST ZAPISANE", style = GrafikType.sectionLabel, color = DarkTokens.inkFaint)
+        Text("CO JEST ZAPISANE", style = GrafikType.sectionLabel, color = Tokeny.inkFaint)
 
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Liczba(stan.dni, "ręcznych dni", Modifier.weight(1f))
@@ -237,7 +237,7 @@ private fun KartaCoZapisane(stan: Kopia.StanDanych) {
             "Grafik w kalendarzu liczy się z cyklu — w pamięci siedzą tylko dni, " +
                 "które zmieniłeś sam, ustawienia i wydarzenia.",
             fontSize = 11.sp, lineHeight = 16.5.sp,
-            fontFamily = Jakarta, color = DarkTokens.inkMuted
+            fontFamily = Jakarta, color = Tokeny.inkMuted
         )
     }
 }
@@ -257,9 +257,9 @@ private fun Liczba(wartosc: Int, podpis: String, modifier: Modifier = Modifier) 
                 fontSize = 20.sp, fontWeight = FontWeight.Bold,
                 fontFamily = Jakarta, fontFeatureSettings = TNUM
             ),
-            color = DarkTokens.ink
+            color = Tokeny.ink
         )
-        Text(podpis, fontSize = 10.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted,
+        Text(podpis, fontSize = 10.sp, fontFamily = Jakarta, color = Tokeny.inkMuted,
             maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
@@ -280,14 +280,14 @@ private fun KartaKopii(
     Column(
         Modifier.wejscie(p).fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(DarkTokens.accent.copy(alpha = 0.06f))
-            .border(1.dp, DarkTokens.accent.copy(alpha = 0.24f), RoundedCornerShape(20.dp))
+            .background(Tokeny.accent.copy(alpha = 0.06f))
+            .border(1.dp, Tokeny.accent.copy(alpha = 0.24f), RoundedCornerShape(20.dp))
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text("Kopia zapasowa", fontSize = 14.sp, fontWeight = FontWeight.Bold,
-                fontFamily = Jakarta, color = DarkTokens.ink)
+                fontFamily = Jakarta, color = Tokeny.ink)
             Text(
                 "Jeden plik .json z całym stanem aplikacji — zmiana telefonu zajmie minutę.",
                 fontSize = 11.sp, lineHeight = 16.5.sp,
@@ -299,14 +299,14 @@ private fun KartaKopii(
             Row(
                 Modifier.weight(1f).height(48.dp)
                     .clip(RoundedCornerShape(15.dp))
-                    .background(DarkTokens.accent)
+                    .background(Tokeny.accent)
                     .clickable(onClick = naZapis),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(7.dp, Alignment.CenterHorizontally)
             ) {
-                Icon(IkonaZapisz, null, Modifier.size(16.dp), tint = DarkTokens.accentOn)
+                Icon(IkonaZapisz, null, Modifier.size(16.dp), tint = Tokeny.accentOn)
                 Text("Zapisz kopię", fontSize = 13.sp, fontWeight = FontWeight.Bold,
-                    fontFamily = Jakarta, color = DarkTokens.accentOn)
+                    fontFamily = Jakarta, color = Tokeny.accentOn)
             }
 
             Box(
@@ -316,27 +316,27 @@ private fun KartaKopii(
                     .clickable(onClick = naWyslanie),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(IkonaWyslij, "Wyślij kopię", Modifier.size(17.dp), tint = DarkTokens.ink2)
+                Icon(IkonaWyslij, "Wyślij kopię", Modifier.size(17.dp), tint = Tokeny.ink2)
             }
         }
 
         Row(
             Modifier.fillMaxWidth().height(44.dp)
                 .clip(RoundedCornerShape(14.dp))
-                .border(1.dp, DarkTokens.accent.copy(alpha = 0.3f), RoundedCornerShape(14.dp))
+                .border(1.dp, Tokeny.accent.copy(alpha = 0.3f), RoundedCornerShape(14.dp))
                 .clickable(onClick = naWczytanie),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(7.dp, Alignment.CenterHorizontally)
         ) {
-            Icon(IkonaWczytaj, null, Modifier.size(16.dp), tint = DarkTokens.accent)
+            Icon(IkonaWczytaj, null, Modifier.size(16.dp), tint = Tokeny.accent)
             Text("Wczytaj z pliku", fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
-                fontFamily = Jakarta, color = DarkTokens.accent)
+                fontFamily = Jakarta, color = Tokeny.accent)
         }
 
         Text(
             notka ?: "Wczytanie nadpisze obecne dane — najpierw zrób kopię.",
             fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta,
-            color = if (notka != null) DarkTokens.accent else DarkTokens.inkFaint
+            color = if (notka != null) Tokeny.accent else Tokeny.inkFaint
         )
     }
 }
@@ -358,7 +358,7 @@ private fun KartaAutomatycznej(
         Modifier.wejscie(p).fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(Color.White.copy(alpha = 0.035f))
-            .border(1.dp, DarkTokens.line, RoundedCornerShape(20.dp))
+            .border(1.dp, Tokeny.line, RoundedCornerShape(20.dp))
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -369,15 +369,15 @@ private fun KartaAutomatycznej(
         ) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text("Automatyczna kopia", fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
-                    fontFamily = Jakarta, color = DarkTokens.ink)
+                    fontFamily = Jakarta, color = Tokeny.ink)
                 Text("co niedzielę, do pamięci telefonu", fontSize = 11.sp,
-                    fontFamily = Jakarta, color = DarkTokens.inkMuted)
+                    fontFamily = Jakarta, color = Tokeny.inkMuted)
             }
             Przelacznik(wlaczona, naPrzelaczenie)
         }
 
         if (kopie.isNotEmpty()) {
-            Box(Modifier.fillMaxWidth().height(1.dp).background(DarkTokens.line))
+            Box(Modifier.fillMaxWidth().height(1.dp).background(Tokeny.line))
 
             kopie.forEach { k ->
                 Row(
@@ -385,18 +385,18 @@ private fun KartaAutomatycznej(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Icon(IkonaPlik, null, Modifier.size(15.dp), tint = DarkTokens.inkFaint)
+                    Icon(IkonaPlik, null, Modifier.size(15.dp), tint = Tokeny.inkFaint)
                     Text(
                         k.nazwa, Modifier.weight(1f),
                         style = TextStyle(fontSize = 12.sp, fontFamily = Jakarta,
                             fontFeatureSettings = TNUM),
-                        color = DarkTokens.ink3, maxLines = 1, overflow = TextOverflow.Ellipsis
+                        color = Tokeny.ink3, maxLines = 1, overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         k.rozmiar,
                         style = TextStyle(fontSize = 11.sp, fontFamily = Jakarta,
                             fontFeatureSettings = TNUM),
-                        color = DarkTokens.inkFaint
+                        color = Tokeny.inkFaint
                     )
                     Box(
                         Modifier.size(32.dp).clip(RoundedCornerShape(10.dp))
@@ -405,7 +405,7 @@ private fun KartaAutomatycznej(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(IkonaCofnij, "Przywróć tę kopię", Modifier.size(14.dp),
-                            tint = DarkTokens.inkMuted)
+                            tint = Tokeny.inkMuted)
                     }
                 }
             }
@@ -438,8 +438,8 @@ private fun KartaNieodwracalnych(
 
         WierszOperacji(
             ikona = IkonaOdswiez,
-            kolorIkony = DarkTokens.ink2,
-            tloIkony = Color.White.copy(alpha = 0.05f),
+            kolorIkony = Tokeny.ink2,
+            tloIkony = Tokeny.surface,
             tytul = "Przywróć cały grafik do cyklu",
             kolorTytulu = Color(0xFFE7EAEC),
             pogrubiony = false,
@@ -463,7 +463,7 @@ private fun KartaNieodwracalnych(
         Text(
             notka ?: "Przed czyszczeniem zapytamy jeszcze raz i zaproponujemy zapisanie kopii.",
             fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta,
-            color = if (notka != null) DarkTokens.accent else DarkTokens.inkMuted
+            color = if (notka != null) Tokeny.accent else Tokeny.inkMuted
         )
     }
 }
@@ -501,7 +501,7 @@ private fun WierszOperacji(
                 fontWeight = if (pogrubiony) FontWeight.Bold else FontWeight.SemiBold,
                 fontFamily = Jakarta, color = kolorTytulu
             )
-            Text(opis, fontSize = 11.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted,
+            Text(opis, fontSize = 11.sp, fontFamily = Jakarta, color = Tokeny.inkMuted,
                 maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
     }
@@ -521,15 +521,15 @@ private fun KartaWersji(uvm: UpdateVm) {
     Row(
         Modifier.wejscie(p).fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(Color.White.copy(alpha = 0.03f))
-            .border(1.dp, DarkTokens.line, RoundedCornerShape(20.dp))
+            .background(Tokeny.surface)
+            .border(1.dp, Tokeny.line, RoundedCornerShape(20.dp))
             .padding(14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text("Wersja ${u.current}", fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
-                fontFamily = Jakarta, color = DarkTokens.ink,
+                fontFamily = Jakarta, color = Tokeny.ink,
                 maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(
                 when {
@@ -539,14 +539,14 @@ private fun KartaWersji(uvm: UpdateVm) {
                     else -> "aktualizacje z GitHuba"
                 },
                 fontSize = 11.sp, fontFamily = Jakarta,
-                color = if (u.available != null) DarkTokens.accent else DarkTokens.inkMuted,
+                color = if (u.available != null) Tokeny.accent else Tokeny.inkMuted,
                 maxLines = 1, overflow = TextOverflow.Ellipsis
             )
         }
 
         Box(
             Modifier.height(36.dp).clip(RoundedCornerShape(12.dp))
-                .background(Color.White.copy(alpha = 0.05f))
+                .background(Tokeny.surface)
                 .border(1.dp, Color(0xFF2A3036), RoundedCornerShape(12.dp))
                 .clickable(enabled = !sprawdza && pobiera == null) {
                     if (u.available != null) uvm.install() else uvm.check(manual = true)
@@ -557,7 +557,7 @@ private fun KartaWersji(uvm: UpdateVm) {
             Text(
                 if (u.available != null) "Zainstaluj" else "Sprawdź",
                 fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
-                fontFamily = Jakarta, color = DarkTokens.ink2
+                fontFamily = Jakarta, color = Tokeny.ink2
             )
         }
     }
@@ -584,14 +584,14 @@ private fun OknoPytania(p: Pytanie, naZamkniecie: () -> Unit) {
                 .clip(RoundedCornerShape(Dim.rCard))
                 // Okno musi być nieprzezroczyste — `surface` to półprzezroczysta biel
                 // i treść ekranu prześwitywała przez tekst pytania.
-                .background(DarkTokens.bgElevated)
-                .border(1.dp, DarkTokens.line, RoundedCornerShape(Dim.rCard))
+                .background(Tokeny.bgElevated)
+                .border(1.dp, Tokeny.line, RoundedCornerShape(Dim.rCard))
                 .padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(p.tytul, style = GrafikType.cardTitle, color = DarkTokens.ink)
+            Text(p.tytul, style = GrafikType.cardTitle, color = Tokeny.ink)
             Text(p.tresc, fontSize = 12.sp, lineHeight = 18.sp,
-                fontFamily = Jakarta, color = DarkTokens.ink3)
+                fontFamily = Jakarta, color = Tokeny.ink3)
 
             Row(
                 Modifier.fillMaxWidth(),
@@ -602,14 +602,14 @@ private fun OknoPytania(p: Pytanie, naZamkniecie: () -> Unit) {
                 Box(
                     Modifier.weight(1f).height(44.dp)
                         .clip(RoundedCornerShape(13.dp))
-                        .background(if (p.grozne) Color(0xFFFF937E) else DarkTokens.accent)
+                        .background(if (p.grozne) Color(0xFFFF937E) else Tokeny.accent)
                         .clickable { p.akcja(); naZamkniecie() },
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         p.przycisk, fontSize = 13.sp, fontWeight = FontWeight.Bold,
                         fontFamily = Jakarta,
-                        color = if (p.grozne) Color(0xFF2A0D07) else DarkTokens.accentOn
+                        color = if (p.grozne) Color(0xFF2A0D07) else Tokeny.accentOn
                     )
                 }
             }

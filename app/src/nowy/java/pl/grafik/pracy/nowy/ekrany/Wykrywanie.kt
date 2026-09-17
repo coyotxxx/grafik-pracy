@@ -63,10 +63,10 @@ fun EkranWykrywanie(pvm: PresenceVm, naPowrot: () -> Unit) {
             Column(Modifier.wejscie(pNag), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text("Wykrywanie pracy",
                     style = GrafikType.h1.copy(fontSize = 26.sp, lineHeight = 26.sp),
-                    color = DarkTokens.ink)
+                    color = Tokeny.ink)
                 Text("Telefon sam rozpozna, że jesteś w zakładzie. Lokalizacja nie opuszcza telefonu.",
                     fontSize = 12.sp, lineHeight = 18.sp, fontFamily = Jakarta,
-                    color = DarkTokens.inkMuted)
+                    color = Tokeny.inkMuted)
             }
 
             KartaStrefy(p, pvm)
@@ -85,7 +85,7 @@ fun EkranWykrywanie(pvm: PresenceVm, naPowrot: () -> Unit) {
 @Composable
 private fun KartaStrefy(p: PresenceUi, pvm: PresenceVm) {
     val pr by postepWejscia(Motion.RISE_MS, 50)
-    val niebieski = ShiftPaletteDark.III.ink
+    val niebieski = Paleta.III.ink
 
     Column(
         Modifier.wejscie(pr).fillMaxWidth()
@@ -106,7 +106,7 @@ private fun KartaStrefy(p: PresenceUi, pvm: PresenceVm) {
         ) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text("Automatyczne wykrywanie", fontSize = 15.sp, fontWeight = FontWeight.Bold,
-                    fontFamily = Jakarta, color = DarkTokens.ink)
+                    fontFamily = Jakarta, color = Tokeny.ink)
                 Text(
                     opisStrefy(p), fontSize = 11.sp, fontFamily = Jakarta,
                     color = Color(0xFF9EC9F0), maxLines = 2, overflow = TextOverflow.Ellipsis
@@ -123,10 +123,10 @@ private fun KartaStrefy(p: PresenceUi, pvm: PresenceVm) {
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text("Zapisuj automatycznie", style = GrafikType.cardTitle, color = DarkTokens.ink)
+                Text("Zapisuj automatycznie", style = GrafikType.cardTitle, color = Tokeny.ink)
                 Text("wykryty dzień wchodzi do grafiku sam, powiadomienie pozwala cofnąć",
                     fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta,
-                    color = DarkTokens.inkMuted)
+                    color = Tokeny.inkMuted)
             }
             Przelacznik(p.place.autoSave) { pvm.setAutoSave(it) }
         }
@@ -144,7 +144,7 @@ private fun opisStrefy(p: PresenceUi): String {
 /** Kręgi strefy z makiety: trzy okręgi i pinezka pośrodku. */
 @Composable
 private fun Radar(modifier: Modifier) {
-    val niebieski = ShiftPaletteDark.III.ink
+    val niebieski = Paleta.III.ink
     Box(modifier, contentAlignment = Alignment.Center) {
         Canvas(Modifier.fillMaxSize()) {
             val srodek = Offset(size.width / 2f, size.height / 2f)
@@ -163,7 +163,7 @@ private fun Radar(modifier: Modifier) {
             drawCircle(niebieski.copy(alpha = 0.35f), radius = r * 0.267f, center = srodek,
                 style = Stroke(1.dp.toPx()))
         }
-        Icon(IkonaLokalizacja, null, Modifier.size(40.dp), tint = ShiftPaletteDark.III.ink)
+        Icon(IkonaLokalizacja, null, Modifier.size(40.dp), tint = Paleta.III.ink)
     }
 }
 
@@ -177,7 +177,7 @@ private fun KartaMiejsca(p: PresenceUi, pvm: PresenceVm) {
     val zapisane = p.place.lat != 0.0 || p.place.lon != 0.0
 
     KartaUstawien(Modifier.wejscie(pr)) {
-        Text("GDZIE JEST TWOJA PRACA", style = GrafikType.sectionLabel, color = DarkTokens.inkFaint)
+        Text("GDZIE JEST TWOJA PRACA", style = GrafikType.sectionLabel, color = Tokeny.inkFaint)
 
         Row(
             Modifier.fillMaxWidth(),
@@ -189,7 +189,7 @@ private fun KartaMiejsca(p: PresenceUi, pvm: PresenceVm) {
                 else "miejsce nie jest jeszcze zapisane",
                 style = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
                     fontFamily = Jakarta, fontFeatureSettings = TNUM),
-                color = if (zapisane) DarkTokens.ink else DarkTokens.inkMuted,
+                color = if (zapisane) Tokeny.ink else Tokeny.inkMuted,
                 modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis
             )
             if (zapisane) {
@@ -201,41 +201,41 @@ private fun KartaMiejsca(p: PresenceUi, pvm: PresenceVm) {
                     contentAlignment = Alignment.Center
                 ) {
                     Text("zapisane", fontSize = 10.sp, fontWeight = FontWeight.Bold,
-                        fontFamily = Jakarta, color = DarkTokens.accent)
+                        fontFamily = Jakarta, color = Tokeny.accent)
                 }
             }
         }
 
         Row(
             Modifier.fillMaxWidth().height(48.dp).clip(RoundedCornerShape(15.dp))
-                .background(DarkTokens.accent)
+                .background(Tokeny.accent)
                 .clickable(enabled = !p.capturing) { pvm.captureHere() },
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
         ) {
-            Icon(IkonaCelownik, null, Modifier.size(17.dp), tint = DarkTokens.accentOn)
+            Icon(IkonaCelownik, null, Modifier.size(17.dp), tint = Tokeny.accentOn)
             Text(
                 if (p.capturing) "Szukam lokalizacji…" else "Jestem teraz w pracy — zapisz miejsce",
                 fontSize = 14.sp, fontWeight = FontWeight.Bold, fontFamily = Jakarta,
-                color = DarkTokens.accentOn
+                color = Tokeny.accentOn
             )
         }
 
         p.error?.let {
-            Text(it, fontSize = 11.sp, fontFamily = Jakarta, color = DarkTokens.warnInk)
+            Text(it, fontSize = 11.sp, fontFamily = Jakarta, color = Tokeny.warnInk)
         }
 
-        Box(Modifier.fillMaxWidth().height(1.dp).background(DarkTokens.line))
+        Box(Modifier.fillMaxWidth().height(1.dp).background(Tokeny.line))
 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Promień strefy", fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
-                fontFamily = Jakarta, color = DarkTokens.ink,
+                fontFamily = Jakarta, color = Tokeny.ink,
                 modifier = Modifier.weight(1f).alignByBaseline())
             Text(
                 "${p.place.radiusM} m",
                 style = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Bold,
                     fontFamily = Jakarta, fontFeatureSettings = TNUM),
-                color = ShiftPaletteDark.III.ink, modifier = Modifier.alignByBaseline()
+                color = Paleta.III.ink, modifier = Modifier.alignByBaseline()
             )
         }
         Suwak(
@@ -246,7 +246,7 @@ private fun KartaMiejsca(p: PresenceUi, pvm: PresenceVm) {
         )
         Text(
             "Poniżej 100 m Android zaczyna gubić zdarzenia. Duży zakład — większy promień.",
-            fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta, color = DarkTokens.inkFaint
+            fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta, color = Tokeny.inkFaint
         )
     }
 }
@@ -262,13 +262,13 @@ private fun KartaWifi(p: PresenceUi, pvm: PresenceVm) {
     KartaUstawien(Modifier.wejscie(pr)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
             Text("WI-FI W PRACY", style = GrafikType.sectionLabel,
-                color = DarkTokens.inkFaint, modifier = Modifier.weight(1f))
-            Text("opcjonalnie", fontSize = 10.sp, fontFamily = Jakarta, color = DarkTokens.inkFaint)
+                color = Tokeny.inkFaint, modifier = Modifier.weight(1f))
+            Text("opcjonalnie", fontSize = 10.sp, fontFamily = Jakarta, color = Tokeny.inkFaint)
         }
         Text(
             "Pewniejsze niż GPS w hali i nie zużywa baterii. Gdy telefon wisi na tej sieci, " +
                 "nie uznamy przypadkowego wyjścia ze strefy.",
-            fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted
+            fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta, color = Tokeny.inkMuted
         )
 
         if (p.place.ssid.isNotBlank()) {
@@ -280,36 +280,36 @@ private fun KartaWifi(p: PresenceUi, pvm: PresenceVm) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Icon(IkonaWifi, null, Modifier.size(18.dp), tint = DarkTokens.ok)
-                Text(p.place.ssid, style = GrafikType.cardTitle, color = DarkTokens.ink,
+                Icon(IkonaWifi, null, Modifier.size(18.dp), tint = Tokeny.ok)
+                Text(p.place.ssid, style = GrafikType.cardTitle, color = Tokeny.ink,
                     modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Box(
                     Modifier.height(32.dp).clip(RoundedCornerShape(10.dp))
-                        .border(1.dp, DarkTokens.lineSoft, RoundedCornerShape(10.dp))
+                        .border(1.dp, Tokeny.lineSoft, RoundedCornerShape(10.dp))
                         .clickable { pvm.clearSsid() }
                         .padding(horizontal = 10.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text("Usuń", fontSize = 11.sp, fontWeight = FontWeight.SemiBold,
-                        fontFamily = Jakarta, color = DarkTokens.inkMuted)
+                        fontFamily = Jakarta, color = Tokeny.inkMuted)
                 }
             }
         }
 
         Row(
             Modifier.fillMaxWidth().height(44.dp).clip(RoundedCornerShape(14.dp))
-                .background(Color.White.copy(alpha = 0.04f))
-                .border(1.dp, DarkTokens.lineSoft, RoundedCornerShape(14.dp))
+                .background(Tokeny.surface)
+                .border(1.dp, Tokeny.lineSoft, RoundedCornerShape(14.dp))
                 .clickable { pvm.captureSsid() },
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
         ) {
-            Icon(IkonaPlus, null, Modifier.size(15.dp), tint = DarkTokens.ink2)
+            Icon(IkonaPlus, null, Modifier.size(15.dp), tint = Tokeny.ink2)
             Text(
                 p.currentSsid?.let { "Dodaj sieć, na której jesteś teraz" }
                     ?: "Dodaj sieć, na której jesteś teraz",
                 fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
-                fontFamily = Jakarta, color = DarkTokens.ink2
+                fontFamily = Jakarta, color = Tokeny.ink2
             )
         }
     }
@@ -324,7 +324,7 @@ private fun KartaCzulosci(p: PresenceUi, pvm: PresenceVm) {
     val pr by postepWejscia(Motion.RISE_MS, 170)
 
     KartaUstawien(Modifier.wejscie(pr)) {
-        Text("CZUŁOŚĆ", style = GrafikType.sectionLabel, color = DarkTokens.inkFaint)
+        Text("CZUŁOŚĆ", style = GrafikType.sectionLabel, color = Tokeny.inkFaint)
 
         WierszSuwaka(
             tytul = "Minimalny pobyt uznawany za pracę",
@@ -358,17 +358,17 @@ private fun WierszSuwaka(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(tytul, fontSize = 13.sp, fontFamily = Jakarta, color = DarkTokens.ink,
+            Text(tytul, fontSize = 13.sp, fontFamily = Jakarta, color = Tokeny.ink,
                 modifier = Modifier.weight(1f).alignByBaseline())
             Text(
                 wartosc,
                 style = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Bold,
                     fontFamily = Jakarta, fontFeatureSettings = TNUM),
-                color = DarkTokens.accent, modifier = Modifier.alignByBaseline()
+                color = Tokeny.accent, modifier = Modifier.alignByBaseline()
             )
         }
         Suwak(liczba, zakres, krokow, naZmiane)
-        Text(podpis, fontSize = 11.sp, fontFamily = Jakarta, color = DarkTokens.inkFaint)
+        Text(podpis, fontSize = 11.sp, fontFamily = Jakarta, color = Tokeny.inkFaint)
     }
 }
 
@@ -382,8 +382,8 @@ private fun Suwak(
     naZmiane: (Float) -> Unit
 ) {
     val kolory = SliderDefaults.colors(
-        thumbColor = DarkTokens.accent,
-        activeTrackColor = DarkTokens.accent,
+        thumbColor = Tokeny.accent,
+        activeTrackColor = Tokeny.accent,
         activeTickColor = Color.Transparent,
         inactiveTrackColor = Color(0xFF1E2327),
         inactiveTickColor = Color.Transparent
@@ -420,14 +420,14 @@ private fun KartaHistorii(p: PresenceUi) {
     KartaUstawien(Modifier.wejscie(pr)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
             Text("OSTATNIE WYKRYCIA", style = GrafikType.sectionLabel,
-                color = DarkTokens.inkFaint, modifier = Modifier.weight(1f))
+                color = Tokeny.inkFaint, modifier = Modifier.weight(1f))
             Text("${p.log.size} zapisanych", fontSize = 10.sp,
-                fontFamily = Jakarta, color = DarkTokens.inkFaint)
+                fontFamily = Jakarta, color = Tokeny.inkFaint)
         }
 
         if (ostatnie.isEmpty()) {
             Text("Nic jeszcze nie wykryliśmy.", fontSize = 12.sp,
-                fontFamily = Jakarta, color = DarkTokens.inkMuted)
+                fontFamily = Jakarta, color = Tokeny.inkMuted)
         }
 
         ostatnie.forEach { wpis -> WierszWykrycia(wpis) }
@@ -437,7 +437,7 @@ private fun KartaHistorii(p: PresenceUi) {
 @Composable
 private fun WierszWykrycia(wpis: PresenceRow) {
     val zmiana = Shift.entries.firstOrNull { it.code == wpis.shiftCode }
-    val k = ShiftPaletteDark.of(typDniaZ(zmiana))
+    val k = Paleta.of(typDniaZ(zmiana))
     val od = runCatching { LocalDateTime.parse(wpis.enterAt) }.getOrNull()
     val doKiedy = runCatching { LocalDateTime.parse(wpis.exitAt) }.getOrNull()
 
@@ -450,9 +450,9 @@ private fun WierszWykrycia(wpis: PresenceRow) {
             Modifier.size(7.dp).clip(RoundedCornerShape(999.dp))
                 .background(
                     when (wpis.status) {
-                        "accepted" -> DarkTokens.ok
-                        "rejected" -> DarkTokens.inkDisabled
-                        else -> ShiftPaletteDark.I.ink
+                        "accepted" -> Tokeny.ok
+                        "rejected" -> Tokeny.inkDisabled
+                        else -> Paleta.I.ink
                     }
                 )
         )
@@ -461,14 +461,14 @@ private fun WierszWykrycia(wpis: PresenceRow) {
             Modifier.width(44.dp),
             style = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
                 fontFamily = Jakarta, fontFeatureSettings = TNUM),
-            color = DarkTokens.ink
+            color = Tokeny.ink
         )
         Text(
             if (od != null && doKiedy != null) "${od.format(GODZINA)} – ${doKiedy.format(GODZINA)}"
             else "—",
             Modifier.weight(1f),
             style = TextStyle(fontSize = 12.sp, fontFamily = Jakarta, fontFeatureSettings = TNUM),
-            color = DarkTokens.ink3
+            color = Tokeny.ink3
         )
         Text(
             wpis.shiftCode.ifBlank { "—" }, fontSize = 12.sp, fontWeight = FontWeight.Bold,

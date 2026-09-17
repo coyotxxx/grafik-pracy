@@ -58,7 +58,7 @@ fun EkranUstawienia(vm: Vm, pvm: PresenceVm, uvm: UpdateVm, naPodstrone: (Podstr
         ) {
             val pNag by postepWejscia(Motion.RISE_MS)
             Text(
-                "Ustawienia", style = GrafikType.h1, color = DarkTokens.ink,
+                "Ustawienia", style = GrafikType.h1, color = Tokeny.ink,
                 modifier = Modifier.wejscie(pNag).padding(horizontal = Dim.screenGutter)
             )
 
@@ -66,35 +66,35 @@ fun EkranUstawienia(vm: Vm, pvm: PresenceVm, uvm: UpdateVm, naPodstrone: (Podstr
 
             Grupa("ROZLICZANIE", 80) {
                 Wiersz(
-                    IkonaCzasPracy, ShiftPaletteDark.I.ink, "Czas pracy i nadgodziny",
+                    IkonaCzasPracy, Paleta.I.ink, "Czas pracy i nadgodziny",
                     opisOkresu(s), gotowe = true, akcja = { naPodstrone(Podstrona.CZAS_PRACY) }
                 )
                 Wiersz(
-                    IkonaWyplata, ShiftPaletteDark.I.ink, "Stawki i wypłata",
+                    IkonaWyplata, Paleta.I.ink, "Stawki i wypłata",
                     opisStawek(s), gotowe = true,
                     akcja = { naPodstrone(Podstrona.WYPLATA) }
                 )
                 Wiersz(
-                    IkonaOdpoczynek, DarkTokens.warnInk, "Odpoczynek",
+                    IkonaOdpoczynek, Tokeny.warnInk, "Odpoczynek",
                     opisOdpoczynku(s), gotowe = true,
                     akcja = { naPodstrone(Podstrona.ODPOCZYNEK) },
                     odznaka = s.kolizje.size.takeIf { it > 0 }
                 )
                 Wiersz(
-                    IkonaUrlop, ShiftPaletteDark.URLOP.ink, "Urlop",
+                    IkonaUrlop, Paleta.URLOP.ink, "Urlop",
                     opisUrlopu(s), gotowe = true, akcja = { naPodstrone(Podstrona.URLOP) }
                 )
             }
 
             Grupa("AUTOMATYKA", 160) {
                 Wiersz(
-                    IkonaLokalizacja, ShiftPaletteDark.III.ink, "Wykrywanie pracy",
+                    IkonaLokalizacja, Paleta.III.ink, "Wykrywanie pracy",
                     opisWykrywania(p.place), gotowe = true,
                     akcja = { naPodstrone(Podstrona.WYKRYWANIE) },
-                    kropka = if (p.place.enabled) DarkTokens.ok else null
+                    kropka = if (p.place.enabled) Tokeny.ok else null
                 )
                 Wiersz(
-                    IkonaDzwonek, DarkTokens.warnInk, "Powiadomienia",
+                    IkonaDzwonek, Tokeny.warnInk, "Powiadomienia",
                     opisPowiadomien(s), gotowe = true,
                     akcja = { naPodstrone(Podstrona.POWIADOMIENIA) }
                 )
@@ -102,13 +102,13 @@ fun EkranUstawienia(vm: Vm, pvm: PresenceVm, uvm: UpdateVm, naPodstrone: (Podstr
 
             Grupa("APLIKACJA", 240) {
                 Wiersz(
-                    IkonaPaleta, DarkTokens.ink2, "Wygląd i kolory",
+                    IkonaPaleta, Tokeny.ink2, "Wygląd i kolory",
                     "ciemny · zestaw „${s.motyw.label}”", gotowe = true,
                     akcja = { naPodstrone(Podstrona.WYGLAD) },
-                    probki = listOf(ShiftPaletteDark.I.ink, ShiftPaletteDark.II.ink, ShiftPaletteDark.III.ink)
+                    probki = listOf(Paleta.I.ink, Paleta.II.ink, Paleta.III.ink)
                 )
                 Wiersz(
-                    IkonaDane, DarkTokens.ink2, "Dane i kopia",
+                    IkonaDane, Tokeny.ink2, "Dane i kopia",
                     "eksport, import, czyszczenie ręcznych zmian", gotowe = true,
                     akcja = { naPodstrone(Podstrona.DANE) }
                 )
@@ -143,22 +143,22 @@ private fun KartaCyklu(s: UiState, naKlik: () -> Unit) {
             Modifier.size(46.dp).clip(RoundedCornerShape(15.dp))
                 .background(Color(0x2952D0B3)),
             contentAlignment = Alignment.Center
-        ) { Icon(IkonaCykl, null, Modifier.size(22.dp), tint = DarkTokens.accent) }
+        ) { Icon(IkonaCykl, null, Modifier.size(22.dp), tint = Tokeny.accent) }
 
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text("Mój cykl", fontSize = 15.sp, fontWeight = FontWeight.Bold,
-                fontFamily = Jakarta, color = DarkTokens.ink)
+                fontFamily = Jakarta, color = Tokeny.ink)
             Text(
                 "Brygada ${s.cfg.brigade} · ${s.cfg.pattern.label}",
-                fontSize = 11.sp, fontFamily = Jakarta, color = DarkTokens.ink3,
+                fontSize = 11.sp, fontFamily = Jakarta, color = Tokeny.ink3,
                 maxLines = 1, overflow = TextOverflow.Ellipsis
             )
             Text(
                 opisWypelniania(s), fontSize = 11.sp, fontFamily = Jakarta,
-                color = DarkTokens.accent, maxLines = 1, overflow = TextOverflow.Ellipsis
+                color = Tokeny.accent, maxLines = 1, overflow = TextOverflow.Ellipsis
             )
         }
-        Icon(IkonaWPrawo, null, Modifier.size(17.dp), tint = Color(0xFF8A939B))
+        Icon(IkonaWPrawo, null, Modifier.size(17.dp), tint = Tokeny.inkIkona)
     }
 }
 
@@ -173,7 +173,7 @@ private fun Grupa(tytul: String, opoznienieMs: Int, tresc: @Composable ColumnSco
         Modifier.padding(horizontal = Dim.screenGutter),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text(tytul, style = GrafikType.sectionLabel, color = DarkTokens.inkFaint,
+        Text(tytul, style = GrafikType.sectionLabel, color = Tokeny.inkFaint,
             modifier = Modifier.wejscie(p))
         tresc()
     }
@@ -194,8 +194,8 @@ private fun Wiersz(
     Row(
         Modifier.fillMaxWidth()
             .clip(RoundedCornerShape(Dim.rCardSmall))
-            .background(DarkTokens.surface)
-            .border(1.dp, DarkTokens.line, RoundedCornerShape(Dim.rCardSmall))
+            .background(Tokeny.surface)
+            .border(1.dp, Tokeny.line, RoundedCornerShape(Dim.rCardSmall))
             .then(if (gotowe && akcja != null) Modifier.clickable(onClick = akcja) else Modifier)
             .alpha(if (gotowe) 1f else 0.55f)
             .padding(14.dp),
@@ -209,8 +209,8 @@ private fun Wiersz(
         ) { Icon(ikona, null, Modifier.size(19.dp), tint = kolorIkony) }
 
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text(nazwa, style = GrafikType.cardTitle, color = DarkTokens.ink)
-            Text(podpis, fontSize = 11.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted,
+            Text(nazwa, style = GrafikType.cardTitle, color = Tokeny.ink)
+            Text(podpis, fontSize = 11.sp, fontFamily = Jakarta, color = Tokeny.inkMuted,
                 maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
 
@@ -223,7 +223,7 @@ private fun Wiersz(
                 contentAlignment = Alignment.Center
             ) {
                 Text("$odznaka", fontSize = 10.sp, fontWeight = FontWeight.Bold,
-                    fontFamily = Jakarta, color = DarkTokens.warnInk)
+                    fontFamily = Jakarta, color = Tokeny.warnInk)
             }
         }
         if (kropka != null) {
@@ -236,7 +236,7 @@ private fun Wiersz(
                 }
             }
         }
-        Icon(IkonaWPrawo, null, Modifier.size(16.dp), tint = Color(0xFF8A939B))
+        Icon(IkonaWPrawo, null, Modifier.size(16.dp), tint = Tokeny.inkIkona)
     }
 }
 
@@ -252,8 +252,8 @@ private fun WierszAplikacji(u: pl.grafik.pracy.ui.UpdateUi, uvm: UpdateVm) {
     Column(
         Modifier.fillMaxWidth()
             .clip(RoundedCornerShape(Dim.rCardSmall))
-            .background(DarkTokens.surface)
-            .border(1.dp, DarkTokens.line, RoundedCornerShape(Dim.rCardSmall))
+            .background(Tokeny.surface)
+            .border(1.dp, Tokeny.line, RoundedCornerShape(Dim.rCardSmall))
             .clickable(enabled = !sprawdza && pobiera == null) {
                 if (u.available != null) uvm.install() else uvm.check(manual = true)
             }
@@ -267,15 +267,15 @@ private fun WierszAplikacji(u: pl.grafik.pracy.ui.UpdateUi, uvm: UpdateVm) {
         ) {
             Box(
                 Modifier.size(40.dp).clip(RoundedCornerShape(13.dp))
-                    .background(Color.White.copy(alpha = 0.06f)),
+                    .background(Tokeny.surface),
                 contentAlignment = Alignment.Center
-            ) { Icon(IkonaInfo, null, Modifier.size(19.dp), tint = DarkTokens.ink2) }
+            ) { Icon(IkonaInfo, null, Modifier.size(19.dp), tint = Tokeny.ink2) }
 
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text("O aplikacji", style = GrafikType.cardTitle, color = DarkTokens.ink)
+                Text("O aplikacji", style = GrafikType.cardTitle, color = Tokeny.ink)
                 Text(
                     "wersja ${u.current} · aktualizacje z GitHuba",
-                    fontSize = 11.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted,
+                    fontSize = 11.sp, fontFamily = Jakarta, color = Tokeny.inkMuted,
                     maxLines = 1, overflow = TextOverflow.Ellipsis
                 )
             }
@@ -304,19 +304,19 @@ private fun WierszAplikacji(u: pl.grafik.pracy.ui.UpdateUi, uvm: UpdateVm) {
             val rozmiar = if (info.sizeBytes > 0) " · %.1f MB".format(info.sizeBytes / 1_048_576.0) else ""
             Text(
                 "Paczka ${info.version}$rozmiar — dotknij, aby pobrać i zainstalować",
-                fontSize = 11.sp, fontFamily = Jakarta, color = DarkTokens.accent,
+                fontSize = 11.sp, fontFamily = Jakarta, color = Tokeny.accent,
                 maxLines = 2, overflow = TextOverflow.Ellipsis
             )
         }
         u.upToDateMessage?.let {
-            Text(it, fontSize = 11.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted)
+            Text(it, fontSize = 11.sp, fontFamily = Jakarta, color = Tokeny.inkMuted)
         }
     }
 }
 
 @Composable
 private fun PigulkaStanu(tekst: String, nowa: Boolean) {
-    val kolor = if (nowa) ShiftPaletteDark.I.ink else DarkTokens.accent
+    val kolor = if (nowa) Paleta.I.ink else Tokeny.accent
     Box(
         Modifier.height(24.dp).clip(RoundedCornerShape(999.dp))
             .background(kolor.copy(alpha = 0.14f))

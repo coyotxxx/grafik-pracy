@@ -29,7 +29,7 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.clickable
 import pl.grafik.pracy.nowy.theme.Jakarta
 import pl.grafik.pracy.nowy.theme.TNUM
-import pl.grafik.pracy.nowy.theme.DarkTokens
+import pl.grafik.pracy.nowy.theme.Tokeny
 import pl.grafik.pracy.nowy.theme.Dim
 import pl.grafik.pracy.nowy.theme.Motion
 
@@ -85,15 +85,19 @@ fun TloZPoswiata(modifier: Modifier = Modifier) {
         label = "halo2"
     ) else remember { mutableFloatStateOf(0f) }
 
+    val tlo = Tokeny.bg
+    val gora = Tokeny.haloGora
+    val dol = Tokeny.haloDol
+
     Box(
-        modifier.background(DarkTokens.bg).drawBehind {
+        modifier.background(tlo).drawBehind {
             // górna: 520×520 w (-110, -230), rgba(53,135,211,0.26) → 0
             val r1 = 260.dp.toPx()
             val c1 = Offset(150.dp.toPx(), 30.dp.toPx() - przesun * 18.dp.toPx())
             drawCircle(
                 Brush.radialGradient(
-                    0f to Color(0xFF3587D3).copy(alpha = 0.26f),
-                    0.48f to Color(0xFF3587D3).copy(alpha = 0.07f),
+                    0f to gora.copy(alpha = 0.26f),
+                    0.48f to gora.copy(alpha = 0.07f),
                     0.72f to Color.Transparent,
                     center = c1, radius = r1
                 ),
@@ -104,7 +108,7 @@ fun TloZPoswiata(modifier: Modifier = Modifier) {
             val c2 = Offset(size.width + 70.dp.toPx(), size.height + 20.dp.toPx() - przesun2 * 22.dp.toPx())
             drawCircle(
                 Brush.radialGradient(
-                    0f to Color(0xFF52D0B3).copy(alpha = 0.12f),
+                    0f to dol.copy(alpha = 0.12f),
                     0.70f to Color.Transparent,
                     center = c2, radius = r2
                 ),
@@ -118,8 +122,8 @@ fun TloZPoswiata(modifier: Modifier = Modifier) {
 @Composable
 fun Karta(
     modifier: Modifier = Modifier,
-    tlo: Color = DarkTokens.surface,
-    obrys: Color = DarkTokens.line,
+    tlo: Color = Tokeny.surface,
+    obrys: Color = Tokeny.line,
     promien: Dp = Dim.rCardSmall,
     paddingPion: Dp = 14.dp,
     paddingBok: Dp = 16.dp,
@@ -144,13 +148,13 @@ fun PasekPostepu(
     udzial: Float,
     modifier: Modifier = Modifier,
     wysokosc: Dp = 6.dp,
-    kolor: Color = DarkTokens.accent
+    kolor: Color = Tokeny.accent
 ) {
     val p by postepWejscia(Motion.BAR_GROW_MS, Motion.BAR_GROW_DELAY_MS)
     Box(
         modifier.fillMaxWidth().height(wysokosc)
             .clip(RoundedCornerShape(999.dp))
-            .background(Color(0xFF1E2327))
+            .background(Tokeny.trackBg)
     ) {
         Box(
             Modifier.fillMaxWidth(udzial.coerceIn(0f, 1f) * p)
@@ -187,10 +191,10 @@ fun Przelacznik(wlaczony: Boolean, naZmiane: (Boolean) -> Unit) {
     Box(
         Modifier.size(46.dp, 28.dp)
             .clip(RoundedCornerShape(999.dp))
-            .background(if (wlaczony) DarkTokens.accent.copy(alpha = 0.22f) else Color(0xFF262B30))
+            .background(if (wlaczony) Tokeny.accent.copy(alpha = 0.22f) else Tokeny.lineInput)
             .border(
                 1.dp,
-                if (wlaczony) DarkTokens.accent.copy(alpha = 0.5f) else Color(0xFF333A40),
+                if (wlaczony) Tokeny.accent.copy(alpha = 0.5f) else Tokeny.lineSoft,
                 RoundedCornerShape(999.dp)
             )
             .clickable { naZmiane(!wlaczony) }
@@ -199,7 +203,7 @@ fun Przelacznik(wlaczony: Boolean, naZmiane: (Boolean) -> Unit) {
             Modifier.padding(start = 4.dp + przesun, top = 4.dp)
                 .size(20.dp)
                 .clip(RoundedCornerShape(999.dp))
-                .background(if (wlaczony) DarkTokens.accent else Color(0xFF8A939B))
+                .background(if (wlaczony) Tokeny.accent else Tokeny.inkFaint)
         )
     }
 }
@@ -210,9 +214,9 @@ fun PrzyciskKwadrat(
     ikona: androidx.compose.ui.graphics.vector.ImageVector,
     opis: String,
     rozmiar: Dp = 36.dp,
-    tlo: Color = DarkTokens.surfaceInput,
-    obrys: Color = DarkTokens.lineInput,
-    kolorIkony: Color = DarkTokens.ink2,
+    tlo: Color = Tokeny.surfaceInput,
+    obrys: Color = Tokeny.lineInput,
+    kolorIkony: Color = Tokeny.ink2,
     akcja: () -> Unit
 ) {
     Box(
@@ -230,8 +234,8 @@ fun PrzyciskKwadrat(
 fun Pigulka(tekst: String) {
     Box(
         Modifier.height(28.dp).clip(RoundedCornerShape(999.dp))
-            .background(Color(0xFF0E1113))
-            .border(1.dp, DarkTokens.lineSoft, RoundedCornerShape(999.dp))
+            .background(Tokeny.surfaceInput)
+            .border(1.dp, Tokeny.lineSoft, RoundedCornerShape(999.dp))
             .padding(horizontal = 10.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -243,7 +247,7 @@ fun Pigulka(tekst: String) {
                 fontFamily = Jakarta,
                 fontFeatureSettings = TNUM
             ),
-            color = DarkTokens.ink
+            color = Tokeny.ink
         )
     }
 }
@@ -254,14 +258,14 @@ fun PrzyciskGlowny(tekst: String, modifier: Modifier = Modifier, akcja: () -> Un
     Box(
         modifier.fillMaxWidth().height(50.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(DarkTokens.accent)
+            .background(Tokeny.accent)
             .clickable(onClick = akcja),
         contentAlignment = Alignment.Center
     ) {
         androidx.compose.material3.Text(
             tekst, fontSize = 15.sp,
             fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-            fontFamily = Jakarta, color = DarkTokens.accentOn
+            fontFamily = Jakarta, color = Tokeny.accentOn
         )
     }
 }
@@ -285,10 +289,10 @@ fun PoleTekstowe(
         onValueChange = naZmiane,
         singleLine = true,
         textStyle = androidx.compose.ui.text.TextStyle(
-            color = DarkTokens.ink, fontSize = 14.sp, fontFamily = Jakarta,
+            color = Tokeny.ink, fontSize = 14.sp, fontFamily = Jakarta,
             textAlign = wyrownanie, fontFeatureSettings = if (cyfry) TNUM else null
         ),
-        cursorBrush = androidx.compose.ui.graphics.SolidColor(DarkTokens.accent),
+        cursorBrush = androidx.compose.ui.graphics.SolidColor(Tokeny.accent),
         keyboardOptions = if (cyfry)
             androidx.compose.foundation.text.KeyboardOptions(
                 keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
@@ -297,8 +301,8 @@ fun PoleTekstowe(
     ) { pole ->
         Box(
             Modifier.fillMaxSize().clip(RoundedCornerShape(12.dp))
-                .background(DarkTokens.surfaceInput)
-                .border(1.dp, DarkTokens.lineInput, RoundedCornerShape(12.dp))
+                .background(Tokeny.surfaceInput)
+                .border(1.dp, Tokeny.lineInput, RoundedCornerShape(12.dp))
                 .padding(horizontal = 12.dp),
             contentAlignment = if (wyrownanie == androidx.compose.ui.text.style.TextAlign.End)
                 Alignment.CenterEnd else Alignment.CenterStart
@@ -306,7 +310,7 @@ fun PoleTekstowe(
             if (wartosc.isEmpty()) {
                 androidx.compose.material3.Text(
                     podpowiedz, fontSize = 14.sp, fontFamily = Jakarta,
-                    color = DarkTokens.inkFaint, maxLines = 1
+                    color = Tokeny.inkFaint, maxLines = 1
                 )
             }
             pole()
@@ -319,14 +323,14 @@ fun PoleTekstowe(
 fun PrzyciskDrugorzedny(tekst: String, modifier: Modifier = Modifier, akcja: () -> Unit) {
     Box(
         modifier.height(44.dp).clip(RoundedCornerShape(13.dp))
-            .border(1.dp, DarkTokens.lineSoft, RoundedCornerShape(13.dp))
+            .border(1.dp, Tokeny.lineSoft, RoundedCornerShape(13.dp))
             .clickable(onClick = akcja),
         contentAlignment = Alignment.Center
     ) {
         androidx.compose.material3.Text(
             tekst, fontSize = 13.sp,
             fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
-            fontFamily = Jakarta, color = DarkTokens.ink2
+            fontFamily = Jakarta, color = Tokeny.ink2
         )
     }
 }
@@ -390,12 +394,12 @@ fun PowrotDoUstawien(naPowrot: () -> Unit) {
     ) {
         androidx.compose.material3.Icon(
             pl.grafik.pracy.nowy.theme.IkonaWLewo, null,
-            Modifier.size(17.dp), tint = DarkTokens.inkMuted
+            Modifier.size(17.dp), tint = Tokeny.inkMuted
         )
         androidx.compose.material3.Text(
             "Ustawienia", fontSize = 13.sp,
             fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
-            fontFamily = Jakarta, color = DarkTokens.inkMuted
+            fontFamily = Jakarta, color = Tokeny.inkMuted
         )
     }
 }

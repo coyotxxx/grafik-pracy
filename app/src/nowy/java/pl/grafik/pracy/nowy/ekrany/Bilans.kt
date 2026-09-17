@@ -87,13 +87,13 @@ private fun Naglowek(s: UiState, vm: Vm, otwarty: Boolean, naPrzelaczenie: () ->
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text("Bilans", style = GrafikType.h1, color = DarkTokens.ink, modifier = Modifier.weight(1f))
+        Text("Bilans", style = GrafikType.h1, color = Tokeny.ink, modifier = Modifier.weight(1f))
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             PrzyciskMiesiaca(IkonaWLewo, "Poprzedni miesiąc") { vm.prevMonth() }
             Row(
                 Modifier.height(38.dp).clip(RoundedCornerShape(12.dp))
-                    .background(Color.White.copy(alpha = 0.04f))
-                    .border(1.dp, DarkTokens.lineStrong, RoundedCornerShape(12.dp))
+                    .background(Tokeny.surface)
+                    .border(1.dp, Tokeny.lineStrong, RoundedCornerShape(12.dp))
                     .clickable(onClick = naPrzelaczenie)
                     .padding(horizontal = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -101,11 +101,11 @@ private fun Naglowek(s: UiState, vm: Vm, otwarty: Boolean, naPrzelaczenie: () ->
             ) {
                 Text(
                     miesiacRok(s.ym), fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
-                    fontFamily = Jakarta, color = DarkTokens.inkStrong, maxLines = 1
+                    fontFamily = Jakarta, color = Tokeny.inkStrong, maxLines = 1
                 )
                 Icon(
                     if (otwarty) IkonaWGore else IkonaWDol, "Wybierz miesiąc",
-                    Modifier.size(13.dp), tint = DarkTokens.inkStrong
+                    Modifier.size(13.dp), tint = Tokeny.inkStrong
                 )
             }
             PrzyciskMiesiaca(IkonaWPrawo, "Następny miesiąc") { vm.nextMonth() }
@@ -121,11 +121,11 @@ private fun PrzyciskMiesiaca(
 ) {
     Box(
         Modifier.size(38.dp).clip(RoundedCornerShape(12.dp))
-            .background(Color.White.copy(alpha = 0.04f))
-            .border(1.dp, DarkTokens.lineStrong, RoundedCornerShape(12.dp))
+            .background(Tokeny.surface)
+            .border(1.dp, Tokeny.lineStrong, RoundedCornerShape(12.dp))
             .clickable(onClick = akcja),
         contentAlignment = Alignment.Center
-    ) { Icon(ikona, opis, Modifier.size(16.dp), tint = DarkTokens.ink2) }
+    ) { Icon(ikona, opis, Modifier.size(16.dp), tint = Tokeny.ink2) }
 }
 
 /**
@@ -144,7 +144,7 @@ private fun WyborMiesiaca(biezacy: YearMonth, naWybor: (YearMonth) -> Unit) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             PrzyciskKwadrat(IkonaWLewo, "Poprzedni rok", rozmiar = 34.dp) { rok-- }
             Text(
-                "$rok", Modifier.weight(1f), style = liczba(17), color = DarkTokens.ink,
+                "$rok", Modifier.weight(1f), style = liczba(17), color = Tokeny.ink,
                 textAlign = TextAlign.Center
             )
             PrzyciskKwadrat(IkonaWPrawo, "Następny rok", rozmiar = 34.dp) { rok++ }
@@ -160,13 +160,13 @@ private fun WyborMiesiaca(biezacy: YearMonth, naWybor: (YearMonth) -> Unit) {
                     val wybrany = m == biezacy
                     Box(
                         Modifier.weight(1f).height(38.dp).clip(RoundedCornerShape(11.dp))
-                            .background(if (wybrany) DarkTokens.accentTintBg else DarkTokens.surfaceInput)
+                            .background(if (wybrany) Tokeny.accentTintBg else Tokeny.surfaceInput)
                             .border(
                                 1.dp,
                                 when {
-                                    wybrany -> DarkTokens.accentTintLine
-                                    m == teraz -> DarkTokens.lineSoft
-                                    else -> DarkTokens.lineInput
+                                    wybrany -> Tokeny.accentTintLine
+                                    m == teraz -> Tokeny.lineSoft
+                                    else -> Tokeny.lineInput
                                 },
                                 RoundedCornerShape(11.dp)
                             )
@@ -176,7 +176,7 @@ private fun WyborMiesiaca(biezacy: YearMonth, naWybor: (YearMonth) -> Unit) {
                         Text(
                             m.month.getDisplayName(JavaTextStyle.SHORT_STANDALONE, PL_BILANS),
                             fontSize = 12.sp, fontWeight = FontWeight.SemiBold, fontFamily = Jakarta,
-                            color = if (wybrany) DarkTokens.accent else DarkTokens.ink2
+                            color = if (wybrany) Tokeny.accent else Tokeny.ink2
                         )
                     }
                 }
@@ -198,26 +198,26 @@ private fun KartaMiesiaca(s: UiState) {
 
     Karta(
         Modifier.wejscie(p).padding(horizontal = Dim.screenGutter),
-        tlo = Color(0x0AFFFFFF), promien = Dim.rCard, paddingPion = 18.dp, paddingBok = 16.dp
+        tlo = Tokeny.surface, promien = Dim.rCard, paddingPion = 18.dp, paddingBok = 16.dp
     ) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
                     if (s.stats.biezacyMiesiac) "PRZEPRACOWANE DO DZIŚ" else "PRZEPRACOWANE",
-                    style = GrafikType.sectionLabel, color = DarkTokens.inkMuted
+                    style = GrafikType.sectionLabel, color = Tokeny.inkMuted
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                    Text("$licznik", style = GrafikType.heroNumber, color = DarkTokens.ink,
+                    Text("$licznik", style = GrafikType.heroNumber, color = Tokeny.ink,
                         modifier = Modifier.alignByBaseline())
                     Text("h", fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
-                        fontFamily = Jakarta, color = DarkTokens.inkMuted,
+                        fontFamily = Jakarta, color = Tokeny.inkMuted,
                         modifier = Modifier.alignByBaseline())
                 }
             }
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 PigulkaBilansu(bilans)
                 Text("norma ${s.stats.norm} h", fontSize = 11.sp,
-                    fontFamily = Jakarta, color = DarkTokens.inkMuted)
+                    fontFamily = Jakarta, color = Tokeny.inkMuted)
             }
         }
         Spacer(Modifier.height(14.dp))
@@ -233,13 +233,13 @@ private fun KartaMiesiaca(s: UiState) {
         ) {
             Row(Modifier.weight(1f)) {
                 Text("cały miesiąc wyjdzie ", fontSize = 11.sp,
-                    fontFamily = Jakarta, color = DarkTokens.inkMuted)
+                    fontFamily = Jakarta, color = Tokeny.inkMuted)
                 Text("${s.stats.rozliczone} h", fontSize = 11.sp, fontWeight = FontWeight.SemiBold,
-                    fontFamily = Jakarta, color = DarkTokens.inkStrong)
+                    fontFamily = Jakarta, color = Tokeny.inkStrong)
             }
             Text(
                 "${s.stats.worked} h pracy + ${s.stats.urlopH} h urlopu",
-                fontSize = 11.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted,
+                fontSize = 11.sp, fontFamily = Jakarta, color = Tokeny.inkMuted,
                 maxLines = 1, overflow = TextOverflow.Ellipsis
             )
         }
@@ -249,7 +249,7 @@ private fun KartaMiesiaca(s: UiState) {
 @Composable
 private fun PigulkaBilansu(bilans: Int) {
     val naPlus = bilans >= 0
-    val kolor = if (naPlus) DarkTokens.accent else DarkTokens.warnInk
+    val kolor = if (naPlus) Tokeny.accent else Tokeny.warnInk
     Box(
         Modifier.height(26.dp).clip(RoundedCornerShape(999.dp))
             .background(kolor.copy(alpha = 0.14f))
@@ -272,7 +272,7 @@ private fun PigulkaBilansu(bilans: Int) {
 private fun KartaWyplaty(s: UiState, naWyplate: () -> Unit) {
     if (!s.stawki.ustawiona || !s.stawki.pokazujWBilansie) return
     val p by postepWejscia(Motion.RISE_MS, 90)
-    val zolty = ShiftPaletteDark.I.ink
+    val zolty = Paleta.I.ink
     val w = remember(s.entries, s.ym, s.stawki) {
         pl.grafik.pracy.domain.KalkulatorWyplaty.policz(
             s.entries.filterKeys { java.time.YearMonth.from(it) == s.ym }.values, s.stawki, s.ym,
@@ -298,16 +298,16 @@ private fun KartaWyplaty(s: UiState, naWyplate: () -> Unit) {
 
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text("Szacunek wypłaty", fontSize = 14.sp, fontWeight = FontWeight.Bold,
-                fontFamily = Jakarta, color = DarkTokens.ink)
+                fontFamily = Jakarta, color = Tokeny.ink)
             Text("z grafiku i Twoich stawek · brutto", fontSize = 11.sp,
-                fontFamily = Jakarta, color = DarkTokens.inkMuted,
+                fontFamily = Jakarta, color = Tokeny.inkMuted,
                 maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         Text(
             "≈ ${pl.grafik.pracy.domain.KalkulatorWyplaty.zlote(w.razem)} zł",
             style = liczba(16), color = zolty
         )
-        Icon(IkonaWPrawo, null, Modifier.size(16.dp), tint = Color(0xFF8A939B))
+        Icon(IkonaWPrawo, null, Modifier.size(16.dp), tint = Tokeny.inkIkona)
     }
 }
 
@@ -327,31 +327,31 @@ private fun KartaOkresu(s: UiState) {
     ) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
             Text("Okres rozliczeniowy", style = GrafikType.cardTitle,
-                color = DarkTokens.ink, modifier = Modifier.weight(1f))
+                color = Tokeny.ink, modifier = Modifier.weight(1f))
             Text(okresLabel(okres.period), fontSize = 11.sp,
-                fontFamily = Jakarta, color = DarkTokens.inkMuted)
+                fontFamily = Jakarta, color = Tokeny.inkMuted)
         }
         Spacer(Modifier.height(12.dp))
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
             Text("nadgodziny w okresie", fontSize = 12.sp,
-                fontFamily = Jakarta, color = DarkTokens.ink3, modifier = Modifier.weight(1f))
+                fontFamily = Jakarta, color = Tokeny.ink3, modifier = Modifier.weight(1f))
             Row {
-                Text("${okres.ot} ", style = liczba(15), color = DarkTokens.ink,
+                Text("${okres.ot} ", style = liczba(15), color = Tokeny.ink,
                     modifier = Modifier.alignByBaseline())
                 Text("/ ${okres.limit} h", style = liczba(12, FontWeight.Medium),
-                    color = DarkTokens.inkMuted, modifier = Modifier.alignByBaseline())
+                    color = Tokeny.inkMuted, modifier = Modifier.alignByBaseline())
             }
         }
         Spacer(Modifier.height(12.dp))
         PasekPostepu(
             if (okres.limit > 0) okres.ot.toFloat() / okres.limit else 0f,
-            kolor = ShiftPaletteDark.I.ink
+            kolor = Paleta.I.ink
         )
         Spacer(Modifier.height(12.dp))
         Row(
             Modifier.fillMaxWidth().height(40.dp).clip(RoundedCornerShape(13.dp))
-                .background(Color.White.copy(alpha = 0.04f))
-                .border(1.dp, DarkTokens.lineStrong, RoundedCornerShape(13.dp))
+                .background(Tokeny.surface)
+                .border(1.dp, Tokeny.lineStrong, RoundedCornerShape(13.dp))
                 .clickable { wszystkie = !wszystkie }
                 .padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -360,12 +360,12 @@ private fun KartaOkresu(s: UiState) {
             Text(
                 "Wszystkie okresy w ${s.ym.year} · razem ${s.otRok} / ${s.otLimitRok} h",
                 fontSize = 12.sp, fontWeight = FontWeight.SemiBold, fontFamily = Jakarta,
-                color = DarkTokens.ink2, modifier = Modifier.weight(1f),
+                color = Tokeny.ink2, modifier = Modifier.weight(1f),
                 maxLines = 1, overflow = TextOverflow.Ellipsis
             )
             Icon(
                 if (wszystkie) IkonaWGore else IkonaWPrawo, null,
-                Modifier.size(15.dp), tint = DarkTokens.ink2
+                Modifier.size(15.dp), tint = Tokeny.ink2
             )
         }
         if (wszystkie) {
@@ -378,16 +378,16 @@ private fun KartaOkresu(s: UiState) {
                 ) {
                     Text(
                         okresLabel(o.period), fontSize = 11.sp, fontFamily = Jakarta,
-                        color = if (o.biezacy) DarkTokens.inkStrong else DarkTokens.inkMuted,
+                        color = if (o.biezacy) Tokeny.inkStrong else Tokeny.inkMuted,
                         modifier = Modifier.width(86.dp), maxLines = 1, overflow = TextOverflow.Ellipsis
                     )
                     PasekPostepu(
                         if (o.limit > 0) o.ot.toFloat() / o.limit else 0f,
-                        Modifier.weight(1f), wysokosc = 6.dp, kolor = ShiftPaletteDark.I.ink
+                        Modifier.weight(1f), wysokosc = 6.dp, kolor = Paleta.I.ink
                     )
                     Text(
                         "${o.ot} / ${o.limit} h", style = liczba(11, FontWeight.SemiBold),
-                        color = DarkTokens.ink2, modifier = Modifier.width(58.dp),
+                        color = Tokeny.ink2, modifier = Modifier.width(58.dp),
                         textAlign = TextAlign.End
                     )
                 }
@@ -403,7 +403,7 @@ private fun KartaOkresu(s: UiState) {
 @Composable
 private fun KafelkiNadgodzin(s: UiState) {
     val p by postepWejscia(Motion.RISE_MS, 160)
-    val zolty = ShiftPaletteDark.I.ink
+    val zolty = Paleta.I.ink
     Row(
         Modifier.wejscie(p).padding(horizontal = Dim.screenGutter).fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -418,7 +418,7 @@ private fun KafelkiNadgodzin(s: UiState) {
         )
         KafelekStatystyki(
             Modifier.weight(1f), "${s.stats.sundayWork}", "prac. nd.",
-            DarkTokens.ink, DarkTokens.surface, DarkTokens.line, wasko = true
+            Tokeny.ink, Tokeny.surface, Tokeny.line, wasko = true
         )
     }
 }
@@ -441,7 +441,7 @@ private fun KafelekStatystyki(
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Text(wartosc, style = liczba(19), color = kolorLiczby)
-        Text(podpis, fontSize = 10.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted,
+        Text(podpis, fontSize = 10.sp, fontFamily = Jakarta, color = Tokeny.inkMuted,
             maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
@@ -454,7 +454,7 @@ private fun KafelekStatystyki(
 private fun KartaUrlopu(s: UiState, naPlaner: () -> Unit) {
     val p by postepWejscia(Motion.RISE_MS, 200)
     val u = s.urlopBilans
-    val rozowy = ShiftPaletteDark.URLOP.ink
+    val rozowy = Paleta.URLOP.ink
 
     Karta(
         Modifier.wejscie(p).padding(horizontal = Dim.screenGutter),
@@ -463,19 +463,19 @@ private fun KartaUrlopu(s: UiState, naPlaner: () -> Unit) {
     ) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                Text("URLOP ${u.rok}", style = GrafikType.sectionLabel, color = DarkTokens.inkMuted)
+                Text("URLOP ${u.rok}", style = GrafikType.sectionLabel, color = Tokeny.inkMuted)
                 Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                     Text("${u.zostalo}", style = GrafikType.heroNumber.copy(fontSize = 34.sp,
                         lineHeight = 31.sp), color = rozowy, modifier = Modifier.alignByBaseline())
                     Text("dni zostało", fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
-                        fontFamily = Jakarta, color = Color(0xFFD7DBDE),
+                        fontFamily = Jakarta, color = Tokeny.inkNaKarcie,
                         modifier = Modifier.alignByBaseline())
                 }
             }
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("wykorzystane", fontSize = 11.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted)
+                Text("wykorzystane", fontSize = 11.sp, fontFamily = Jakarta, color = Tokeny.inkMuted)
                 Text("${u.zuzyte} / ${u.bazaZalegly + u.bazaBiezacy}",
-                    style = liczba(14), color = DarkTokens.ink)
+                    style = liczba(14), color = Tokeny.ink)
             }
         }
         Spacer(Modifier.height(14.dp))
@@ -510,7 +510,7 @@ private fun KartaUrlopu(s: UiState, naPlaner: () -> Unit) {
                 Box(Modifier.size(6.dp).clip(RoundedCornerShape(999.dp)).background(rozowy))
                 Text(
                     "w tym miesiącu: ${dniUrlopu(s)}",
-                    fontSize = 11.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted,
+                    fontSize = 11.sp, fontFamily = Jakarta, color = Tokeny.inkMuted,
                     maxLines = 2, overflow = TextOverflow.Ellipsis
                 )
             }
@@ -522,16 +522,16 @@ private fun KartaUrlopu(s: UiState, naPlaner: () -> Unit) {
 private fun KafelekUrlopu(modifier: Modifier, podpis: String, zostalo: Int, baza: Int) {
     Column(
         modifier.clip(RoundedCornerShape(14.dp))
-            .background(Color(0x40000000))
-            .border(1.dp, DarkTokens.lineStrong, RoundedCornerShape(14.dp))
+            .background(Tokeny.naklad)
+            .border(1.dp, Tokeny.lineStrong, RoundedCornerShape(14.dp))
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(3.dp)
     ) {
-        Text(podpis, fontSize = 10.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted)
+        Text(podpis, fontSize = 10.sp, fontFamily = Jakarta, color = Tokeny.inkMuted)
         Row {
-            Text("$zostalo ", style = liczba(14), color = DarkTokens.ink,
+            Text("$zostalo ", style = liczba(14), color = Tokeny.ink,
                 modifier = Modifier.alignByBaseline())
-            Text("z $baza", style = liczba(10, FontWeight.Medium), color = DarkTokens.inkMuted,
+            Text("z $baza", style = liczba(10, FontWeight.Medium), color = Tokeny.inkMuted,
                 modifier = Modifier.alignByBaseline())
         }
     }
@@ -563,11 +563,11 @@ private fun KartaRozkladu(s: UiState) {
         Modifier.wejscie(p).padding(horizontal = Dim.screenGutter),
         promien = Dim.rCard, paddingPion = 16.dp, paddingBok = 16.dp
     ) {
-        Text("Rozkład zmian", style = GrafikType.cardTitle, color = DarkTokens.ink)
+        Text("Rozkład zmian", style = GrafikType.cardTitle, color = Tokeny.ink)
         Spacer(Modifier.height(14.dp))
 
-        listOf(Shift.I to ShiftPaletteDark.I, Shift.II to ShiftPaletteDark.II,
-            Shift.III to ShiftPaletteDark.III).forEach { (zm, kolory) ->
+        listOf(Shift.I to Paleta.I, Shift.II to Paleta.II,
+            Shift.III to Paleta.III).forEach { (zm, kolory) ->
             val dni = s.stats.daysByShift[zm] ?: 0
             val godziny = s.stats.byShift[zm] ?: 0
             Row(
@@ -580,20 +580,20 @@ private fun KartaRozkladu(s: UiState) {
                 PasekPostepu(dni.toFloat() / maks, Modifier.weight(1f),
                     wysokosc = 10.dp, kolor = kolory.ink)
                 Column(Modifier.width(62.dp), horizontalAlignment = Alignment.End) {
-                    Text("$dni dni", style = liczba(12, FontWeight.SemiBold), color = DarkTokens.ink)
-                    Text("$godziny h", style = liczba(10, FontWeight.Medium), color = DarkTokens.inkMuted)
+                    Text("$dni dni", style = liczba(12, FontWeight.SemiBold), color = Tokeny.ink)
+                    Text("$godziny h", style = liczba(10, FontWeight.Medium), color = Tokeny.inkMuted)
                 }
             }
         }
 
-        Box(Modifier.fillMaxWidth().height(1.dp).background(DarkTokens.line))
+        Box(Modifier.fillMaxWidth().height(1.dp).background(Tokeny.line))
         Spacer(Modifier.height(14.dp))
 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            PodsumowanieDni(Modifier.weight(1f), "${s.stats.daysWork}", "dni pracy", DarkTokens.ink)
-            PodsumowanieDni(Modifier.weight(1f), "${s.stats.daysFree}", "dni wolnych", DarkTokens.ink)
+            PodsumowanieDni(Modifier.weight(1f), "${s.stats.daysWork}", "dni pracy", Tokeny.ink)
+            PodsumowanieDni(Modifier.weight(1f), "${s.stats.daysFree}", "dni wolnych", Tokeny.ink)
             PodsumowanieDni(Modifier.weight(1f), "${s.urlopMiesiaca.size}", "urlopu",
-                ShiftPaletteDark.URLOP.ink)
+                Paleta.URLOP.ink)
         }
     }
 }
@@ -602,7 +602,7 @@ private fun KartaRozkladu(s: UiState) {
 private fun PodsumowanieDni(modifier: Modifier, wartosc: String, podpis: String, kolor: Color) {
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(wartosc, style = liczba(18), color = kolor, modifier = Modifier.alignByBaseline())
-        Text(podpis, fontSize = 11.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted,
+        Text(podpis, fontSize = 11.sp, fontFamily = Jakarta, color = Tokeny.inkMuted,
             maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.alignByBaseline())
     }
 }

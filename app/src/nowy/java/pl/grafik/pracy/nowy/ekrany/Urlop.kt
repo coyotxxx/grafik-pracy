@@ -54,9 +54,9 @@ fun EkranUrlop(vm: Vm, naPowrot: () -> Unit, naPlaner: () -> Unit) {
             val pNag by postepWejscia(Motion.RISE_MS)
             Column(Modifier.wejscie(pNag), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text("Urlop", style = GrafikType.h1.copy(fontSize = 26.sp, lineHeight = 26.sp),
-                    color = DarkTokens.ink)
+                    color = Tokeny.ink)
                 Text("Ustaw raz w roku — dalej aplikacja odlicza sama.",
-                    fontSize = 12.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted)
+                    fontSize = 12.sp, fontFamily = Jakarta, color = Tokeny.inkMuted)
             }
 
             KartaPozostalo(s)
@@ -77,7 +77,7 @@ private fun KartaPozostalo(s: UiState) {
     val p by postepWejscia(Motion.RISE_MS, 50)
     val u = s.urlopBilans
     val pula = u.bazaZalegly + u.bazaBiezacy
-    val rozowy = ShiftPaletteDark.URLOP.ink
+    val rozowy = Paleta.URLOP.ink
 
     Column(
         Modifier.wejscie(p).fillMaxWidth()
@@ -87,7 +87,7 @@ private fun KartaPozostalo(s: UiState) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Text("ZOSTAŁO NA ${u.rok}", style = GrafikType.sectionLabel, color = DarkTokens.inkMuted)
+        Text("ZOSTAŁO NA ${u.rok}", style = GrafikType.sectionLabel, color = Tokeny.inkMuted)
 
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
             Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
@@ -97,19 +97,19 @@ private fun KartaPozostalo(s: UiState) {
                     color = rozowy, modifier = Modifier.alignByBaseline()
                 )
                 Text("dni", fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
-                    fontFamily = Jakarta, color = Color(0xFFD7DBDE),
+                    fontFamily = Jakarta, color = Tokeny.inkNaKarcie,
                     modifier = Modifier.alignByBaseline())
             }
             Text(
                 "z $pula dni wymiaru\n${u.zuzyte} wykorzystane",
                 fontSize = 11.sp, lineHeight = 16.sp, fontFamily = Jakarta,
-                color = DarkTokens.inkMuted, textAlign = TextAlign.End
+                color = Tokeny.inkMuted, textAlign = TextAlign.End
             )
         }
 
         Box(
             Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(999.dp))
-                .background(Color(0x4D000000))
+                .background(Tokeny.naklad)
         ) {
             val udzial = if (pula > 0) u.zuzyte.toFloat() / pula else 0f
             Box(
@@ -132,9 +132,9 @@ private fun KartaWymiaru(s: UiState, vm: Vm) {
 
     KartaUstawien(Modifier.wejscie(p)) {
         Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text("Wymiar roczny", style = GrafikType.cardTitle, color = DarkTokens.ink)
+            Text("Wymiar roczny", style = GrafikType.cardTitle, color = Tokeny.ink)
             Text("20 dni do 10 lat stażu, 26 powyżej",
-                fontSize = 11.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted)
+                fontSize = 11.sp, fontFamily = Jakarta, color = Tokeny.inkMuted)
         }
 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -142,10 +142,10 @@ private fun KartaWymiaru(s: UiState, vm: Vm) {
                 val wybrany = cfg.wymiar == ile
                 Box(
                     Modifier.weight(1f).height(46.dp).clip(RoundedCornerShape(14.dp))
-                        .background(if (wybrany) Color(0x29F490D9) else DarkTokens.surfaceInput)
+                        .background(if (wybrany) Color(0x29F490D9) else Tokeny.surfaceInput)
                         .border(
                             1.dp,
-                            if (wybrany) Color(0x6BF490D9) else DarkTokens.lineInput,
+                            if (wybrany) Color(0x6BF490D9) else Tokeny.lineInput,
                             RoundedCornerShape(14.dp)
                         )
                         .clickable { vm.saveVacation(cfg.copy(wymiar = ile)) },
@@ -153,13 +153,13 @@ private fun KartaWymiaru(s: UiState, vm: Vm) {
                 ) {
                     Text("$ile dni", fontSize = 14.sp, fontWeight = FontWeight.Bold,
                         fontFamily = Jakarta,
-                        color = if (wybrany) ShiftPaletteDark.URLOP.ink else DarkTokens.inkMuted)
+                        color = if (wybrany) Paleta.URLOP.ink else Tokeny.inkMuted)
                 }
             }
             StepperDni(cfg.wymiar, "dni wymiaru") { vm.saveVacation(cfg.copy(wymiar = it.coerceIn(0, 40))) }
         }
 
-        Box(Modifier.fillMaxWidth().height(1.dp).background(DarkTokens.line))
+        Box(Modifier.fillMaxWidth().height(1.dp).background(Tokeny.line))
 
         Row(
             Modifier.fillMaxWidth(),
@@ -167,9 +167,9 @@ private fun KartaWymiaru(s: UiState, vm: Vm) {
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text("Zaległy z ${rok - 1}", style = GrafikType.cardTitle, color = DarkTokens.ink)
+                Text("Zaległy z ${rok - 1}", style = GrafikType.cardTitle, color = Tokeny.ink)
                 Text("doliczany do wymiaru", fontSize = 11.sp,
-                    fontFamily = Jakarta, color = DarkTokens.inkMuted)
+                    fontFamily = Jakarta, color = Tokeny.inkMuted)
             }
             StepperDni(cfg.zalegly, "dni zaległych") { vm.saveVacation(cfg.copy(zalegly = it.coerceIn(0, 40))) }
         }
@@ -189,15 +189,15 @@ private fun PasekTerminu(cfg: VacationCfg, rok: Int) {
 
     val stan = when {
         cfg.zalegly <= 0 -> Termin(
-            Color(0x08FFFFFF), DarkTokens.line, Color(0xFF8A939B),
+            Color(0x08FFFFFF), Tokeny.line, Tokeny.inkIkona,
             "Brak zaległego urlopu — nic nie przepada."
         )
         dzis.isAfter(termin) -> Termin(
-            DarkTokens.warnBg, DarkTokens.warnLine, DarkTokens.warnInk,
+            Tokeny.warnBg, Tokeny.warnLine, Tokeny.warnInk,
             "Termin na zaległy urlop minął ${termin.format(DATA_PL)}."
         )
         else -> Termin(
-            Color(0x14DAC559), Color(0x42DAC559), ShiftPaletteDark.I.ink,
+            Color(0x14DAC559), Color(0x42DAC559), Paleta.I.ink,
             "Zaległy urlop trzeba wykorzystać do 30 września. Przypomnimy w sierpniu."
         )
     }
@@ -223,7 +223,7 @@ private fun PasekTerminu(cfg: VacationCfg, rok: Int) {
 private fun KartaStanuZZakladu(s: UiState, vm: Vm) {
     val p by postepWejscia(Motion.RISE_MS, 130)
     val cfg = s.urlop
-    val rozowy = ShiftPaletteDark.URLOP.ink
+    val rozowy = Paleta.URLOP.ink
     // Stepper trzyma własną wartość do czasu zapisu — dopóki nie dotkniesz
     // „Zapisz stan na dziś", nic nie zmienia się w rozliczeniu.
     var biezacy by remember(cfg.stanData, cfg.stanBiezacy) {
@@ -232,11 +232,11 @@ private fun KartaStanuZZakladu(s: UiState, vm: Vm) {
 
     KartaUstawien(Modifier.wejscie(p)) {
         Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text("Stan z zakładu", style = GrafikType.cardTitle, color = DarkTokens.ink)
+            Text("Stan z zakładu", style = GrafikType.cardTitle, color = Tokeny.ink)
             Text(
                 "Jeśli kadrowa poda Ci aktualne liczby, zapisz je tutaj. Od tego dnia aplikacja " +
                     "odlicza sama, zdejmując najpierw urlop zaległy.",
-                fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted
+                fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta, color = Tokeny.inkMuted
             )
         }
 
@@ -246,7 +246,7 @@ private fun KartaStanuZZakladu(s: UiState, vm: Vm) {
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text("bieżący", fontSize = 13.sp, fontFamily = Jakarta,
-                color = DarkTokens.ink3, modifier = Modifier.weight(1f))
+                color = Tokeny.ink3, modifier = Modifier.weight(1f))
             StepperDni(biezacy, "dni bieżących") { biezacy = it.coerceIn(0, 60) }
         }
 
@@ -277,13 +277,13 @@ private fun KartaStanuZZakladu(s: UiState, vm: Vm) {
                 cfg.stanData?.let {
                     "Zapisane ${it.format(DATA_PL)}: ${cfg.stanBiezacy} bieżącego, ${cfg.stanZalegly} zaległego"
                 } ?: "Nic nie zapisano — liczymy od początku roku.",
-                fontSize = 11.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted,
+                fontSize = 11.sp, fontFamily = Jakarta, color = Tokeny.inkMuted,
                 modifier = Modifier.weight(1f)
             )
             if (cfg.stanData != null) {
                 Box(
                     Modifier.height(30.dp).clip(RoundedCornerShape(10.dp))
-                        .border(1.dp, DarkTokens.lineSoft, RoundedCornerShape(10.dp))
+                        .border(1.dp, Tokeny.lineSoft, RoundedCornerShape(10.dp))
                         .clickable {
                             vm.saveVacation(cfg.copy(stanData = null, stanBiezacy = 0, stanZalegly = 0))
                         }
@@ -291,7 +291,7 @@ private fun KartaStanuZZakladu(s: UiState, vm: Vm) {
                     contentAlignment = Alignment.Center
                 ) {
                     Text("Wyczyść", fontSize = 11.sp, fontWeight = FontWeight.SemiBold,
-                        fontFamily = Jakarta, color = DarkTokens.inkMuted)
+                        fontFamily = Jakarta, color = Tokeny.inkMuted)
                 }
             }
         }
@@ -309,11 +309,11 @@ private fun KartaJakLiczymy() {
         Modifier.wejscie(p).fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(Color(0x08FFFFFF))
-            .border(1.dp, DarkTokens.line, RoundedCornerShape(20.dp))
+            .border(1.dp, Tokeny.line, RoundedCornerShape(20.dp))
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Text("JAK TO LICZYMY", style = GrafikType.sectionLabel, color = DarkTokens.inkFaint)
+        Text("JAK TO LICZYMY", style = GrafikType.sectionLabel, color = Tokeny.inkFaint)
         listOf(
             "Dzień urlopu = 8 h i wlicza się do normy miesiąca.",
             "Najpierw zdejmujemy zaległy, dopiero potem bieżący.",
@@ -323,10 +323,10 @@ private fun KartaJakLiczymy() {
                 Box(
                     Modifier.padding(top = 6.dp).size(5.dp)
                         .clip(RoundedCornerShape(999.dp))
-                        .background(ShiftPaletteDark.URLOP.ink)
+                        .background(Paleta.URLOP.ink)
                 )
                 Text(zdanie, fontSize = 12.sp, lineHeight = 18.sp,
-                    fontFamily = Jakarta, color = DarkTokens.ink3)
+                    fontFamily = Jakarta, color = Tokeny.ink3)
             }
         }
     }
@@ -336,7 +336,7 @@ private fun KartaJakLiczymy() {
 @Composable
 private fun PrzyciskPlanera(naPlaner: () -> Unit) {
     val p by postepWejscia(Motion.RISE_MS, 210)
-    val rozowy = ShiftPaletteDark.URLOP.ink
+    val rozowy = Paleta.URLOP.ink
     Row(
         Modifier.wejscie(p).fillMaxWidth().height(48.dp)
             .clip(RoundedCornerShape(15.dp))
@@ -361,8 +361,8 @@ private fun PrzyciskPlanera(naPlaner: () -> Unit) {
 private fun StepperDni(wartosc: Int, opis: String, naZmiane: (Int) -> Unit) {
     Row(
         Modifier.clip(RoundedCornerShape(14.dp))
-            .background(DarkTokens.surfaceInput)
-            .border(1.dp, DarkTokens.lineInput, RoundedCornerShape(14.dp))
+            .background(Tokeny.surfaceInput)
+            .border(1.dp, Tokeny.lineInput, RoundedCornerShape(14.dp))
             .padding(horizontal = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -371,19 +371,19 @@ private fun StepperDni(wartosc: Int, opis: String, naZmiane: (Int) -> Unit) {
             Modifier.size(34.dp).clip(RoundedCornerShape(10.dp))
                 .clickable { naZmiane(wartosc - 1) },
             contentAlignment = Alignment.Center
-        ) { Icon(IkonaMinus, "Mniej $opis", Modifier.size(14.dp), tint = DarkTokens.ink2) }
+        ) { Icon(IkonaMinus, "Mniej $opis", Modifier.size(14.dp), tint = Tokeny.ink2) }
 
         Text(
             "$wartosc", Modifier.widthIn(min = 26.dp),
             style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Bold,
                 fontFamily = Jakarta, fontFeatureSettings = TNUM),
-            color = DarkTokens.ink, textAlign = TextAlign.Center
+            color = Tokeny.ink, textAlign = TextAlign.Center
         )
 
         Box(
             Modifier.size(34.dp).clip(RoundedCornerShape(10.dp))
                 .clickable { naZmiane(wartosc + 1) },
             contentAlignment = Alignment.Center
-        ) { Icon(IkonaPlus, "Więcej $opis", Modifier.size(14.dp), tint = DarkTokens.ink2) }
+        ) { Icon(IkonaPlus, "Więcej $opis", Modifier.size(14.dp), tint = Tokeny.ink2) }
     }
 }

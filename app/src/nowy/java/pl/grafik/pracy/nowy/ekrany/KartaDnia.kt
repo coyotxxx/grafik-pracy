@@ -71,12 +71,12 @@ fun KartaDnia(vm: Vm, dzien: LocalDate, naZamkniecie: () -> Unit) {
     ModalBottomSheet(
         onDismissRequest = naZamkniecie,
         sheetState = stan,
-        containerColor = DarkTokens.bgElevated,
-        contentColor = DarkTokens.ink,
+        containerColor = Tokeny.bgElevated,
+        contentColor = Tokeny.ink,
         shape = RoundedCornerShape(topStart = Dim.rSheet, topEnd = Dim.rSheet),
         dragHandle = {
             Box(Modifier.fillMaxWidth().padding(top = 10.dp), contentAlignment = Alignment.Center) {
-                Box(Modifier.size(40.dp, 4.dp).clip(RoundedCornerShape(999.dp)).background(DarkTokens.lineSoft))
+                Box(Modifier.size(40.dp, 4.dp).clip(RoundedCornerShape(999.dp)).background(Tokeny.lineSoft))
             }
         }
     ) {
@@ -109,16 +109,16 @@ private fun NaglowekDnia(dzien: LocalDate, naZamkniecie: () -> Unit) {
                     fontFamily = Bricolage, fontWeight = FontWeight.Bold,
                     fontSize = 21.sp, lineHeight = 23.sp, letterSpacing = (-0.42).sp
                 ),
-                color = DarkTokens.ink
+                color = Tokeny.ink
             )
             Text(
                 "tydzień $tydzien" + if (dzien == dzis) " · dziś" else "",
-                style = GrafikType.caption, color = DarkTokens.inkMuted
+                style = GrafikType.caption, color = Tokeny.inkMuted
             )
         }
         PrzyciskKwadrat(
             IkonaZamknij, "Zamknij",
-            tlo = Color.White.copy(alpha = 0.05f), obrys = DarkTokens.lineStrong,
+            tlo = Tokeny.surface, obrys = Tokeny.lineStrong,
             akcja = naZamkniecie
         )
     }
@@ -127,7 +127,7 @@ private fun NaglowekDnia(dzien: LocalDate, naZamkniecie: () -> Unit) {
 @Composable
 private fun KartaTypuDnia(s: UiState, dzien: LocalDate, vm: Vm) {
     val e = s.entries[dzien]
-    val k = ShiftPaletteDark.of(typDniaZ(e?.shift))
+    val k = Paleta.of(typDniaZ(e?.shift))
     val godzin = (if (e?.shift?.isWork == true) 8 else 0) + (e?.otHours ?: 0)
 
     Column(
@@ -153,12 +153,12 @@ private fun KartaTypuDnia(s: UiState, dzien: LocalDate, vm: Vm) {
                 )
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(nazwaZmiany(e?.shift), style = GrafikType.cardTitleStrong, color = DarkTokens.ink,
+                Text(nazwaZmiany(e?.shift), style = GrafikType.cardTitleStrong, color = Tokeny.ink,
                     maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(
                     godzinyZmiany(e?.shift),
                     style = TextStyle(fontFamily = Jakarta, fontSize = 12.sp, fontFeatureSettings = TNUM),
-                    color = DarkTokens.ink3
+                    color = Tokeny.ink3
                 )
             }
             if (godzin > 0) Pigulka("$godzin h")
@@ -166,18 +166,18 @@ private fun KartaTypuDnia(s: UiState, dzien: LocalDate, vm: Vm) {
         Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
             SEGMENTY.forEach { (narzedzie, etykieta) ->
                 val wybrany = e?.shift == shiftZNarzedzia(narzedzie)
-                val kol = ShiftPaletteDark.of(typDniaZ(shiftZNarzedzia(narzedzie)))
+                val kol = Paleta.of(typDniaZ(shiftZNarzedzia(narzedzie)))
                 Box(
                     Modifier.weight(1f).height(42.dp).clip(RoundedCornerShape(12.dp))
-                        .background(if (wybrany) kol.fill else DarkTokens.surfaceInput)
-                        .border(1.dp, if (wybrany) kol.line else DarkTokens.lineInput, RoundedCornerShape(12.dp))
+                        .background(if (wybrany) kol.fill else Tokeny.surfaceInput)
+                        .border(1.dp, if (wybrany) kol.line else Tokeny.lineInput, RoundedCornerShape(12.dp))
                         .clickable { vm.setShift(dzien, shiftZNarzedzia(narzedzie)) },
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         etykieta, fontSize = 12.sp, fontWeight = FontWeight.Bold,
                         letterSpacing = 0.36.sp, fontFamily = Jakarta,
-                        color = if (wybrany) kol.ink else DarkTokens.inkMuted,
+                        color = if (wybrany) kol.ink else Tokeny.inkMuted,
                         maxLines = 1, textAlign = TextAlign.Center
                     )
                 }
@@ -194,17 +194,17 @@ private fun WierszNadgodzin(s: UiState, dzien: LocalDate, vm: Vm) {
 
     Row(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(Dim.rCardSmall))
-            .background(DarkTokens.surface)
-            .border(1.dp, DarkTokens.line, RoundedCornerShape(Dim.rCardSmall))
+            .background(Tokeny.surface)
+            .border(1.dp, Tokeny.line, RoundedCornerShape(Dim.rCardSmall))
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text("Nadgodziny", style = GrafikType.cardTitle, color = DarkTokens.ink)
+            Text("Nadgodziny", style = GrafikType.cardTitle, color = Tokeny.ink)
             Text(
                 if (ile == 0) "brak — dotknij plus, aby dodać" else "$ile h po ${stawka.percent} %",
-                style = GrafikType.caption, color = DarkTokens.inkMuted
+                style = GrafikType.caption, color = Tokeny.inkMuted
             )
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
@@ -218,7 +218,7 @@ private fun WierszNadgodzin(s: UiState, dzien: LocalDate, vm: Vm) {
                     fontFamily = Jakarta, fontSize = 14.sp, fontWeight = FontWeight.Bold,
                     fontFeatureSettings = TNUM
                 ),
-                color = DarkTokens.ink, textAlign = TextAlign.Center
+                color = Tokeny.ink, textAlign = TextAlign.Center
             )
             PrzyciskKwadrat(IkonaPlus, "Więcej nadgodzin") {
                 vm.setOvertime(dzien, ile + 1, stawka)
@@ -226,8 +226,8 @@ private fun WierszNadgodzin(s: UiState, dzien: LocalDate, vm: Vm) {
             val setka = stawka == OtRate.P100
             Box(
                 Modifier.height(36.dp).widthIn(min = 48.dp).clip(RoundedCornerShape(12.dp))
-                    .background(if (setka) ShiftPaletteDark.I.fill else DarkTokens.surfaceInput)
-                    .border(1.dp, if (setka) ShiftPaletteDark.I.line else DarkTokens.lineInput, RoundedCornerShape(12.dp))
+                    .background(if (setka) Paleta.I.fill else Tokeny.surfaceInput)
+                    .border(1.dp, if (setka) Paleta.I.line else Tokeny.lineInput, RoundedCornerShape(12.dp))
                     .clickable {
                         vm.setOvertime(dzien, ile, if (setka) OtRate.P50 else OtRate.P100)
                     }
@@ -237,7 +237,7 @@ private fun WierszNadgodzin(s: UiState, dzien: LocalDate, vm: Vm) {
                 Text(
                     "${stawka.percent}%", fontSize = 12.sp, fontWeight = FontWeight.Bold,
                     fontFamily = Jakarta,
-                    color = if (setka) ShiftPaletteDark.I.ink else DarkTokens.inkMuted
+                    color = if (setka) Paleta.I.ink else Tokeny.inkMuted
                 )
             }
         }
@@ -250,17 +250,17 @@ private fun SekcjaObecnosci(s: UiState, dzien: LocalDate, vm: Vm) {
     val zmianaRobocza = s.entries[dzien]?.shift?.isWork == true
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("OBECNOŚĆ", style = GrafikType.sectionLabel, color = DarkTokens.inkFaint)
+        Text("OBECNOŚĆ", style = GrafikType.sectionLabel, color = Tokeny.inkFaint)
         Column(
             Modifier.fillMaxWidth().clip(RoundedCornerShape(Dim.rCardSmall))
-                .background(DarkTokens.surface)
-                .border(1.dp, DarkTokens.line, RoundedCornerShape(Dim.rCardSmall))
+                .background(Tokeny.surface)
+                .border(1.dp, Tokeny.line, RoundedCornerShape(Dim.rCardSmall))
                 .padding(horizontal = 14.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Box(Modifier.size(8.dp).clip(RoundedCornerShape(999.dp))
-                    .background(if (ob != null) DarkTokens.ok else DarkTokens.lineSoft))
+                    .background(if (ob != null) Tokeny.ok else Tokeny.lineSoft))
                 Text(
                     when {
                         ob?.trwa == true -> "Jesteś w pracy"
@@ -269,15 +269,15 @@ private fun SekcjaObecnosci(s: UiState, dzien: LocalDate, vm: Vm) {
                         ob != null -> "Zapisane ${ob.hours} h"
                         else -> "Nic nie wykryto"
                     },
-                    Modifier.weight(1f), fontSize = 13.sp, fontFamily = Jakarta, color = Color(0xFFD7DBDE)
+                    Modifier.weight(1f), fontSize = 13.sp, fontFamily = Jakarta, color = Tokeny.inkNaKarcie
                 )
                 if (ob != null) {
                     Text(if (ob.reczne) "ręcznie" else "auto",
-                        style = GrafikType.caption, color = DarkTokens.inkMuted)
+                        style = GrafikType.caption, color = Tokeny.inkMuted)
                 }
             }
             if (ob == null || ob.reczne) {
-                Box(Modifier.fillMaxWidth().height(1.dp).background(DarkTokens.line))
+                Box(Modifier.fillMaxWidth().height(1.dp).background(Tokeny.line))
                 Row(
                     Modifier.fillMaxWidth().clickable(enabled = zmianaRobocza) {
                         vm.oznaczObecnosc(dzien, ob == null)
@@ -286,10 +286,10 @@ private fun SekcjaObecnosci(s: UiState, dzien: LocalDate, vm: Vm) {
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text("Byłem w pracy", style = GrafikType.cardTitle, color = DarkTokens.ink)
+                        Text("Byłem w pracy", style = GrafikType.cardTitle, color = Tokeny.ink)
                         Text(
                             if (zmianaRobocza) "godziny bierzemy ze zmiany" else "najpierw ustaw zmianę",
-                            style = GrafikType.caption, color = DarkTokens.inkMuted
+                            style = GrafikType.caption, color = Tokeny.inkMuted
                         )
                     }
                     Przelacznik(ob != null) { if (zmianaRobocza) vm.oznaczObecnosc(dzien, it) }
@@ -309,17 +309,17 @@ private fun SekcjaWydarzen(s: UiState, dzien: LocalDate, vm: Vm) {
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text("WYDARZENIA", Modifier.weight(1f), style = GrafikType.sectionLabel, color = DarkTokens.inkFaint)
+            Text("WYDARZENIA", Modifier.weight(1f), style = GrafikType.sectionLabel, color = Tokeny.inkFaint)
             Text("przypomnienia działają też przy zmianie nocnej",
-                style = GrafikType.caption, color = DarkTokens.inkFaint,
+                style = GrafikType.caption, color = Tokeny.inkFaint,
                 maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
 
         wydarzenia.forEach { ev ->
             Row(
                 Modifier.fillMaxWidth().clip(RoundedCornerShape(Dim.rCardSmall))
-                    .background(DarkTokens.surface)
-                    .border(1.dp, DarkTokens.line, RoundedCornerShape(Dim.rCardSmall))
+                    .background(Tokeny.surface)
+                    .border(1.dp, Tokeny.line, RoundedCornerShape(Dim.rCardSmall))
                     .padding(horizontal = 14.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -330,24 +330,24 @@ private fun SekcjaWydarzen(s: UiState, dzien: LocalDate, vm: Vm) {
                         fontFamily = Jakarta, fontSize = 14.sp, fontWeight = FontWeight.Bold,
                         fontFeatureSettings = TNUM
                     ),
-                    color = ShiftPaletteDark.III.ink
+                    color = Paleta.III.ink
                 )
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text(ev.text, style = GrafikType.cardTitle, color = DarkTokens.ink,
+                    Text(ev.text, style = GrafikType.cardTitle, color = Tokeny.ink,
                         maxLines = 1, overflow = TextOverflow.Ellipsis)
                     if (ev.remind) {
                         Row(verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                            Icon(IkonaDzwonek, null, Modifier.size(12.dp), tint = DarkTokens.inkMuted)
+                            Icon(IkonaDzwonek, null, Modifier.size(12.dp), tint = Tokeny.inkMuted)
                             Text("przypomnienie dzień wcześniej, ${"%02d".format(s.remindHour)}:00",
-                                style = GrafikType.caption, color = DarkTokens.inkMuted)
+                                style = GrafikType.caption, color = Tokeny.inkMuted)
                         }
                     }
                 }
                 PrzyciskKwadrat(
                     IkonaKosz, "Usuń wydarzenie",
-                    tlo = Color.Transparent, obrys = DarkTokens.lineStrong,
-                    kolorIkony = Color(0xFF8A939B)
+                    tlo = Color.Transparent, obrys = Tokeny.lineStrong,
+                    kolorIkony = Tokeny.inkIkona
                 ) { vm.deleteEvent(ev.id) }
             }
         }
@@ -355,18 +355,18 @@ private fun SekcjaWydarzen(s: UiState, dzien: LocalDate, vm: Vm) {
         if (dodaje) {
             Column(
                 Modifier.fillMaxWidth().clip(RoundedCornerShape(Dim.rCardSmall))
-                    .background(DarkTokens.accent.copy(alpha = 0.06f))
-                    .border(1.dp, DarkTokens.accent.copy(alpha = 0.28f), RoundedCornerShape(Dim.rCardSmall))
+                    .background(Tokeny.accent.copy(alpha = 0.06f))
+                    .border(1.dp, Tokeny.accent.copy(alpha = 0.28f), RoundedCornerShape(Dim.rCardSmall))
                     .padding(horizontal = 14.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Column(Modifier.width(92.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                        Text("godzina", fontSize = 10.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted)
+                        Text("godzina", fontSize = 10.sp, fontFamily = Jakarta, color = Tokeny.inkMuted)
                         PoleTekstowe(godzina, "9 20", cyfry = true) { godzina = it.filter(Char::isDigit).take(4) }
                     }
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                        Text("co to za wydarzenie", fontSize = 10.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted)
+                        Text("co to za wydarzenie", fontSize = 10.sp, fontFamily = Jakarta, color = Tokeny.inkMuted)
                         PoleTekstowe(nazwa, "np. badania okresowe") { nazwa = it.take(80) }
                     }
                 }
@@ -378,19 +378,19 @@ private fun SekcjaWydarzen(s: UiState, dzien: LocalDate, vm: Vm) {
                     Checkbox(
                         przypomnij, { przypomnij = it },
                         colors = CheckboxDefaults.colors(
-                            checkedColor = DarkTokens.accent,
-                            checkmarkColor = DarkTokens.accentOn,
-                            uncheckedColor = DarkTokens.lineSoft
+                            checkedColor = Tokeny.accent,
+                            checkmarkColor = Tokeny.accentOn,
+                            uncheckedColor = Tokeny.lineSoft
                         )
                     )
                     Text("Przypomnij dzień wcześniej o ${"%02d".format(s.remindHour)}:00",
-                        fontSize = 13.sp, fontFamily = Jakarta, color = DarkTokens.ink)
+                        fontSize = 13.sp, fontFamily = Jakarta, color = Tokeny.ink)
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     PrzyciskDrugorzedny("Anuluj", Modifier.weight(1f)) { dodaje = false }
                     Box(
                         Modifier.weight(1f).height(44.dp).clip(RoundedCornerShape(13.dp))
-                            .background(DarkTokens.accent)
+                            .background(Tokeny.accent)
                             .clickable {
                                 val g = godzina.padStart(4, '0')
                                 val czas = "${g.take(2).toInt()}:${g.takeLast(2)}"
@@ -402,19 +402,22 @@ private fun SekcjaWydarzen(s: UiState, dzien: LocalDate, vm: Vm) {
                         contentAlignment = Alignment.Center
                     ) {
                         Text("Dodaj", fontSize = 13.sp, fontWeight = FontWeight.Bold,
-                            fontFamily = Jakarta, color = DarkTokens.accentOn)
+                            fontFamily = Jakarta, color = Tokeny.accentOn)
                     }
                 }
             }
         } else {
+            // Kolor czytamy przed rysowaniem — wewnątrz `drawBehind` nie ma już
+            // kontekstu kompozycji, z którego bierze się motyw.
+            val kolorKreski = Tokeny.lineSoft
             Row(
                 // Makieta: „border: 1px dashed #2A3036" — Compose nie ma obrysu
                 // przerywanego w Modifier.border, więc rysujemy go sami.
                 Modifier.fillMaxWidth().height(46.dp).clip(RoundedCornerShape(15.dp))
-                    .background(Color.White.copy(alpha = 0.04f))
+                    .background(Tokeny.surface)
                     .drawBehind {
                         drawRoundRect(
-                            color = DarkTokens.lineSoft,
+                            color = kolorKreski,
                             style = androidx.compose.ui.graphics.drawscope.Stroke(
                                 width = 1.dp.toPx(),
                                 pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(
@@ -428,9 +431,9 @@ private fun SekcjaWydarzen(s: UiState, dzien: LocalDate, vm: Vm) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
             ) {
-                Icon(IkonaPlusCienki, null, Modifier.size(16.dp), tint = DarkTokens.ink2)
+                Icon(IkonaPlusCienki, null, Modifier.size(16.dp), tint = Tokeny.ink2)
                 Text("Dodaj wydarzenie", fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
-                    fontFamily = Jakarta, color = DarkTokens.ink2)
+                    fontFamily = Jakarta, color = Tokeny.ink2)
             }
         }
     }

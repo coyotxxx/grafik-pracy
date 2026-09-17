@@ -61,9 +61,9 @@ fun EkranCzasPracy(vm: Vm, naPowrot: () -> Unit) {
             Column(Modifier.wejscie(pNag), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text("Czas pracy i nadgodziny",
                     style = GrafikType.h1.copy(fontSize = 26.sp, lineHeight = 30.sp),
-                    color = DarkTokens.ink)
+                    color = Tokeny.ink)
                 Text("Tak liczymy Twoją normę i limity. Ustaw zgodnie z tym, co robi kadrowa.",
-                    fontSize = 12.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted)
+                    fontSize = 12.sp, fontFamily = Jakarta, color = Tokeny.inkMuted)
             }
 
             KartaOkresuRozliczeniowego(s, vm)
@@ -84,11 +84,11 @@ private fun KartaOkresuRozliczeniowego(s: UiState, vm: Vm) {
     val biezacy = s.okresy.firstOrNull { it.biezacy } ?: s.okresy.firstOrNull()
 
     KartaUstawien(Modifier.wejscie(p)) {
-        Text("Okres rozliczeniowy", style = GrafikType.cardTitle, color = DarkTokens.ink)
+        Text("Okres rozliczeniowy", style = GrafikType.cardTitle, color = Tokeny.ink)
         Text(
             "Zakład rozlicza godziny w całym okresie, nie w pojedynczym miesiącu — " +
                 "niedobór z jednego miesiąca odrabiasz w kolejnym.",
-            fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted
+            fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta, color = Tokeny.inkMuted
         )
 
         // Pięć długości w siatce po trzy w rzędzie — jak w makiecie.
@@ -98,10 +98,10 @@ private fun KartaOkresuRozliczeniowego(s: UiState, vm: Vm) {
                     val wybrany = s.okres.months == ile
                     Box(
                         Modifier.weight(1f).height(42.dp).clip(RoundedCornerShape(13.dp))
-                            .background(if (wybrany) Color(0x2452D0B3) else DarkTokens.surface)
+                            .background(if (wybrany) Color(0x2452D0B3) else Tokeny.surface)
                             .border(
                                 1.dp,
-                                if (wybrany) Color(0x7352D0B3) else DarkTokens.line,
+                                if (wybrany) Color(0x7352D0B3) else Tokeny.line,
                                 RoundedCornerShape(13.dp)
                             )
                             .clickable { vm.saveSettlement(s.okres.copy(months = ile)) },
@@ -111,7 +111,7 @@ private fun KartaOkresuRozliczeniowego(s: UiState, vm: Vm) {
                             NAZWY_OKRESU[ile] ?: "$ile mies.",
                             fontSize = 12.sp, fontWeight = FontWeight.SemiBold, fontFamily = Jakarta,
                             maxLines = 1, overflow = TextOverflow.Ellipsis,
-                            color = if (wybrany) DarkTokens.accent else DarkTokens.inkMuted
+                            color = if (wybrany) Tokeny.accent else Tokeny.inkMuted
                         )
                     }
                 }
@@ -129,7 +129,7 @@ private fun KartaOkresuRozliczeniowego(s: UiState, vm: Vm) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Box(Modifier.size(7.dp).clip(RoundedCornerShape(999.dp)).background(DarkTokens.accent))
+                Box(Modifier.size(7.dp).clip(RoundedCornerShape(999.dp)).background(Tokeny.accent))
                 Text("Bieżący okres: ${okresLabel(biezacy.period)}",
                     fontSize = 12.sp, fontFamily = Jakarta, color = Color(0xFF9FE3D2))
             }
@@ -151,19 +151,19 @@ private fun KartaStawki(s: UiState, vm: Vm) {
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text("Domyślna stawka nadgodzin", style = GrafikType.cardTitle, color = DarkTokens.ink)
+                Text("Domyślna stawka nadgodzin", style = GrafikType.cardTitle, color = Tokeny.ink)
                 Text("podpowiadana przy malowaniu i w dniu",
-                    fontSize = 11.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted)
+                    fontSize = 11.sp, fontFamily = Jakarta, color = Tokeny.inkMuted)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
                 OtRate.entries.forEach { stawka ->
                     val wybrana = s.otRate == stawka
                     Box(
                         Modifier.height(38.dp).clip(RoundedCornerShape(12.dp))
-                            .background(if (wybrana) Color(0x2452D0B3) else DarkTokens.surfaceInput)
+                            .background(if (wybrana) Color(0x2452D0B3) else Tokeny.surfaceInput)
                             .border(
                                 1.dp,
-                                if (wybrana) Color(0x7352D0B3) else DarkTokens.lineInput,
+                                if (wybrana) Color(0x7352D0B3) else Tokeny.lineInput,
                                 RoundedCornerShape(12.dp)
                             )
                             .clickable { if (!wybrana) vm.toggleRate() }
@@ -172,7 +172,7 @@ private fun KartaStawki(s: UiState, vm: Vm) {
                     ) {
                         Text("${stawka.percent}%", fontSize = 12.sp, fontWeight = FontWeight.Bold,
                             fontFamily = Jakarta,
-                            color = if (wybrana) DarkTokens.accent else DarkTokens.inkMuted)
+                            color = if (wybrana) Tokeny.accent else Tokeny.inkMuted)
                     }
                 }
             }
@@ -193,13 +193,13 @@ private fun KartaLimitow(s: UiState, vm: Vm) {
     KartaUstawien(Modifier.wejscie(p)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
             Text("Limit nadgodzin", style = GrafikType.cardTitle,
-                color = DarkTokens.ink, modifier = Modifier.weight(1f))
-            Text("art. 131 KP", fontSize = 10.sp, fontFamily = Jakarta, color = DarkTokens.inkFaint)
+                color = Tokeny.ink, modifier = Modifier.weight(1f))
+            Text("art. 131 KP", fontSize = 10.sp, fontFamily = Jakarta, color = Tokeny.inkFaint)
         }
         Text(
             "Ustawowy to 8 h na każdy pełny tydzień okresu. Jeśli Twój zakład ma własny limit, " +
                 "wpisz go obok — wtedy obowiązuje zamiast ustawowego.",
-            fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted
+            fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta, color = Tokeny.inkMuted
         )
 
         Row(
@@ -209,33 +209,33 @@ private fun KartaLimitow(s: UiState, vm: Vm) {
             Spacer(Modifier.weight(1f))
             Text("USTAWOWO", Modifier.width(64.dp), fontSize = 10.sp,
                 fontWeight = FontWeight.SemiBold, fontFamily = Jakarta, letterSpacing = 0.4.sp,
-                color = DarkTokens.inkFaint, textAlign = TextAlign.End)
+                color = Tokeny.inkFaint, textAlign = TextAlign.End)
             Text("ZAKŁAD", Modifier.width(74.dp), fontSize = 10.sp,
                 fontWeight = FontWeight.SemiBold, fontFamily = Jakarta, letterSpacing = 0.4.sp,
-                color = DarkTokens.inkFaint, textAlign = TextAlign.End)
+                color = Tokeny.inkFaint, textAlign = TextAlign.End)
         }
 
         s.okresy.forEach { okres ->
             WierszLimitu(s, vm, okres)
         }
 
-        Box(Modifier.fillMaxWidth().height(1.dp).background(DarkTokens.line))
+        Box(Modifier.fillMaxWidth().height(1.dp).background(Tokeny.line))
 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text("W roku razem", fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
-                    fontFamily = Jakarta, color = DarkTokens.ink)
+                    fontFamily = Jakarta, color = Tokeny.ink)
                 Text(
                     "suma limitów okresów · art. 131 KP dopuszcza w $rok najwyżej $sufit h",
                     fontSize = 10.sp, lineHeight = 14.sp, fontFamily = Jakarta,
-                    color = DarkTokens.inkFaint
+                    color = Tokeny.inkFaint
                 )
             }
             Text(
                 "${s.otLimitRok} h",
                 style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold,
                     fontFamily = Jakarta, fontFeatureSettings = TNUM),
-                color = if (s.otLimitRok > sufit) DarkTokens.warnInk else ShiftPaletteDark.I.ink
+                color = if (s.otLimitRok > sufit) Tokeny.warnInk else Paleta.I.ink
             )
         }
     }
@@ -259,16 +259,16 @@ private fun WierszLimitu(s: UiState, vm: Vm, okres: pl.grafik.pracy.domain.Perio
             Text(
                 okresLabel(okres.period), fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
                 fontFamily = Jakarta, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                color = if (okres.biezacy) DarkTokens.ink else DarkTokens.ink3
+                color = if (okres.biezacy) Tokeny.ink else Tokeny.ink3
             )
             Text("${okres.period.weeks} tygodni", fontSize = 10.sp,
-                fontFamily = Jakarta, color = DarkTokens.inkFaint)
+                fontFamily = Jakarta, color = Tokeny.inkFaint)
         }
         Text(
             "${okres.otLimit} h", Modifier.width(64.dp),
             style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
                 fontFamily = Jakarta, fontFeatureSettings = TNUM),
-            color = DarkTokens.ink3, textAlign = TextAlign.End
+            color = Tokeny.ink3, textAlign = TextAlign.End
         )
         PoleTekstowe(
             wartosc = wpis,
@@ -307,13 +307,13 @@ private fun KartaPodpowiedzi() {
             Modifier.size(34.dp).clip(RoundedCornerShape(11.dp))
                 .background(Color(0x297ABDFF)),
             contentAlignment = Alignment.Center
-        ) { Icon(IkonaInfo, null, Modifier.size(17.dp), tint = ShiftPaletteDark.III.ink) }
+        ) { Icon(IkonaInfo, null, Modifier.size(17.dp), tint = Paleta.III.ink) }
         Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text("Puste pole = limit ustawowy", fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
-                fontFamily = Jakarta, color = DarkTokens.ink)
+                fontFamily = Jakarta, color = Tokeny.ink)
             Text(
                 "Bilans i ostrzeżenia w zakładce Bilans liczą się zawsze z tego, co masz ustawione tutaj.",
-                fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta, color = DarkTokens.ink3
+                fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta, color = Tokeny.ink3
             )
         }
     }
@@ -325,8 +325,8 @@ internal fun KartaUstawien(modifier: Modifier = Modifier, tresc: @Composable Col
     Column(
         modifier.fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(DarkTokens.surface)
-            .border(1.dp, DarkTokens.line, RoundedCornerShape(20.dp))
+            .background(Tokeny.surface)
+            .border(1.dp, Tokeny.line, RoundedCornerShape(20.dp))
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
         content = tresc

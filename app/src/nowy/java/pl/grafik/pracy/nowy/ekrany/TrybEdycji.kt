@@ -73,9 +73,9 @@ fun TrybEdycji(vm: Vm, naGotowe: () -> Unit) {
     var ngGodziny by remember { mutableIntStateOf(8) }
     var ngStawka by remember { mutableStateOf(OtRate.P100) }
 
-    val kolory = ShiftPaletteDark.of(typDniaZ(wybrane.shift))
+    val kolory = Paleta.of(typDniaZ(wybrane.shift))
 
-    Box(Modifier.fillMaxSize().background(DarkTokens.bg)) {
+    Box(Modifier.fillMaxSize().background(Tokeny.bg)) {
         Column(Modifier.fillMaxSize().padding(top = gornaKrawedz())) {
             Column(
                 Modifier.weight(1f).verticalScroll(rememberScrollState()),
@@ -120,12 +120,12 @@ private fun PasekKolizji(s: UiState) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Icon(IkonaOstrzezenie, null, Modifier.size(16.dp), tint = DarkTokens.warnInk)
+        Icon(IkonaOstrzezenie, null, Modifier.size(16.dp), tint = Tokeny.warnInk)
         Text(
             "%02d.%02d — tylko %d h przerwy między zmianami".format(
                 pierwsza.date.dayOfMonth, pierwsza.date.monthValue, pierwsza.przerwaH
             ) + if (s.kolizje.size > 1) " (+${s.kolizje.size - 1})" else "",
-            style = GrafikType.caption, color = DarkTokens.warnInk2,
+            style = GrafikType.caption, color = Tokeny.warnInk2,
             maxLines = 1, overflow = TextOverflow.Ellipsis
         )
     }
@@ -139,30 +139,30 @@ private fun PasekEdycji(s: UiState, vm: Vm, naGotowe: () -> Unit) {
     ) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text("Tryb edycji", fontSize = 15.sp, fontWeight = FontWeight.Bold,
-                fontFamily = Jakarta, color = DarkTokens.ink)
+                fontFamily = Jakarta, color = Tokeny.ink)
             Text(
                 s.ym.month.getDisplayName(JavaTextStyle.FULL_STANDALONE, PLE)
                     .replaceFirstChar { it.uppercase() } + " ${s.ym.year} · zmiany zapisują się od razu",
-                style = GrafikType.caption, color = DarkTokens.inkMuted,
+                style = GrafikType.caption, color = Tokeny.inkMuted,
                 maxLines = 1, overflow = TextOverflow.Ellipsis
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(
                 Modifier.size(40.dp).clip(RoundedCornerShape(13.dp))
-                    .background(Color.White.copy(alpha = 0.05f))
-                    .border(1.dp, DarkTokens.lineStrong, RoundedCornerShape(13.dp))
+                    .background(Tokeny.surface)
+                    .border(1.dp, Tokeny.lineStrong, RoundedCornerShape(13.dp))
                     .clickable { vm.undo() },
                 contentAlignment = Alignment.Center
-            ) { Icon(IkonaCofnij, "Cofnij ostatnią zmianę", Modifier.size(17.dp), tint = DarkTokens.ink2) }
+            ) { Icon(IkonaCofnij, "Cofnij ostatnią zmianę", Modifier.size(17.dp), tint = Tokeny.ink2) }
             Box(
                 Modifier.height(40.dp).clip(RoundedCornerShape(13.dp))
-                    .background(DarkTokens.accent).clickable(onClick = naGotowe)
+                    .background(Tokeny.accent).clickable(onClick = naGotowe)
                     .padding(horizontal = 16.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text("Gotowe", fontSize = 13.sp, fontWeight = FontWeight.Bold,
-                    fontFamily = Jakarta, color = DarkTokens.accentOn)
+                    fontFamily = Jakarta, color = Tokeny.accentOn)
             }
         }
     }
@@ -180,7 +180,7 @@ private fun BanerNarzedzia(n: Narzedzie, k: DayColors) {
     ) {
         Box(
             Modifier.size(38.dp).clip(RoundedCornerShape(12.dp))
-                .background(DarkTokens.bg).border(1.dp, k.line, RoundedCornerShape(12.dp)),
+                .background(Tokeny.bg).border(1.dp, k.line, RoundedCornerShape(12.dp)),
             contentAlignment = Alignment.Center
         ) {
             Text(n.etykieta, fontSize = 13.sp, fontWeight = FontWeight.Bold,
@@ -188,8 +188,8 @@ private fun BanerNarzedzia(n: Narzedzie, k: DayColors) {
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(n.nazwa, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
-                fontFamily = Jakarta, color = DarkTokens.ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text("dotykaj dni, aby ustawić", style = GrafikType.caption, color = DarkTokens.inkMuted)
+                fontFamily = Jakarta, color = Tokeny.ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text("dotykaj dni, aby ustawić", style = GrafikType.caption, color = Tokeny.inkMuted)
         }
         Text(
             n.meta,
@@ -219,7 +219,7 @@ private fun SiatkaEdycji(
                     d, Modifier.weight(1f), textAlign = TextAlign.Center,
                     fontSize = 10.sp, fontWeight = FontWeight.SemiBold,
                     letterSpacing = 0.8.sp, fontFamily = Jakarta,
-                    color = if (i >= 5) DarkTokens.inkFaint else DarkTokens.inkMuted
+                    color = if (i >= 5) Tokeny.inkFaint else Tokeny.inkMuted
                 )
             }
         }
@@ -229,7 +229,7 @@ private fun SiatkaEdycji(
                     val d = start.plusDays((w * 7 + kol).toLong())
                     val e = s.entries[d]
                     val poza = YearMonth.from(d) != s.ym
-                    val k = ShiftPaletteDark.of(typDniaZ(e?.shift))
+                    val k = Paleta.of(typDniaZ(e?.shift))
                     val ot = e?.otHours ?: 0
 
                     Box(
@@ -240,7 +240,7 @@ private fun SiatkaEdycji(
                             .then(
                                 // Pierścień na dniach nadpisanych ręcznie — reszta jest z cyklu.
                                 if (!poza && d in s.reczne)
-                                    Modifier.border(1.dp, DarkTokens.accent.copy(alpha = 0.55f), RoundedCornerShape(13.dp))
+                                    Modifier.border(1.dp, Tokeny.accent.copy(alpha = 0.55f), RoundedCornerShape(13.dp))
                                 else Modifier
                             )
                             .clickable(enabled = !poza) {
@@ -260,15 +260,15 @@ private fun SiatkaEdycji(
                                     fontWeight = FontWeight.SemiBold, fontFeatureSettings = TNUM
                                 ),
                                 color = when {
-                                    poza -> DarkTokens.inkDisabled
-                                    e?.shift?.isWork != true -> DarkTokens.inkMuted
-                                    else -> DarkTokens.inkStrong
+                                    poza -> Tokeny.inkDisabled
+                                    e?.shift?.isWork != true -> Tokeny.inkMuted
+                                    else -> Tokeny.inkStrong
                                 }
                             )
                             Spacer(Modifier.weight(1f))
                             if (ot > 0 && !poza) {
                                 Text("+$ot", fontSize = 9.sp, fontWeight = FontWeight.Bold,
-                                    fontFamily = Jakarta, color = ShiftPaletteDark.I.ink)
+                                    fontFamily = Jakarta, color = Paleta.I.ink)
                             }
                         }
                         if (!poza) {
@@ -331,16 +331,16 @@ private fun PanelNarzedzi(
             horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
                 "Malowanie nadpisuje dni z cyklu. Cofnij przywraca poprzedni stan.",
-                Modifier.weight(1f), style = GrafikType.caption, color = DarkTokens.inkFaint
+                Modifier.weight(1f), style = GrafikType.caption, color = Tokeny.inkFaint
             )
             Box(
                 Modifier.height(34.dp).clip(RoundedCornerShape(11.dp))
-                    .border(1.dp, DarkTokens.lineSoft, RoundedCornerShape(11.dp))
+                    .border(1.dp, Tokeny.lineSoft, RoundedCornerShape(11.dp))
                     .clickable(onClick = naPrzywroc).padding(horizontal = 12.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text("Przywróć cykl", fontSize = 11.sp, fontWeight = FontWeight.SemiBold,
-                    fontFamily = Jakarta, color = DarkTokens.inkMuted)
+                    fontFamily = Jakarta, color = Tokeny.inkMuted)
             }
         }
     }
@@ -348,10 +348,10 @@ private fun PanelNarzedzi(
 
 @Composable
 private fun KafelekNarzedzia(n: Narzedzie, aktywne: Boolean, modifier: Modifier, akcja: () -> Unit) {
-    val k = ShiftPaletteDark.of(typDniaZ(n.shift))
+    val k = Paleta.of(typDniaZ(n.shift))
     Column(
         modifier.height(56.dp).clip(RoundedCornerShape(15.dp))
-            .background(if (aktywne) k.fill else DarkTokens.surfaceInput)
+            .background(if (aktywne) k.fill else Tokeny.surfaceInput)
             .border(1.dp, if (aktywne) k.line else Color(0xFF20252A), RoundedCornerShape(15.dp))
             .clickable(onClick = akcja).padding(horizontal = 2.dp, vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -359,9 +359,9 @@ private fun KafelekNarzedzia(n: Narzedzie, aktywne: Boolean, modifier: Modifier,
     ) {
         Text(n.etykieta, fontSize = 14.sp, fontWeight = FontWeight.Bold,
             letterSpacing = 0.56.sp, fontFamily = Jakarta,
-            color = if (aktywne) k.ink else DarkTokens.ink3, maxLines = 1)
+            color = if (aktywne) k.ink else Tokeny.ink3, maxLines = 1)
         Text(n.podpis, fontSize = 8.sp, fontWeight = FontWeight.Medium,
-            fontFamily = Jakarta, color = Color(0xFF8A939B), maxLines = 1)
+            fontFamily = Jakarta, color = Tokeny.inkIkona, maxLines = 1)
     }
 }
 
@@ -369,16 +369,16 @@ private fun KafelekNarzedzia(n: Narzedzie, aktywne: Boolean, modifier: Modifier,
 private fun KafelekWiecej(otwarte: Boolean, modifier: Modifier, akcja: () -> Unit) {
     Column(
         modifier.height(56.dp).clip(RoundedCornerShape(15.dp))
-            .background(if (otwarte) Color.White.copy(alpha = 0.04f) else DarkTokens.surfaceInput)
+            .background(if (otwarte) Tokeny.surface else Tokeny.surfaceInput)
             .border(1.dp, if (otwarte) Color(0xFF252A2F) else Color(0xFF20252A), RoundedCornerShape(15.dp))
             .clickable(onClick = akcja).padding(horizontal = 2.dp, vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(3.dp, Alignment.CenterVertically)
     ) {
         Text("···", fontSize = 14.sp, fontWeight = FontWeight.Bold,
-            fontFamily = Jakarta, color = DarkTokens.ink2)
+            fontFamily = Jakarta, color = Tokeny.ink2)
         Text("więcej", fontSize = 8.sp, fontWeight = FontWeight.Medium,
-            fontFamily = Jakarta, color = Color(0xFF8A939B))
+            fontFamily = Jakarta, color = Tokeny.inkIkona)
     }
 }
 
@@ -387,11 +387,11 @@ private fun WierszNadgodzinEdycji(
     wlaczone: Boolean, godziny: Int, stawka: OtRate,
     naNg: (Boolean) -> Unit, naGodziny: (Int) -> Unit, naStawke: (OtRate) -> Unit
 ) {
-    val bursztyn = ShiftPaletteDark.I
+    val bursztyn = Paleta.I
     Row(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))
-            .background(if (wlaczone) bursztyn.fill else DarkTokens.surface)
-            .border(1.dp, if (wlaczone) bursztyn.line else DarkTokens.line, RoundedCornerShape(16.dp))
+            .background(if (wlaczone) bursztyn.fill else Tokeny.surface)
+            .border(1.dp, if (wlaczone) bursztyn.line else Tokeny.line, RoundedCornerShape(16.dp))
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -403,19 +403,19 @@ private fun WierszNadgodzinEdycji(
         ) {
             Box(
                 Modifier.size(34.dp).clip(RoundedCornerShape(11.dp))
-                    .background(if (wlaczone) bursztyn.line else DarkTokens.surfaceInput),
+                    .background(if (wlaczone) bursztyn.line else Tokeny.surfaceInput),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(IkonaZegarek, null, Modifier.size(16.dp),
-                    tint = if (wlaczone) bursztyn.ink else DarkTokens.ink2)
+                    tint = if (wlaczone) bursztyn.ink else Tokeny.ink2)
             }
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text("Nadgodziny", fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
-                    fontFamily = Jakarta, color = if (wlaczone) bursztyn.ink else DarkTokens.ink)
+                    fontFamily = Jakarta, color = if (wlaczone) bursztyn.ink else Tokeny.ink)
                 Text(
                     if (wlaczone) "dopisywane do malowanych dni" else "wyłączone — dotknij, aby dopisywać",
                     fontSize = 10.sp, lineHeight = 13.sp, fontFamily = Jakarta,
-                    color = DarkTokens.inkMuted, maxLines = 2, overflow = TextOverflow.Ellipsis
+                    color = Tokeny.inkMuted, maxLines = 2, overflow = TextOverflow.Ellipsis
                 )
             }
         }
@@ -425,20 +425,20 @@ private fun WierszNadgodzinEdycji(
                 "$godziny", Modifier.widthIn(min = 34.dp),
                 style = TextStyle(fontFamily = Jakarta, fontSize = 13.sp,
                     fontWeight = FontWeight.Bold, fontFeatureSettings = TNUM),
-                color = if (wlaczone) bursztyn.ink else DarkTokens.ink, textAlign = TextAlign.Center
+                color = if (wlaczone) bursztyn.ink else Tokeny.ink, textAlign = TextAlign.Center
             )
             PrzyciskKwadrat(IkonaPlus, "Więcej godzin", rozmiar = 34.dp) { naGodziny(godziny + 1) }
             val setka = stawka == OtRate.P100
             Box(
                 Modifier.height(34.dp).widthIn(min = 46.dp).clip(RoundedCornerShape(11.dp))
-                    .background(if (setka) bursztyn.fill else DarkTokens.surfaceInput)
-                    .border(1.dp, if (setka) bursztyn.line else DarkTokens.lineInput, RoundedCornerShape(11.dp))
+                    .background(if (setka) bursztyn.fill else Tokeny.surfaceInput)
+                    .border(1.dp, if (setka) bursztyn.line else Tokeny.lineInput, RoundedCornerShape(11.dp))
                     .clickable { naStawke(if (setka) OtRate.P50 else OtRate.P100) }
                     .padding(horizontal = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text("${stawka.percent}%", fontSize = 12.sp, fontWeight = FontWeight.Bold,
-                    fontFamily = Jakarta, color = if (setka) bursztyn.ink else DarkTokens.inkMuted)
+                    fontFamily = Jakarta, color = if (setka) bursztyn.ink else Tokeny.inkMuted)
             }
         }
     }

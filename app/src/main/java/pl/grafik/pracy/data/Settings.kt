@@ -71,6 +71,8 @@ class SettingsStore(private val ctx: Context) {
     private val kOkrLimity = stringPreferencesKey("okres_limity")
     /** Automatyczna kopia zapasowa co niedzielę, do pamięci telefonu. */
     private val kKopiaAuto = booleanPreferencesKey("kopia_auto")
+    /** Motyw nowego wyglądu: ciemny, jasny albo za ustawieniem telefonu. */
+    private val kTrybMotywu = stringPreferencesKey("tryb_motywu")
 
     val config: Flow<CycleConfig> = ctx.ds.data.map { p ->
         CycleConfig(
@@ -270,6 +272,13 @@ class SettingsStore(private val ctx: Context) {
     }
 
     val kopiaAuto: Flow<Boolean> = ctx.ds.data.map { p -> p[kKopiaAuto] ?: false }
+
+    /** Nazwa trybu motywu; rozwija ją nowy wygląd, klasyczna aplikacja jej nie czyta. */
+    val trybMotywu: Flow<String> = ctx.ds.data.map { p -> p[kTrybMotywu] ?: "CIEMNY" }
+
+    suspend fun saveTrybMotywu(nazwa: String) {
+        ctx.ds.edit { p -> p[kTrybMotywu] = nazwa }
+    }
 
     suspend fun saveKopiaAuto(wlaczona: Boolean) {
         ctx.ds.edit { p -> p[kKopiaAuto] = wlaczona }

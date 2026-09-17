@@ -57,9 +57,9 @@ fun EkranPowiadomienia(vm: Vm, naPowrot: () -> Unit) {
             val pNag by postepWejscia(Motion.RISE_MS)
             Column(Modifier.wejscie(pNag), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text("Powiadomienia", style = GrafikType.h1.copy(fontSize = 26.sp, lineHeight = 26.sp),
-                    color = DarkTokens.ink)
+                    color = Tokeny.ink)
                 Text("Aplikacja odzywa się tylko wtedy, kiedy ma po co.",
-                    fontSize = 12.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted)
+                    fontSize = 12.sp, fontFamily = Jakarta, color = Tokeny.inkMuted)
             }
 
             Podglad(s, cfg)
@@ -76,7 +76,7 @@ fun EkranPowiadomienia(vm: Vm, naPowrot: () -> Unit) {
                 "Wszystkie powiadomienia są lokalne — nic nie wychodzi z telefonu. " +
                     "Jeśli system je blokuje, otwórz ustawienia Androida dla tej aplikacji.",
                 fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta,
-                color = DarkTokens.inkFaint, modifier = Modifier.wejscie(pNotka)
+                color = Tokeny.inkFaint, modifier = Modifier.wejscie(pNotka)
             )
         }
     }
@@ -97,31 +97,31 @@ private fun Podglad(s: UiState, cfg: PowiadomieniaCfg) {
         Modifier.wejscie(p).fillMaxWidth()
             .clip(RoundedCornerShape(Dim.rCardSmall))
             .background(Color(0x12FFFFFF))
-            .border(1.dp, DarkTokens.lineSoft, RoundedCornerShape(Dim.rCardSmall))
+            .border(1.dp, Tokeny.lineSoft, RoundedCornerShape(Dim.rCardSmall))
             .padding(horizontal = 14.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Box(
-            Modifier.size(34.dp).clip(RoundedCornerShape(10.dp)).background(DarkTokens.accent),
+            Modifier.size(34.dp).clip(RoundedCornerShape(10.dp)).background(Tokeny.accent),
             contentAlignment = Alignment.Center
-        ) { Icon(IkonaGrafik, null, Modifier.size(18.dp), tint = DarkTokens.accentOn) }
+        ) { Icon(IkonaGrafik, null, Modifier.size(18.dp), tint = Tokeny.accentOn) }
 
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("Grafik pracy", fontSize = 11.sp, fontWeight = FontWeight.SemiBold,
-                    fontFamily = Jakarta, color = DarkTokens.inkMuted,
+                    fontFamily = Jakarta, color = Tokeny.inkMuted,
                     modifier = Modifier.weight(1f).alignByBaseline())
                 Text("${cfg.godzinaWieczorna}:00", fontSize = 10.sp, fontFamily = Jakarta,
-                    color = DarkTokens.inkFaint, modifier = Modifier.alignByBaseline())
+                    color = Tokeny.inkFaint, modifier = Modifier.alignByBaseline())
             }
             Text(
                 wydarzenie?.let { "Jutro o ${it.time} — ${it.text}" } ?: "Jutro: plan dnia",
                 fontSize = 13.sp, fontWeight = FontWeight.Bold, fontFamily = Jakarta,
-                color = DarkTokens.ink, maxLines = 1, overflow = TextOverflow.Ellipsis
+                color = Tokeny.ink, maxLines = 1, overflow = TextOverflow.Ellipsis
             )
             Text(
                 opisJutra(zmiana), fontSize = 11.sp, fontFamily = Jakarta,
-                color = DarkTokens.ink3, maxLines = 2, overflow = TextOverflow.Ellipsis
+                color = Tokeny.ink3, maxLines = 2, overflow = TextOverflow.Ellipsis
             )
         }
     }
@@ -147,8 +147,8 @@ private fun KartaWydarzen(cfg: PowiadomieniaCfg, zapisz: (PowiadomieniaCfg) -> U
     Column(
         Modifier.wejscie(p).fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(DarkTokens.surface)
-            .border(1.dp, DarkTokens.line, RoundedCornerShape(20.dp))
+            .background(Tokeny.surface)
+            .border(1.dp, Tokeny.line, RoundedCornerShape(20.dp))
             .padding(horizontal = 14.dp, vertical = 4.dp)
     ) {
         Row(
@@ -161,18 +161,18 @@ private fun KartaWydarzen(cfg: PowiadomieniaCfg, zapisz: (PowiadomieniaCfg) -> U
                 Modifier.size(34.dp).clip(RoundedCornerShape(11.dp))
                     .background(Color(0x24FF937E)),
                 contentAlignment = Alignment.Center
-            ) { Icon(IkonaDzwonek, null, Modifier.size(17.dp), tint = DarkTokens.warnInk) }
+            ) { Icon(IkonaDzwonek, null, Modifier.size(17.dp), tint = Tokeny.warnInk) }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text("Wydarzenia", fontSize = 15.sp, fontWeight = FontWeight.Bold,
-                    fontFamily = Jakarta, color = DarkTokens.ink)
+                    fontFamily = Jakarta, color = Tokeny.ink)
                 Text("fryzjer, badania, wizyty — wszystko z kalendarza",
-                    fontSize = 11.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted,
+                    fontSize = 11.sp, fontFamily = Jakarta, color = Tokeny.inkMuted,
                     maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             Przelacznik(cfg.wydarzenia) { zapisz(cfg.copy(wydarzenia = it)) }
         }
 
-        Box(Modifier.fillMaxWidth().height(1.dp).background(DarkTokens.line))
+        Box(Modifier.fillMaxWidth().height(1.dp).background(Tokeny.line))
 
         Row(
             Modifier.fillMaxWidth().heightIn(min = 54.dp),
@@ -180,14 +180,14 @@ private fun KartaWydarzen(cfg: PowiadomieniaCfg, zapisz: (PowiadomieniaCfg) -> U
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text("Dzień wcześniej", fontSize = 14.sp, fontFamily = Jakarta, color = DarkTokens.ink)
+                Text("Dzień wcześniej", fontSize = 14.sp, fontFamily = Jakarta, color = Tokeny.ink)
                 Text("wieczorem dostajesz plan na jutro", fontSize = 11.sp,
-                    fontFamily = Jakarta, color = DarkTokens.inkMuted)
+                    fontFamily = Jakarta, color = Tokeny.inkMuted)
             }
             StepperGodziny(cfg.godzinaWieczorna) { zapisz(cfg.copy(godzinaWieczorna = it)) }
         }
 
-        Box(Modifier.fillMaxWidth().height(1.dp).background(DarkTokens.line))
+        Box(Modifier.fillMaxWidth().height(1.dp).background(Tokeny.line))
 
         Column(
             Modifier.fillMaxWidth().padding(vertical = 12.dp),
@@ -200,9 +200,9 @@ private fun KartaWydarzen(cfg: PowiadomieniaCfg, zapisz: (PowiadomieniaCfg) -> U
             ) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text("W dniu wydarzenia", fontSize = 14.sp, fontFamily = Jakarta,
-                        color = DarkTokens.ink)
+                        color = Tokeny.ink)
                     Text("krótko przed godziną", fontSize = 11.sp,
-                        fontFamily = Jakarta, color = DarkTokens.inkMuted)
+                        fontFamily = Jakarta, color = Tokeny.inkMuted)
                 }
                 Przelacznik(cfg.wDniu) { zapisz(cfg.copy(wDniu = it)) }
             }
@@ -211,10 +211,10 @@ private fun KartaWydarzen(cfg: PowiadomieniaCfg, zapisz: (PowiadomieniaCfg) -> U
                     val wybrane = cfg.wyprzedzenieMin == minuty
                     Box(
                         Modifier.weight(1f).height(38.dp).clip(RoundedCornerShape(11.dp))
-                            .background(if (wybrane) Color(0x2452D0B3) else DarkTokens.surfaceInput)
+                            .background(if (wybrane) Color(0x2452D0B3) else Tokeny.surfaceInput)
                             .border(
                                 1.dp,
-                                if (wybrane) Color(0x7352D0B3) else DarkTokens.lineInput,
+                                if (wybrane) Color(0x7352D0B3) else Tokeny.lineInput,
                                 RoundedCornerShape(11.dp)
                             )
                             .clickable(enabled = cfg.wDniu) { zapisz(cfg.copy(wyprzedzenieMin = minuty)) },
@@ -223,7 +223,7 @@ private fun KartaWydarzen(cfg: PowiadomieniaCfg, zapisz: (PowiadomieniaCfg) -> U
                         Text(
                             PlanPowiadomien.etykietaWyprzedzenia(minuty),
                             fontSize = 12.sp, fontWeight = FontWeight.SemiBold, fontFamily = Jakarta,
-                            color = if (wybrane) DarkTokens.accent else DarkTokens.inkMuted
+                            color = if (wybrane) Tokeny.accent else Tokeny.inkMuted
                         )
                     }
                 }
@@ -237,8 +237,8 @@ private fun KartaWydarzen(cfg: PowiadomieniaCfg, zapisz: (PowiadomieniaCfg) -> U
 private fun StepperGodziny(godzina: Int, naZmiane: (Int) -> Unit) {
     Row(
         Modifier.height(40.dp).clip(RoundedCornerShape(11.dp))
-            .background(DarkTokens.surfaceInput)
-            .border(1.dp, DarkTokens.lineInput, RoundedCornerShape(11.dp))
+            .background(Tokeny.surfaceInput)
+            .border(1.dp, Tokeny.lineInput, RoundedCornerShape(11.dp))
             .padding(horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(2.dp)
@@ -247,18 +247,18 @@ private fun StepperGodziny(godzina: Int, naZmiane: (Int) -> Unit) {
             Modifier.size(32.dp).clip(RoundedCornerShape(9.dp))
                 .clickable { naZmiane((godzina - 1 + 24) % 24) },
             contentAlignment = Alignment.Center
-        ) { Icon(IkonaMinus, "Wcześniej", Modifier.size(13.dp), tint = DarkTokens.ink2) }
+        ) { Icon(IkonaMinus, "Wcześniej", Modifier.size(13.dp), tint = Tokeny.ink2) }
         Text(
             "%02d:00".format(godzina), Modifier.widthIn(min = 46.dp),
             style = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
                 fontFamily = Jakarta, fontFeatureSettings = TNUM),
-            color = DarkTokens.ink, textAlign = TextAlign.Center
+            color = Tokeny.ink, textAlign = TextAlign.Center
         )
         Box(
             Modifier.size(32.dp).clip(RoundedCornerShape(9.dp))
                 .clickable { naZmiane((godzina + 1) % 24) },
             contentAlignment = Alignment.Center
-        ) { Icon(IkonaPlus, "Później", Modifier.size(13.dp), tint = DarkTokens.ink2) }
+        ) { Icon(IkonaPlus, "Później", Modifier.size(13.dp), tint = Tokeny.ink2) }
     }
 }
 
@@ -283,13 +283,13 @@ private fun KartaCiszy(cfg: PowiadomieniaCfg, zapisz: (PowiadomieniaCfg) -> Unit
             Modifier.size(34.dp).clip(RoundedCornerShape(11.dp))
                 .background(Color(0x297ABDFF)),
             contentAlignment = Alignment.Center
-        ) { Icon(IkonaOdpoczynek, null, Modifier.size(17.dp), tint = ShiftPaletteDark.III.ink) }
+        ) { Icon(IkonaOdpoczynek, null, Modifier.size(17.dp), tint = Paleta.III.ink) }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text("Nie budź mnie na nocce", style = GrafikType.cardTitle, color = DarkTokens.ink)
+            Text("Nie budź mnie na nocce", style = GrafikType.cardTitle, color = Tokeny.ink)
             Text(
                 "Powiadomienie, które wypadłoby w trakcie zmiany nocnej albo do " +
                     "${PlanPowiadomien.CISZA_PO_NOCCE_H} h po niej, przesuwamy na późniejszą porę.",
-                fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta, color = DarkTokens.ink3
+                fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta, color = Tokeny.ink3
             )
         }
         Przelacznik(cfg.ciszaNaNocce) { zapisz(cfg.copy(ciszaNaNocce = it)) }
@@ -306,8 +306,8 @@ private fun KartaZmiany(cfg: PowiadomieniaCfg, zapisz: (PowiadomieniaCfg) -> Uni
     Column(
         Modifier.wejscie(p).fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(DarkTokens.surface)
-            .border(1.dp, DarkTokens.line, RoundedCornerShape(20.dp))
+            .background(Tokeny.surface)
+            .border(1.dp, Tokeny.line, RoundedCornerShape(20.dp))
             .padding(horizontal = 14.dp, vertical = 4.dp)
     ) {
         Row(
@@ -317,16 +317,16 @@ private fun KartaZmiany(cfg: PowiadomieniaCfg, zapisz: (PowiadomieniaCfg) -> Uni
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text("Przypomnienie o zmianie", style = GrafikType.cardTitle, color = DarkTokens.ink)
+                Text("Przypomnienie o zmianie", style = GrafikType.cardTitle, color = Tokeny.ink)
                 Text(
                     "${PlanPowiadomien.etykietaWyprzedzenia(cfg.przedZmianaMin)} przed startem · tylko dni robocze",
-                    fontSize = 11.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted
+                    fontSize = 11.sp, fontFamily = Jakarta, color = Tokeny.inkMuted
                 )
             }
             Przelacznik(cfg.przedZmiana) { zapisz(cfg.copy(przedZmiana = it)) }
         }
 
-        Box(Modifier.fillMaxWidth().height(1.dp).background(DarkTokens.line))
+        Box(Modifier.fillMaxWidth().height(1.dp).background(Tokeny.line))
 
         Row(
             Modifier.fillMaxWidth().padding(vertical = 12.dp),
@@ -336,10 +336,10 @@ private fun KartaZmiany(cfg: PowiadomieniaCfg, zapisz: (PowiadomieniaCfg) -> Uni
                 val wybrane = cfg.przedZmianaMin == minuty
                 Box(
                     Modifier.weight(1f).height(38.dp).clip(RoundedCornerShape(11.dp))
-                        .background(if (wybrane) Color(0x2452D0B3) else DarkTokens.surfaceInput)
+                        .background(if (wybrane) Color(0x2452D0B3) else Tokeny.surfaceInput)
                         .border(
                             1.dp,
-                            if (wybrane) Color(0x7352D0B3) else DarkTokens.lineInput,
+                            if (wybrane) Color(0x7352D0B3) else Tokeny.lineInput,
                             RoundedCornerShape(11.dp)
                         )
                         .clickable(enabled = cfg.przedZmiana) { zapisz(cfg.copy(przedZmianaMin = minuty)) },
@@ -348,13 +348,13 @@ private fun KartaZmiany(cfg: PowiadomieniaCfg, zapisz: (PowiadomieniaCfg) -> Uni
                     Text(
                         PlanPowiadomien.etykietaWyprzedzenia(minuty),
                         fontSize = 12.sp, fontWeight = FontWeight.SemiBold, fontFamily = Jakarta,
-                        color = if (wybrane) DarkTokens.accent else DarkTokens.inkMuted
+                        color = if (wybrane) Tokeny.accent else Tokeny.inkMuted
                     )
                 }
             }
         }
 
-        Box(Modifier.fillMaxWidth().height(1.dp).background(DarkTokens.line))
+        Box(Modifier.fillMaxWidth().height(1.dp).background(Tokeny.line))
 
         WierszWarunkowy(
             tytul = "Zmiana brygady w cyklu",
@@ -362,7 +362,7 @@ private fun KartaZmiany(cfg: PowiadomieniaCfg, zapisz: (PowiadomieniaCfg) -> Uni
             wlaczony = cfg.zmianaBrygady
         ) { zapisz(cfg.copy(zmianaBrygady = it)) }
 
-        Box(Modifier.fillMaxWidth().height(1.dp).background(DarkTokens.line))
+        Box(Modifier.fillMaxWidth().height(1.dp).background(Tokeny.line))
 
         WierszWarunkowy(
             tytul = "Limit nadgodzin blisko",
@@ -370,7 +370,7 @@ private fun KartaZmiany(cfg: PowiadomieniaCfg, zapisz: (PowiadomieniaCfg) -> Uni
             wlaczony = cfg.limitNadgodzin
         ) { zapisz(cfg.copy(limitNadgodzin = it)) }
 
-        Box(Modifier.fillMaxWidth().height(1.dp).background(DarkTokens.line))
+        Box(Modifier.fillMaxWidth().height(1.dp).background(Tokeny.line))
 
         WierszWarunkowy(
             tytul = "Zaległy urlop do wykorzystania",
@@ -394,8 +394,8 @@ private fun WierszWarunkowy(
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(tytul, style = GrafikType.cardTitle, color = DarkTokens.ink)
-            Text(opis, fontSize = 11.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted)
+            Text(tytul, style = GrafikType.cardTitle, color = Tokeny.ink)
+            Text(opis, fontSize = 11.sp, fontFamily = Jakarta, color = Tokeny.inkMuted)
         }
         Przelacznik(wlaczony, naZmiane)
     }

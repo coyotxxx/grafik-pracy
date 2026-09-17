@@ -63,11 +63,11 @@ fun EkranOdpoczynek(vm: Vm, naPowrot: () -> Unit, naDzien: (LocalDate) -> Unit) 
             val pNag by postepWejscia(Motion.RISE_MS)
             Column(Modifier.wejscie(pNag), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text("Odpoczynek", style = GrafikType.h1.copy(fontSize = 26.sp, lineHeight = 26.sp),
-                    color = DarkTokens.ink)
+                    color = Tokeny.ink)
                 Text(
                     "Pilnujemy 11 h przerwy na dobę i 35 h w tygodniu. Sprawdzamy przy każdej zmianie w grafiku.",
                     fontSize = 12.sp, lineHeight = 18.sp, fontFamily = Jakarta,
-                    color = DarkTokens.inkMuted
+                    color = Tokeny.inkMuted
                 )
             }
 
@@ -90,7 +90,7 @@ fun EkranOdpoczynek(vm: Vm, naPowrot: () -> Unit, naDzien: (LocalDate) -> Unit) 
 private fun Podsumowanie(ile: Int, s: UiState) {
     val p by postepWejscia(Motion.RISE_MS, 50)
     val czysto = ile == 0
-    val kolor = if (czysto) DarkTokens.accent else DarkTokens.warnInk
+    val kolor = if (czysto) Tokeny.accent else Tokeny.warnInk
     val miesiac = wMiesiacu(s.ym.monthValue)
 
     Row(
@@ -116,13 +116,13 @@ private fun Podsumowanie(ile: Int, s: UiState) {
             Text(
                 if (czysto) "Bez kolizji $miesiac" else "${liczbaKolizji(ile)} $miesiac",
                 fontSize = 16.sp, fontWeight = FontWeight.Bold, fontFamily = Jakarta,
-                color = DarkTokens.ink
+                color = Tokeny.ink
             )
             Text(
                 if (czysto) "każda przerwa ma co najmniej 11 h"
                 else "przerwa krótsza niż 11 h · reszta miesiąca w porządku",
                 fontSize = 11.sp, fontFamily = Jakarta,
-                color = if (czysto) Color(0xFF9FE3D2) else DarkTokens.warnInk2
+                color = if (czysto) Color(0xFF9FE3D2) else Tokeny.warnInk2
             )
         }
     }
@@ -155,10 +155,10 @@ private fun KartaKolizji(k: KolizjaOdpoczynku, naDzien: (LocalDate) -> Unit, naP
                 Text(
                     "${dzienTygodniaOdp(k.date)} ${k.date.dayOfMonth} ${miesiacOdp(k.date)}",
                     fontSize = 14.sp, fontWeight = FontWeight.Bold, fontFamily = Jakarta,
-                    color = DarkTokens.ink
+                    color = Tokeny.ink
                 )
                 Text(opisPrzejscia(k), fontSize = 11.sp, fontFamily = Jakarta,
-                    color = DarkTokens.inkMuted, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    color = Tokeny.inkMuted, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
             Box(
                 Modifier.height(26.dp).clip(RoundedCornerShape(999.dp))
@@ -171,7 +171,7 @@ private fun KartaKolizji(k: KolizjaOdpoczynku, naDzien: (LocalDate) -> Unit, naP
                     "${k.przerwaH} h przerwy",
                     style = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.Bold,
                         fontFamily = Jakarta, fontFeatureSettings = TNUM),
-                    color = DarkTokens.warnInk
+                    color = Tokeny.warnInk
                 )
             }
         }
@@ -180,37 +180,37 @@ private fun KartaKolizji(k: KolizjaOdpoczynku, naDzien: (LocalDate) -> Unit, naP
 
         Row(
             Modifier.fillMaxWidth().clip(RoundedCornerShape(13.dp))
-                .background(Color(0x40000000))
-                .border(1.dp, DarkTokens.lineStrong, RoundedCornerShape(13.dp))
+                .background(Tokeny.naklad)
+                .border(1.dp, Tokeny.lineStrong, RoundedCornerShape(13.dp))
                 .padding(horizontal = 12.dp, vertical = 10.dp)
         ) {
             Text(
                 "Brakuje ${k.brakujeH} h do normy. Zwykle wychodzi przy przejściu z nocki " +
                     "na popołudniówkę albo przy dobranych nadgodzinach.",
-                fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta, color = DarkTokens.ink3
+                fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta, color = Tokeny.ink3
             )
         }
 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Box(
                 Modifier.weight(1f).height(44.dp).clip(RoundedCornerShape(14.dp))
-                    .background(Color.White.copy(alpha = 0.05f))
-                    .border(1.dp, DarkTokens.lineSoft, RoundedCornerShape(14.dp))
+                    .background(Tokeny.surface)
+                    .border(1.dp, Tokeny.lineSoft, RoundedCornerShape(14.dp))
                     .clickable { naDzien(k.date) },
                 contentAlignment = Alignment.Center
             ) {
                 Text("Otwórz ten dzień", fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
-                    fontFamily = Jakarta, color = DarkTokens.inkStrong)
+                    fontFamily = Jakarta, color = Tokeny.inkStrong)
             }
             Box(
                 Modifier.height(44.dp).clip(RoundedCornerShape(14.dp))
-                    .border(1.dp, DarkTokens.lineSoft, RoundedCornerShape(14.dp))
+                    .border(1.dp, Tokeny.lineSoft, RoundedCornerShape(14.dp))
                     .clickable(onClick = naPomin)
                     .padding(horizontal = 14.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text("Wiem, ignoruj", fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
-                    fontFamily = Jakarta, color = DarkTokens.inkMuted)
+                    fontFamily = Jakarta, color = Tokeny.inkMuted)
             }
         }
     }
@@ -219,8 +219,8 @@ private fun KartaKolizji(k: KolizjaOdpoczynku, naDzien: (LocalDate) -> Unit, naP
 /** Pasek doby: koniec poprzedniej zmiany, przerwa, start następnej. */
 @Composable
 private fun OsCzasu(k: KolizjaOdpoczynku) {
-    val poprzednia = ShiftPaletteDark.of(typDniaZ(k.poprzednia))
-    val nastepna = ShiftPaletteDark.of(typDniaZ(k.nastepna))
+    val poprzednia = Paleta.of(typDniaZ(k.poprzednia))
+    val nastepna = Paleta.of(typDniaZ(k.nastepna))
     val dlugoscPoprzedniej = k.poprzednia.hours.toFloat()
     val dlugoscNastepnej = k.nastepna.hours.toFloat()
     val przerwa = k.przerwaH.toFloat()
@@ -233,22 +233,22 @@ private fun OsCzasu(k: KolizjaOdpoczynku) {
                 Modifier.weight(margines / calosc).fillMaxHeight()
                     .clip(RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp,
                         topEnd = 3.dp, bottomEnd = 3.dp))
-                    .background(Color.White.copy(alpha = 0.04f))
-                    .border(1.dp, DarkTokens.line, RoundedCornerShape(topStart = 8.dp,
+                    .background(Tokeny.surface)
+                    .border(1.dp, Tokeny.line, RoundedCornerShape(topStart = 8.dp,
                         bottomStart = 8.dp, topEnd = 3.dp, bottomEnd = 3.dp))
             )
             SegmentOsi(Modifier.weight(dlugoscPoprzedniej / calosc), k.poprzednia.code,
                 poprzednia.fill, poprzednia.line, poprzednia.ink)
             SegmentOsi(Modifier.weight(przerwa / calosc), "${k.przerwaH} h",
-                Color(0x24FF937E), Color(0x80FF937E), DarkTokens.warnInk, maleLitery = true)
+                Color(0x24FF937E), Color(0x80FF937E), Tokeny.warnInk, maleLitery = true)
             SegmentOsi(Modifier.weight(dlugoscNastepnej / calosc), k.nastepna.code,
                 nastepna.fill, nastepna.line, nastepna.ink)
             Box(
                 Modifier.weight(margines / calosc).fillMaxHeight()
                     .clip(RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp,
                         topStart = 3.dp, bottomStart = 3.dp))
-                    .background(Color.White.copy(alpha = 0.04f))
-                    .border(1.dp, DarkTokens.line, RoundedCornerShape(topEnd = 8.dp,
+                    .background(Tokeny.surface)
+                    .border(1.dp, Tokeny.line, RoundedCornerShape(topEnd = 8.dp,
                         bottomEnd = 8.dp, topStart = 3.dp, bottomStart = 3.dp))
             )
         }
@@ -262,7 +262,7 @@ private fun OsCzasu(k: KolizjaOdpoczynku) {
                 Text(
                     it.format(GODZ),
                     style = TextStyle(fontSize = 9.sp, fontFamily = Jakarta, fontFeatureSettings = TNUM),
-                    color = DarkTokens.inkFaint
+                    color = Tokeny.inkFaint
                 )
             }
         }
@@ -310,7 +310,7 @@ private fun KartaTygodni(s: UiState) {
     val tygodnie = s.tygodnieOdpoczynku
     val najkrotszy = tygodnie.minOfOrNull { it.najdluzszaPrzerwaH } ?: 0L
     val wszystkieOk = tygodnie.all { it.spelnia }
-    val kolor = if (wszystkieOk) DarkTokens.accent else DarkTokens.warnInk
+    val kolor = if (wszystkieOk) Tokeny.accent else Tokeny.warnInk
 
     Column(
         Modifier.wejscie(p).fillMaxWidth()
@@ -336,11 +336,11 @@ private fun KartaTygodni(s: UiState) {
                 )
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text("Odpoczynek tygodniowy", style = GrafikType.cardTitle, color = DarkTokens.ink)
+                Text("Odpoczynek tygodniowy", style = GrafikType.cardTitle, color = Tokeny.ink)
                 Text(
                     "najkrótszy w miesiącu: $najkrotszy h · norma ${Odpoczynek.MIN_TYGODNIOWY_H} h",
                     fontSize = 11.sp, fontFamily = Jakarta,
-                    color = if (wszystkieOk) Color(0xFF9FE3D2) else DarkTokens.warnInk2
+                    color = if (wszystkieOk) Color(0xFF9FE3D2) else Tokeny.warnInk2
                 )
             }
         }
@@ -351,7 +351,7 @@ private fun KartaTygodni(s: UiState) {
 
 @Composable
 private fun WierszTygodnia(t: TydzienOdpoczynku) {
-    val kolor = if (t.spelnia) DarkTokens.accent else DarkTokens.warnInk
+    val kolor = if (t.spelnia) Tokeny.accent else Tokeny.warnInk
     // Pasek pełny przy dwukrotności normy — 70 h to tyle, ile daje wolny weekend.
     val udzial = (t.najdluzszaPrzerwaH / (Odpoczynek.MIN_TYGODNIOWY_H * 2f)).coerceIn(0f, 1f)
 
@@ -364,11 +364,11 @@ private fun WierszTygodnia(t: TydzienOdpoczynku) {
             "${t.od.dayOfMonth} – ${t.doKiedy.dayOfMonth}.${"%02d".format(t.doKiedy.monthValue)}",
             Modifier.width(54.dp),
             style = TextStyle(fontSize = 11.sp, fontFamily = Jakarta, fontFeatureSettings = TNUM),
-            color = DarkTokens.inkMuted
+            color = Tokeny.inkMuted
         )
         Box(
             Modifier.weight(1f).height(8.dp).clip(RoundedCornerShape(999.dp))
-                .background(Color(0x4D000000))
+                .background(Tokeny.naklad)
         ) {
             Box(
                 Modifier.fillMaxWidth(udzial).fillMaxHeight()
@@ -394,15 +394,15 @@ private fun Przelaczniki(s: UiState, vm: Vm) {
     Column(
         Modifier.wejscie(p).fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(DarkTokens.surface)
-            .border(1.dp, DarkTokens.line, RoundedCornerShape(20.dp))
+            .background(Tokeny.surface)
+            .border(1.dp, Tokeny.line, RoundedCornerShape(20.dp))
             .padding(horizontal = 14.dp, vertical = 4.dp)
     ) {
         WierszPrzelacznika(
             "Znacznik w kalendarzu", "mała kropka na dniu z kolizją", s.restZnacznik
         ) { vm.saveOdpoczynek(it, s.restOstrzegaj) }
 
-        Box(Modifier.fillMaxWidth().height(1.dp).background(DarkTokens.line))
+        Box(Modifier.fillMaxWidth().height(1.dp).background(Tokeny.line))
 
         WierszPrzelacznika(
             "Ostrzegaj przy malowaniu", "od razu, gdy wpiszesz zmianę łamiącą przerwę", s.restOstrzegaj
@@ -423,8 +423,8 @@ private fun WierszPrzelacznika(
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(tytul, style = GrafikType.cardTitle, color = DarkTokens.ink)
-            Text(podpis, fontSize = 11.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted)
+            Text(tytul, style = GrafikType.cardTitle, color = Tokeny.ink)
+            Text(podpis, fontSize = 11.sp, fontFamily = Jakarta, color = Tokeny.inkMuted)
         }
         Przelacznik(wlaczony, naZmiane)
     }
@@ -437,16 +437,16 @@ private fun NotkaPrawna() {
         Modifier.wejscie(p).fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(Color(0x08FFFFFF))
-            .border(1.dp, DarkTokens.line, RoundedCornerShape(20.dp))
+            .border(1.dp, Tokeny.line, RoundedCornerShape(20.dp))
             .padding(14.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Icon(IkonaInfo, null, Modifier.size(16.dp).padding(top = 1.dp), tint = Color(0xFF8A939B))
+        Icon(IkonaInfo, null, Modifier.size(16.dp).padding(top = 1.dp), tint = Tokeny.inkIkona)
         Text(
             "Liczymy z godzin zmian w grafiku (art. 132 i 133 Kodeksu pracy). To podpowiedź, " +
                 "nie porada prawna — ruchomy czas pracy, doba pracownicza i ustalenia zakładowe " +
                 "mogą zmienić wynik.",
-            fontSize = 11.sp, lineHeight = 17.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted
+            fontSize = 11.sp, lineHeight = 17.sp, fontFamily = Jakarta, color = Tokeny.inkMuted
         )
     }
 }

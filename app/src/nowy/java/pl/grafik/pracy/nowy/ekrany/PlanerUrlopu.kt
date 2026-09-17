@@ -74,13 +74,13 @@ fun EkranPlanerUrlopu(vm: Vm, naPowrot: () -> Unit) {
             val pNag by postepWejscia(Motion.RISE_MS)
             Column(Modifier.wejscie(pNag)) {
                 Text("Kiedy wziąć urlop",
-                    style = GrafikType.h1.copy(lineHeight = 28.sp), color = DarkTokens.ink)
+                    style = GrafikType.h1.copy(lineHeight = 28.sp), color = Tokeny.ink)
                 Spacer(Modifier.height(8.dp))
                 Text(
                     "Miejsca, w których kilka dni urlopu daje najdłuższy ciąg wolnego. " +
                         "Liczone rok do przodu z Twojego cyklu i kalendarza świąt.",
                     fontSize = 12.sp, lineHeight = 18.sp, fontFamily = Jakarta,
-                    color = DarkTokens.inkMuted
+                    color = Tokeny.inkMuted
                 )
             }
 
@@ -108,9 +108,9 @@ private fun PowrotDoBilansu(naPowrot: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        Icon(IkonaWLewo, null, Modifier.size(17.dp), tint = DarkTokens.inkMuted)
+        Icon(IkonaWLewo, null, Modifier.size(17.dp), tint = Tokeny.inkMuted)
         Text("Bilans", fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
-            fontFamily = Jakarta, color = DarkTokens.inkMuted)
+            fontFamily = Jakarta, color = Tokeny.inkMuted)
     }
 }
 
@@ -121,14 +121,14 @@ private fun PowrotDoBilansu(naPowrot: () -> Unit) {
 @Composable
 private fun KartaCykluPlanera(s: UiState) {
     val p by postepWejscia(Motion.RISE_MS, 50)
-    val rozowy = ShiftPaletteDark.URLOP.ink
+    val rozowy = Paleta.URLOP.ink
     val rotacja = remember(s.cfg) { CycleGenerator.rotationLabel(s.cfg) }
 
     Row(
         Modifier.wejscie(p).fillMaxWidth()
             .clip(RoundedCornerShape(Dim.rCardSmall))
-            .background(DarkTokens.surface)
-            .border(1.dp, DarkTokens.line, RoundedCornerShape(Dim.rCardSmall))
+            .background(Tokeny.surface)
+            .border(1.dp, Tokeny.line, RoundedCornerShape(Dim.rCardSmall))
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -141,12 +141,12 @@ private fun KartaCykluPlanera(s: UiState) {
 
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(s.cfg.pattern.label, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
-                fontFamily = Jakarta, color = DarkTokens.ink,
+                fontFamily = Jakarta, color = Tokeny.ink,
                 maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(
                 "brygada ${s.cfg.brigade} · $rotacja" +
                     if (s.cfg.anchorIndex > 0) " · przesunięcie ${s.cfg.anchorIndex}" else "",
-                fontSize = 11.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted,
+                fontSize = 11.sp, fontFamily = Jakarta, color = Tokeny.inkMuted,
                 maxLines = 1, overflow = TextOverflow.Ellipsis
             )
         }
@@ -179,10 +179,10 @@ private fun Filtry(wybrany: Filtr, naWybor: (Filtr) -> Unit) {
             val aktywny = f == wybrany
             Box(
                 Modifier.weight(1f).height(38.dp).clip(RoundedCornerShape(12.dp))
-                    .background(if (aktywny) Color(0x2452D0B3) else DarkTokens.surface)
+                    .background(if (aktywny) Color(0x2452D0B3) else Tokeny.surface)
                     .border(
                         1.dp,
-                        if (aktywny) Color(0x7352D0B3) else DarkTokens.line,
+                        if (aktywny) Color(0x7352D0B3) else Tokeny.line,
                         RoundedCornerShape(12.dp)
                     )
                     .clickable { naWybor(f) },
@@ -190,7 +190,7 @@ private fun Filtry(wybrany: Filtr, naWybor: (Filtr) -> Unit) {
             ) {
                 Text(f.etykieta, fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
                     fontFamily = Jakarta, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                    color = if (aktywny) DarkTokens.accent else DarkTokens.inkMuted)
+                    color = if (aktywny) Tokeny.accent else Tokeny.inkMuted)
             }
         }
     }
@@ -203,18 +203,18 @@ private fun Filtry(wybrany: Filtr, naWybor: (Filtr) -> Unit) {
 @Composable
 private fun KartaPropozycji(p: VacationSuggestion, indeks: Int) {
     val wejscie by postepWejscia(Motion.RISE_MS, 110 + indeks * 40)
-    val rozowy = ShiftPaletteDark.URLOP.ink
+    val rozowy = Paleta.URLOP.ink
     // Im więcej dni wolnego za jeden dzień urlopu, tym mocniejszy kolor liczby.
     val swietny = p.oplacalnosc >= 3.0
-    val kolorLiczby = if (swietny) DarkTokens.accent else DarkTokens.ink
+    val kolorLiczby = if (swietny) Tokeny.accent else Tokeny.ink
 
     Column(
         Modifier.wejscie(wejscie).fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(if (swietny) Color(0x1452D0B3) else DarkTokens.surface)
+            .background(if (swietny) Color(0x1452D0B3) else Tokeny.surface)
             .border(
                 1.dp,
-                if (swietny) Color(0x4D52D0B3) else DarkTokens.line,
+                if (swietny) Color(0x4D52D0B3) else Tokeny.line,
                 RoundedCornerShape(20.dp)
             )
             .padding(14.dp),
@@ -229,11 +229,11 @@ private fun KartaPropozycji(p: VacationSuggestion, indeks: Int) {
                         color = kolorLiczby, modifier = Modifier.alignByBaseline()
                     )
                     Text("dni wolnego pod rząd", fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
-                        fontFamily = Jakarta, color = DarkTokens.ink3,
+                        fontFamily = Jakarta, color = Tokeny.ink3,
                         modifier = Modifier.alignByBaseline())
                 }
                 Text(zakres(p), fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
-                    fontFamily = Jakarta, color = DarkTokens.ink)
+                    fontFamily = Jakarta, color = Tokeny.ink)
             }
 
             Column(
@@ -249,7 +249,7 @@ private fun KartaPropozycji(p: VacationSuggestion, indeks: Int) {
                         fontFamily = Jakarta, fontFeatureSettings = TNUM),
                     color = rozowy
                 )
-                Text("dni urlopu", fontSize = 9.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted)
+                Text("dni urlopu", fontSize = 9.sp, fontFamily = Jakarta, color = Tokeny.inkMuted)
             }
         }
 
@@ -257,18 +257,18 @@ private fun KartaPropozycji(p: VacationSuggestion, indeks: Int) {
             horizontalArrangement = Arrangement.spacedBy(7.dp)) {
             Icon(IkonaUrlop, null, Modifier.size(13.dp), tint = rozowy)
             Text("urlop: ${dniUrlopu(p)}", fontSize = 11.sp, fontFamily = Jakarta,
-                color = DarkTokens.ink2, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                color = Tokeny.ink2, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
 
         Row(verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(7.dp)) {
             Box(
                 Modifier.size(6.dp).clip(RoundedCornerShape(999.dp))
-                    .background(if (p.swieta.isEmpty()) DarkTokens.inkDisabled else ShiftPaletteDark.I.ink)
+                    .background(if (p.swieta.isEmpty()) Tokeny.inkDisabled else Paleta.I.ink)
             )
             Text(
                 opisSwiat(p), fontSize = 11.sp, fontFamily = Jakarta,
-                color = if (p.swieta.isEmpty()) DarkTokens.inkFaint else ShiftPaletteDark.I.ink,
+                color = if (p.swieta.isEmpty()) Tokeny.inkFaint else Paleta.I.ink,
                 maxLines = 2, overflow = TextOverflow.Ellipsis
             )
         }
@@ -291,7 +291,7 @@ private fun KartaPropozycji(p: VacationSuggestion, indeks: Int) {
             Text(
                 "%.1f× za dzień".format(p.oplacalnosc),
                 style = TextStyle(fontSize = 10.sp, fontFamily = Jakarta, fontFeatureSettings = TNUM),
-                color = DarkTokens.inkMuted
+                color = Tokeny.inkMuted
             )
         }
     }
@@ -304,11 +304,11 @@ private fun KartaPropozycji(p: VacationSuggestion, indeks: Int) {
 @Composable
 private fun BrakCyklu() {
     KartaUstawien {
-        Text("Najpierw włącz cykl", style = GrafikType.cardTitle, color = DarkTokens.ink)
+        Text("Najpierw włącz cykl", style = GrafikType.cardTitle, color = Tokeny.ink)
         Text(
             "Propozycje liczymy z grafiku wypełnianego cyklem. Włącz „Wypełniaj grafik z cyklu” " +
                 "w ustawieniach „Mój cykl”, a wrócę z podpowiedziami.",
-            fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted
+            fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta, color = Tokeny.inkMuted
         )
     }
 }
@@ -316,12 +316,12 @@ private fun BrakCyklu() {
 @Composable
 private fun BrakPropozycji(s: UiState) {
     KartaUstawien {
-        Text("Nie ma czego proponować", style = GrafikType.cardTitle, color = DarkTokens.ink)
+        Text("Nie ma czego proponować", style = GrafikType.cardTitle, color = Tokeny.ink)
         Text(
             if (s.urlopBilans.zostalo <= 0)
                 "Cały urlop już wykorzystany — w tym roku nie ma czym płacić za dłuższe wolne."
             else "W najbliższym roku nie widzę układu, w którym urlop dokłada się do wolnego z cyklu.",
-            fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted
+            fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta, color = Tokeny.inkMuted
         )
     }
 }

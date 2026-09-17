@@ -130,22 +130,22 @@ private fun PasekGorny(s: UiState, dzis: LocalDate, naUstawienia: () -> Unit) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text(
                 "BRYGADA ${s.cfg.brigade.uppercase(PL_TERAZ)}",
-                style = GrafikType.sectionLabel, color = DarkTokens.accent
+                style = GrafikType.sectionLabel, color = Tokeny.accent
             )
             Text(
                 "${dzienTygodnia(dzis)}, ${dzis.dayOfMonth} ${miesiacDopelniacz(dzis)}",
                 fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
-                fontFamily = Jakarta, color = DarkTokens.inkStrong
+                fontFamily = Jakarta, color = Tokeny.inkStrong
             )
         }
         Box(
             Modifier.size(42.dp).clip(RoundedCornerShape(14.dp))
-                .background(Color.White.copy(alpha = 0.04f))
-                .border(1.dp, DarkTokens.lineStrong, RoundedCornerShape(14.dp))
+                .background(Tokeny.surface)
+                .border(1.dp, Tokeny.lineStrong, RoundedCornerShape(14.dp))
                 .clickable(onClick = naUstawienia),
             contentAlignment = Alignment.Center
         ) {
-            Icon(IkonaUstawienia, "Ustawienia", Modifier.size(19.dp), tint = DarkTokens.ink2)
+            Icon(IkonaUstawienia, "Ustawienia", Modifier.size(19.dp), tint = Tokeny.ink2)
         }
     }
 }
@@ -183,7 +183,7 @@ private fun kat(czas: LocalDateTime): Float = -90f + (czas.hour + czas.minute / 
 
 @Composable
 private fun TarczaDoby(zm: NajblizszaZmiana?, teraz: LocalDateTime, modifier: Modifier = Modifier) {
-    val kolory = ShiftPaletteDark.of(typDniaZ(zm?.shift))
+    val kolory = Paleta.of(typDniaZ(zm?.shift))
     val pLuk by postepWejscia(Motion.ARC_DRAW_MS, Motion.ARC_DRAW_DELAY_MS)
     val pWsk by postepWejscia(Motion.SWEEP_MS, Motion.SWEEP_DELAY_MS)
 
@@ -192,6 +192,10 @@ private fun TarczaDoby(zm: NajblizszaZmiana?, teraz: LocalDateTime, modifier: Mo
         (Duration.between(it.start, it.koniec).toMinutes() / 60f * 15f).coerceAtMost(360f)
     } ?: 0f
     val katTeraz = kat(teraz)
+    // Kolory czytamy przed Canvasem — wewnątrz rysowania nie ma kontekstu kompozycji.
+    val kolorWskazowki = Tokeny.accent
+    val kolorToru = Tokeny.tarczaTor
+    val kolorKresek = Tokeny.tarczaKreski
 
     Box(modifier.size(240.dp), contentAlignment = Alignment.Center) {
         Canvas(Modifier.size(240.dp)) {
@@ -201,7 +205,7 @@ private fun TarczaDoby(zm: NajblizszaZmiana?, teraz: LocalDateTime, modifier: Mo
             val rogTarczy = Offset(srodek.x - r, srodek.y - r)
             val bokTarczy = Size(r * 2, r * 2)
 
-            drawCircle(Color(0xFF191D21), radius = r, center = srodek, style = Stroke(grubosc))
+            drawCircle(kolorToru, radius = r, center = srodek, style = Stroke(grubosc))
 
             if (zm != null && dlugosc > 0f) {
                 // Poświata łuku — drop-shadow(0 0 12px rgba(kolor,0.55)) z makiety.
@@ -236,7 +240,7 @@ private fun TarczaDoby(zm: NajblizszaZmiana?, teraz: LocalDateTime, modifier: Mo
                 val dlugi = i % 2 == 0
                 rotate(-90f + i * 45f, srodek) {
                     drawLine(
-                        Color(0xFF333A40),
+                        kolorKresek,
                         start = Offset(srodek.x + 108.dp.toPx(), srodek.y),
                         end = Offset(srodek.x + (if (dlugi) 116.dp else 114.dp).toPx(), srodek.y),
                         strokeWidth = 2.dp.toPx(), cap = StrokeCap.Round
@@ -248,12 +252,12 @@ private fun TarczaDoby(zm: NajblizszaZmiana?, teraz: LocalDateTime, modifier: Mo
             val katWsk = -90f + (katTeraz + 90f) * pWsk
             rotate(katWsk, srodek) {
                 drawLine(
-                    DarkTokens.accent,
+                    kolorWskazowki,
                     start = Offset(srodek.x + 84.dp.toPx(), srodek.y),
                     end = Offset(srodek.x + 110.dp.toPx(), srodek.y),
                     strokeWidth = 3.dp.toPx(), cap = StrokeCap.Round
                 )
-                drawCircle(DarkTokens.accent, radius = 4.5.dp.toPx(),
+                drawCircle(kolorWskazowki, radius = 4.5.dp.toPx(),
                     center = Offset(srodek.x + 112.dp.toPx(), srodek.y))
             }
         }
@@ -280,19 +284,19 @@ private fun SrodekTarczy(zm: NajblizszaZmiana?, teraz: LocalDateTime, kolory: Da
         ) {
             Box(
                 Modifier.size(7.dp).clip(RoundedCornerShape(999.dp))
-                    .background(if (zm != null) kolory.solid else DarkTokens.inkDisabled)
+                    .background(if (zm != null) kolory.solid else Tokeny.inkDisabled)
             )
             Text(
                 if (zm != null) nazwaZmiany(zm.shift) else "DZIEŃ WOLNY",
                 fontSize = 11.sp, fontWeight = FontWeight.Bold, fontFamily = Jakarta,
                 letterSpacing = 1.1.sp,
-                color = if (zm != null) kolory.ink else DarkTokens.inkMuted
+                color = if (zm != null) kolory.ink else Tokeny.inkMuted
             )
         }
         Text(
             if (zm != null) odliczanie(teraz, if (zm.trwa) zm.koniec else zm.start)
             else "%d:%02d".format(teraz.hour, teraz.minute),
-            style = GrafikType.heroNumber, color = DarkTokens.ink,
+            style = GrafikType.heroNumber, color = Tokeny.ink,
             modifier = Modifier.wejscie(p2)
         )
         Text(
@@ -301,7 +305,7 @@ private fun SrodekTarczy(zm: NajblizszaZmiana?, teraz: LocalDateTime, kolory: Da
                 zm.trwa -> "do końca zmiany"
                 else -> "do startu zmiany"
             },
-            fontSize = 12.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted,
+            fontSize = 12.sp, fontFamily = Jakarta, color = Tokeny.inkMuted,
             modifier = Modifier.wejscie(p3)
         )
         if (zm != null) {
@@ -340,16 +344,16 @@ private fun TrzyKafelki(s: UiState, naBilans: () -> Unit) {
     ) {
         KafelekLiczby(Modifier.weight(1f), "godziny", naBilans) {
             Row(verticalAlignment = Alignment.Bottom) {
-                Text("$doDzis", style = liczbaKafelka, color = DarkTokens.ink)
+                Text("$doDzis", style = liczbaKafelka, color = Tokeny.ink)
                 Text("/${s.stats.norm}", style = liczbaKafelka.copy(
-                    fontSize = 11.sp, fontWeight = FontWeight.Medium), color = DarkTokens.inkMuted)
+                    fontSize = 11.sp, fontWeight = FontWeight.Medium), color = Tokeny.inkMuted)
             }
         }
         KafelekLiczby(Modifier.weight(1f), "nadgodziny", naBilans) {
-            Text("${s.stats.ot100 + s.stats.ot50} h", style = liczbaKafelka, color = DarkTokens.ink)
+            Text("${s.stats.ot100 + s.stats.ot50} h", style = liczbaKafelka, color = Tokeny.ink)
         }
         KafelekLiczby(Modifier.weight(1f), "dni urlopu", naBilans) {
-            Text("${s.urlopBilans.zostalo}", style = liczbaKafelka, color = ShiftPaletteDark.URLOP.ink)
+            Text("${s.urlopBilans.zostalo}", style = liczbaKafelka, color = Paleta.URLOP.ink)
         }
     }
 }
@@ -363,15 +367,15 @@ private fun KafelekLiczby(
 ) {
     Column(
         modifier.clip(RoundedCornerShape(16.dp))
-            .background(DarkTokens.surface)
-            .border(1.dp, DarkTokens.line, RoundedCornerShape(16.dp))
+            .background(Tokeny.surface)
+            .border(1.dp, Tokeny.line, RoundedCornerShape(16.dp))
             .clickable(onClick = akcja)
             .padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         liczba()
         Text(podpis, style = GrafikType.micro.copy(fontWeight = FontWeight.Normal),
-            color = DarkTokens.inkMuted, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            color = Tokeny.inkMuted, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -394,7 +398,7 @@ private fun NajblizszeDni(
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Text("NAJBLIŻSZE DNI", style = GrafikType.sectionLabel,
-            color = DarkTokens.inkMuted, modifier = Modifier.wejscie(pNag))
+            color = Tokeny.inkMuted, modifier = Modifier.wejscie(pNag))
 
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             dni.forEachIndexed { i, e ->
@@ -402,12 +406,12 @@ private fun NajblizszeDni(
             }
         }
 
-        val k = ShiftPaletteDark.of(typDniaZ(wpis.shift))
+        val k = Paleta.of(typDniaZ(wpis.shift))
         Row(
             Modifier.wejscie(pOpis).fillMaxWidth()
                 .clip(RoundedCornerShape(14.dp))
-                .background(DarkTokens.surface)
-                .border(1.dp, DarkTokens.line, RoundedCornerShape(14.dp))
+                .background(Tokeny.surface)
+                .border(1.dp, Tokeny.line, RoundedCornerShape(14.dp))
                 .padding(horizontal = 14.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -415,7 +419,7 @@ private fun NajblizszeDni(
             Box(Modifier.size(7.dp).clip(RoundedCornerShape(999.dp)).background(k.solid))
             Text(
                 "${dzienTygodnia(wpis.date)} ${wpis.date.dayOfMonth} ${miesiacDopelniacz(wpis.date)} · ${opisDnia(wpis.shift)}",
-                fontSize = 12.sp, fontFamily = Jakarta, color = DarkTokens.ink2,
+                fontSize = 12.sp, fontFamily = Jakarta, color = Tokeny.ink2,
                 maxLines = 2, overflow = TextOverflow.Ellipsis
             )
         }
@@ -431,16 +435,16 @@ private fun KafelekDnia(
     akcja: () -> Unit
 ) {
     val p by postepWejscia(Motion.CELL_IN_MS, 780 + indeks * 60)
-    val k = ShiftPaletteDark.of(typDniaZ(e.shift))
+    val k = Paleta.of(typDniaZ(e.shift))
     Column(
         modifier.height(84.dp)
             .alpha(p)
             .scale(0.94f + 0.06f * p)
             .clip(RoundedCornerShape(16.dp))
             .background(k.fill)
-            .border(1.dp, if (wybrany) k.line else DarkTokens.line, RoundedCornerShape(16.dp))
+            .border(1.dp, if (wybrany) k.line else Tokeny.line, RoundedCornerShape(16.dp))
             .then(
-                if (wybrany) Modifier.border(1.5.dp, DarkTokens.accent, RoundedCornerShape(16.dp))
+                if (wybrany) Modifier.border(1.5.dp, Tokeny.accent, RoundedCornerShape(16.dp))
                 else Modifier
             )
             .clickable(onClick = akcja)
@@ -449,13 +453,13 @@ private fun KafelekDnia(
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         Text(skrotDnia(e.date), fontSize = 10.sp, fontWeight = FontWeight.SemiBold,
-            fontFamily = Jakarta, letterSpacing = 0.4.sp, color = DarkTokens.inkMuted)
+            fontFamily = Jakarta, letterSpacing = 0.4.sp, color = Tokeny.inkMuted)
         Text("${e.date.dayOfMonth}",
             style = TextStyle(
                 fontSize = 17.sp, lineHeight = 17.sp, fontWeight = FontWeight.Bold,
                 fontFamily = Jakarta, fontFeatureSettings = TNUM
             ),
-            color = if (wybrany) DarkTokens.ink else DarkTokens.ink2)
+            color = if (wybrany) Tokeny.ink else Tokeny.ink2)
         Text(oznaczenie(e.shift), fontSize = 12.sp, fontWeight = FontWeight.Bold,
             fontFamily = Jakarta, letterSpacing = 0.48.sp, color = k.ink,
             maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -498,21 +502,21 @@ private fun KartaWydarzenia(
                 .background(Color(0x24FF937E)),
             contentAlignment = Alignment.Center
         ) {
-            Icon(IkonaDzwonek, null, Modifier.size(17.dp), tint = DarkTokens.warnInk)
+            Icon(IkonaDzwonek, null, Modifier.size(17.dp), tint = Tokeny.warnInk)
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
                 tytulWydarzenia(ev, data, dzis),
                 fontSize = 13.sp, fontWeight = FontWeight.SemiBold, fontFamily = Jakarta,
-                color = DarkTokens.ink, maxLines = 1, overflow = TextOverflow.Ellipsis
+                color = Tokeny.ink, maxLines = 1, overflow = TextOverflow.Ellipsis
             )
             Text(
                 podpisWydarzenia(ev, data, dzis, s, dni),
-                fontSize = 11.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted,
+                fontSize = 11.sp, fontFamily = Jakarta, color = Tokeny.inkMuted,
                 maxLines = 2, overflow = TextOverflow.Ellipsis
             )
         }
-        Icon(IkonaWPrawo, null, Modifier.size(16.dp), tint = Color(0xFF8A939B))
+        Icon(IkonaWPrawo, null, Modifier.size(16.dp), tint = Tokeny.inkFaint)
     }
 }
 
@@ -560,23 +564,23 @@ private fun RzadAkcji(naGrafik: () -> Unit, naDzisiaj: () -> Unit) {
         Row(
             Modifier.weight(1f).height(52.dp)
                 .clip(RoundedCornerShape(16.dp))
-                .background(DarkTokens.accent)
+                .background(Tokeny.accent)
                 .clickable(onClick = naGrafik),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
         ) {
-            Icon(IkonaGrafik, null, Modifier.size(18.dp), tint = DarkTokens.accentOn)
+            Icon(IkonaGrafik, null, Modifier.size(18.dp), tint = Tokeny.accentOn)
             Text("Otwórz grafik", fontSize = 14.sp, fontWeight = FontWeight.Bold,
-                fontFamily = Jakarta, color = DarkTokens.accentOn)
+                fontFamily = Jakarta, color = Tokeny.accentOn)
         }
         Box(
             Modifier.size(52.dp).clip(RoundedCornerShape(16.dp))
-                .background(Color.White.copy(alpha = 0.05f))
-                .border(1.dp, DarkTokens.lineStrong, RoundedCornerShape(16.dp))
+                .background(Tokeny.surface)
+                .border(1.dp, Tokeny.lineStrong, RoundedCornerShape(16.dp))
                 .clickable(onClick = naDzisiaj),
             contentAlignment = Alignment.Center
         ) {
-            Icon(IkonaOlowek, "Edytuj dzisiejszy dzień", Modifier.size(19.dp), tint = DarkTokens.ink2)
+            Icon(IkonaOlowek, "Edytuj dzisiejszy dzień", Modifier.size(19.dp), tint = Tokeny.ink2)
         }
     }
 }

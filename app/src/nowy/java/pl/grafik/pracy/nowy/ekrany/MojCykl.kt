@@ -68,9 +68,9 @@ fun EkranMojCykl(vm: Vm, naPowrot: () -> Unit) {
             val pNag by postepWejscia(Motion.RISE_MS)
             Column(Modifier.wejscie(pNag), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text("Mój cykl", style = GrafikType.h1.copy(fontSize = 26.sp, lineHeight = 26.sp),
-                    color = DarkTokens.ink)
+                    color = Tokeny.ink)
                 Text("Ustawiasz raz — grafik liczy się sam na każdy miesiąc.",
-                    fontSize = 12.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted)
+                    fontSize = 12.sp, fontFamily = Jakarta, color = Tokeny.inkMuted)
             }
 
             KartaWypelniania(s, vm)
@@ -111,7 +111,7 @@ private fun KartaWypelniania(s: UiState, vm: Vm) {
         ) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text("Wypełniaj grafik z cyklu", fontSize = 15.sp, fontWeight = FontWeight.Bold,
-                    fontFamily = Jakarta, color = DarkTokens.ink)
+                    fontFamily = Jakarta, color = Tokeny.ink)
                 Text(
                     if (cfg.generate) "włączone — kalendarz liczy zmiany sam"
                     else "wyłączone — kalendarz pokazuje tylko to, co wpiszesz",
@@ -123,7 +123,7 @@ private fun KartaWypelniania(s: UiState, vm: Vm) {
 
         Text(
             "Dni wpisane ręcznie zawsze mają pierwszeństwo przed cyklem — nic Ci ich nie nadpisze.",
-            fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted
+            fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta, color = Tokeny.inkMuted
         )
 
         Box(Modifier.fillMaxWidth().height(1.dp).background(Color(0x2E52D0B3)))
@@ -134,20 +134,20 @@ private fun KartaWypelniania(s: UiState, vm: Vm) {
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Text("Wypełniaj od", fontSize = 12.sp, fontFamily = Jakarta,
-                color = DarkTokens.ink3, modifier = Modifier.weight(1f))
+                color = Tokeny.ink3, modifier = Modifier.weight(1f))
             Row(verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 PrzyciskKwadrat(IkonaMinus, "Wcześniejszy miesiąc", rozmiar = 34.dp,
-                    tlo = Color(0x4D000000), obrys = DarkTokens.lineSoft) {
+                    tlo = Tokeny.naklad, obrys = Tokeny.lineSoft) {
                     if (cfg.generate) vm.saveConfig(przesunOd(cfg, od.minusMonths(1)))
                 }
                 Text(
                     miesiacRokCykl(od), Modifier.widthIn(min = 108.dp),
                     fontSize = 13.sp, fontWeight = FontWeight.SemiBold, fontFamily = Jakarta,
-                    color = DarkTokens.ink, textAlign = TextAlign.Center
+                    color = Tokeny.ink, textAlign = TextAlign.Center
                 )
                 PrzyciskKwadrat(IkonaPlus, "Późniejszy miesiąc", rozmiar = 34.dp,
-                    tlo = Color(0x4D000000), obrys = DarkTokens.lineSoft) {
+                    tlo = Tokeny.naklad, obrys = Tokeny.lineSoft) {
                     if (cfg.generate) vm.saveConfig(przesunOd(cfg, od.plusMonths(1)))
                 }
             }
@@ -161,10 +161,10 @@ private fun KartaWypelniania(s: UiState, vm: Vm) {
                 val wybrany = dlugoscZakresu(cfg) == z.miesiecy
                 Box(
                     Modifier.weight(1f).height(36.dp).clip(RoundedCornerShape(11.dp))
-                        .background(if (wybrany) Color(0x2952D0B3) else Color(0x4D000000))
+                        .background(if (wybrany) Color(0x2952D0B3) else Tokeny.naklad)
                         .border(
                             1.dp,
-                            if (wybrany) Color(0x7352D0B3) else DarkTokens.lineSoft,
+                            if (wybrany) Color(0x7352D0B3) else Tokeny.lineSoft,
                             RoundedCornerShape(11.dp)
                         )
                         .clickable(enabled = cfg.generate) { vm.saveConfig(ustawZakres(cfg, od, z.miesiecy)) },
@@ -172,12 +172,12 @@ private fun KartaWypelniania(s: UiState, vm: Vm) {
                 ) {
                     Text(z.etykieta, fontSize = 11.sp, fontWeight = FontWeight.SemiBold,
                         fontFamily = Jakarta, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                        color = if (wybrany) DarkTokens.accent else DarkTokens.inkMuted)
+                        color = if (wybrany) Tokeny.accent else Tokeny.inkMuted)
                 }
             }
         }
 
-        Text(opisZakresu(cfg, od), fontSize = 11.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted)
+        Text(opisZakresu(cfg, od), fontSize = 11.sp, fontFamily = Jakarta, color = Tokeny.inkMuted)
     }
 }
 
@@ -212,17 +212,17 @@ private fun opisZakresu(cfg: CycleConfig, od: YearMonth): String {
 private fun SystemPracy(cfg: CycleConfig, vm: Vm) {
     val p by postepWejscia(Motion.RISE_MS, 100)
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("SYSTEM PRACY", style = GrafikType.sectionLabel, color = DarkTokens.inkFaint,
+        Text("SYSTEM PRACY", style = GrafikType.sectionLabel, color = Tokeny.inkFaint,
             modifier = Modifier.wejscie(p))
         CyclePattern.entries.forEach { wzorzec ->
             val wybrany = wzorzec == cfg.pattern
             Row(
                 Modifier.fillMaxWidth()
                     .clip(RoundedCornerShape(Dim.rCardSmall))
-                    .background(if (wybrany) Color(0x2452D0B3) else DarkTokens.surface)
+                    .background(if (wybrany) Color(0x2452D0B3) else Tokeny.surface)
                     .border(
                         1.dp,
-                        if (wybrany) Color(0x7352D0B3) else DarkTokens.line,
+                        if (wybrany) Color(0x7352D0B3) else Tokeny.line,
                         RoundedCornerShape(Dim.rCardSmall)
                     )
                     .clickable {
@@ -236,23 +236,23 @@ private fun SystemPracy(cfg: CycleConfig, vm: Vm) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(wzorzec.label, fontSize = 14.sp, fontWeight = FontWeight.Bold,
                         fontFamily = Jakarta,
-                        color = if (wybrany) DarkTokens.accent else DarkTokens.ink)
+                        color = if (wybrany) Tokeny.accent else Tokeny.ink)
                     Text(wzorzec.desc, fontSize = 11.sp, fontFamily = Jakarta,
-                        color = DarkTokens.inkMuted, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        color = Tokeny.inkMuted, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 }
                 Text("${wzorzec.length} dni", fontSize = 10.sp, fontFamily = Jakarta,
-                    color = DarkTokens.inkFaint)
+                    color = Tokeny.inkFaint)
                 Box(
                     Modifier.size(20.dp).clip(RoundedCornerShape(999.dp))
-                        .background(if (wybrany) DarkTokens.accent else Color.Transparent)
+                        .background(if (wybrany) Tokeny.accent else Color.Transparent)
                         .border(
                             1.dp,
-                            if (wybrany) DarkTokens.accent else DarkTokens.lineSoft,
+                            if (wybrany) Tokeny.accent else Tokeny.lineSoft,
                             RoundedCornerShape(999.dp)
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (wybrany) Icon(IkonaPtaszek, null, Modifier.size(12.dp), tint = DarkTokens.accentOn)
+                    if (wybrany) Icon(IkonaPtaszek, null, Modifier.size(12.dp), tint = Tokeny.accentOn)
                 }
             }
         }
@@ -272,7 +272,7 @@ private fun KierunekRotacji(cfg: CycleConfig, vm: Vm) {
     val odwrotna = remember(cfg.pattern) { CycleGenerator.rotationLabel(cfg.copy(reverse = true)) }
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("KIERUNEK ROTACJI", style = GrafikType.sectionLabel, color = DarkTokens.inkFaint,
+        Text("KIERUNEK ROTACJI", style = GrafikType.sectionLabel, color = Tokeny.inkFaint,
             modifier = Modifier.wejscie(p))
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             KafelekKierunku(Modifier.weight(1f), zwykla, "zwykła kolejność", !cfg.reverse) {
@@ -295,10 +295,10 @@ private fun KafelekKierunku(
 ) {
     Column(
         modifier.height(58.dp).clip(RoundedCornerShape(16.dp))
-            .background(if (wybrany) Color(0x2452D0B3) else DarkTokens.surface)
+            .background(if (wybrany) Color(0x2452D0B3) else Tokeny.surface)
             .border(
                 1.dp,
-                if (wybrany) Color(0x7352D0B3) else DarkTokens.line,
+                if (wybrany) Color(0x7352D0B3) else Tokeny.line,
                 RoundedCornerShape(16.dp)
             )
             .clickable(onClick = akcja),
@@ -307,8 +307,8 @@ private fun KafelekKierunku(
     ) {
         Text(etykieta, fontSize = 14.sp, fontWeight = FontWeight.Bold, fontFamily = Jakarta,
             letterSpacing = 0.28.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
-            color = if (wybrany) DarkTokens.accent else DarkTokens.inkMuted)
-        Text(podpis, fontSize = 10.sp, fontFamily = Jakarta, color = DarkTokens.inkMuted)
+            color = if (wybrany) Tokeny.accent else Tokeny.inkMuted)
+        Text(podpis, fontSize = 10.sp, fontFamily = Jakarta, color = Tokeny.inkMuted)
     }
 }
 
@@ -323,7 +323,7 @@ private fun MojaBrygada(cfg: CycleConfig, vm: Vm) {
     val krokow = if (tygodniowy) cfg.pattern.weeks else cfg.pattern.length
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("MOJA BRYGADA", style = GrafikType.sectionLabel, color = DarkTokens.inkFaint,
+        Text("MOJA BRYGADA", style = GrafikType.sectionLabel, color = Tokeny.inkFaint,
             modifier = Modifier.wejscie(p))
 
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -331,25 +331,25 @@ private fun MojaBrygada(cfg: CycleConfig, vm: Vm) {
                 val wybrana = cfg.brigade == b
                 Box(
                     Modifier.weight(1f).height(52.dp).clip(RoundedCornerShape(16.dp))
-                        .background(if (wybrana) Color(0x2452D0B3) else DarkTokens.surface)
+                        .background(if (wybrana) Color(0x2452D0B3) else Tokeny.surface)
                         .border(
                             1.dp,
-                            if (wybrana) Color(0x7352D0B3) else DarkTokens.line,
+                            if (wybrana) Color(0x7352D0B3) else Tokeny.line,
                             RoundedCornerShape(16.dp)
                         )
                         .clickable { vm.saveConfig(cfg.copy(brigade = b)) },
                     contentAlignment = Alignment.Center
                 ) {
                     Text(b, fontSize = 17.sp, fontWeight = FontWeight.Bold, fontFamily = Jakarta,
-                        color = if (wybrana) DarkTokens.accent else DarkTokens.inkMuted)
+                        color = if (wybrana) Tokeny.accent else Tokeny.inkMuted)
                 }
             }
         }
 
         Row(
             Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
-                .background(DarkTokens.surface)
-                .border(1.dp, DarkTokens.line, RoundedCornerShape(14.dp))
+                .background(Tokeny.surface)
+                .border(1.dp, Tokeny.line, RoundedCornerShape(14.dp))
                 .padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -361,7 +361,7 @@ private fun MojaBrygada(cfg: CycleConfig, vm: Vm) {
                 if (tygodniowy) "tydzień ${cfg.anchorIndex + 1} z $krokow"
                 else "pozycja ${cfg.anchorIndex}",
                 Modifier.weight(1f), fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
-                fontFamily = Jakarta, color = DarkTokens.ink3, textAlign = TextAlign.Center
+                fontFamily = Jakarta, color = Tokeny.ink3, textAlign = TextAlign.Center
             )
             PrzyciskPrzesuniecia(if (tygodniowy) "+1 tydzień" else "+1 dzień") {
                 vm.saveConfig(cfg.copy(anchorIndex = (cfg.anchorIndex + 1) % krokow))
@@ -370,7 +370,7 @@ private fun MojaBrygada(cfg: CycleConfig, vm: Vm) {
 
         Text(
             "Nie wiesz, które przesunięcie jest Twoje? Ustaw takie, przy którym podgląd poniżej zgadza się z tym tygodniem.",
-            fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta, color = DarkTokens.inkFaint
+            fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta, color = Tokeny.inkFaint
         )
     }
 }
@@ -379,14 +379,14 @@ private fun MojaBrygada(cfg: CycleConfig, vm: Vm) {
 private fun PrzyciskPrzesuniecia(tekst: String, akcja: () -> Unit) {
     Box(
         Modifier.height(34.dp).clip(RoundedCornerShape(11.dp))
-            .background(DarkTokens.surfaceInput)
-            .border(1.dp, DarkTokens.lineInput, RoundedCornerShape(11.dp))
+            .background(Tokeny.surfaceInput)
+            .border(1.dp, Tokeny.lineInput, RoundedCornerShape(11.dp))
             .clickable(onClick = akcja)
             .padding(horizontal = 12.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(tekst, fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
-            fontFamily = Jakarta, color = DarkTokens.ink2)
+            fontFamily = Jakarta, color = Tokeny.ink2)
     }
 }
 
@@ -407,16 +407,16 @@ private fun Podglad(cfg: CycleConfig) {
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("PODGLĄD — 21 DNI OD DZIŚ", style = GrafikType.sectionLabel,
-            color = DarkTokens.inkFaint, modifier = Modifier.wejscie(p))
+            color = Tokeny.inkFaint, modifier = Modifier.wejscie(p))
         Row(
             Modifier.fillMaxWidth().clip(RoundedCornerShape(Dim.rCardSmall))
-                .background(DarkTokens.surface)
-                .border(1.dp, DarkTokens.line, RoundedCornerShape(Dim.rCardSmall))
+                .background(Tokeny.surface)
+                .border(1.dp, Tokeny.line, RoundedCornerShape(Dim.rCardSmall))
                 .padding(horizontal = 10.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(3.dp)
         ) {
             dni.forEach { (_, zmiana) ->
-                val k = ShiftPaletteDark.of(typDniaZ(zmiana))
+                val k = Paleta.of(typDniaZ(zmiana))
                 Box(
                     Modifier.weight(1f).height(38.dp).clip(RoundedCornerShape(7.dp))
                         .background(k.fill)
