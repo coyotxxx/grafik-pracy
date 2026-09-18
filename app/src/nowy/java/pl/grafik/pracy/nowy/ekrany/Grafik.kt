@@ -248,6 +248,7 @@ private fun SiatkaMiesiaca(
                         poza = YearMonth.from(d) != s.ym,
                         dzisiaj = d == dzis,
                         zaznaczony = d == wybrany,
+                        maWydarzenie = s.events[d].orEmpty().isNotEmpty(),
                         kolizja = s.restZnacznik && d in dniZKolizja,
                         postepSiatki = pSiatki,
                         indeks = i,
@@ -268,6 +269,7 @@ private fun KafelekDnia(
     poza: Boolean,
     dzisiaj: Boolean,
     zaznaczony: Boolean,
+    maWydarzenie: Boolean,
     kolizja: Boolean,
     postepSiatki: Float,
     indeks: Int,
@@ -343,7 +345,15 @@ private fun KafelekDnia(
     ) {
         // Każda informacja ma swój róg i nie wchodzi w drogę pozostałym:
         // numer i kropka kolizji u góry z lewej, obecność u góry z prawej,
-        // oznaczenie zmiany na dole z lewej, nadgodziny na dole z prawej.
+        // oznaczenie zmiany na dole z lewej, nadgodziny na dole z prawej,
+        // a kropka wydarzenia na dole pośrodku — jedyne wolne miejsce.
+        if (maWydarzenie && !poza) {
+            Box(
+                Modifier.align(Alignment.BottomCenter).size(5.dp)
+                    .clip(RoundedCornerShape(999.dp))
+                    .background(Tokeny.wydarzenie)
+            )
+        }
         Row(Modifier.fillMaxWidth().align(Alignment.TopStart), verticalAlignment = Alignment.Bottom) {
             Text("${data.dayOfMonth}", style = GrafikType.dayNumber, color = numer)
             if (kolizja && !poza) {
