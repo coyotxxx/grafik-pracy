@@ -55,6 +55,8 @@ data class Tokens(
     val trackBg: Color,
     /** Podpis przy dużej liczbie na kolorowej karcie (urlop, wypłata). */
     val inkNaKarcie: Color,
+    /** Barwa szrafury na dniach ustawowo wolnych — nie powtarza żadnego koloru zmiany. */
+    val swiateczny: Color,
     /** Szarość ikon strzałek i drobnych znaczników. */
     val inkIkona: Color,
     /** Przyciemnienie pod treścią: w ciemnym czerń, w jasnym ledwie widoczny cień. */
@@ -103,6 +105,7 @@ val TOKENY_CIEMNE = Tokens(
     warnInk2 = DarkTokens.warnInk2,
     trackBg = Color(0xFF1E2327),
     inkNaKarcie = Color(0xFFD7DBDE),
+    swiateczny = Color(0xFFE8DFB8),
     inkIkona = Color(0xFF8A939B),
     naklad = Color(0x4D000000),
     tarczaTor = Color(0xFF191D21),
@@ -149,6 +152,7 @@ val TOKENY_JASNE = Tokens(
     warnInk2 = Color(0xFF8C4433),
     trackBg = LightTokens.trackBg,                // #ECEAE3
     inkNaKarcie = LightTokens.inkMuted,           // #5A6169
+    swiateczny = Color(0xFF8A6D1F),               // na jasnym tle potrzeba ciemniejszego złota
     inkIkona = LightTokens.inkFaint,              // #8A9099
     naklad = Color(0x0F000000),
     tarczaTor = Color(0xFFE6E3DB),

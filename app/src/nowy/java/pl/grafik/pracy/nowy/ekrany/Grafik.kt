@@ -18,6 +18,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
@@ -282,20 +283,14 @@ private fun KafelekDnia(
     // Dzień ustawowo wolny wyróżnia się całym kafelkiem, nie samym numerem —
     // w siatce trzydziestu dni pojedyncza czerwona cyfra ginie.
     val swieto = remember(data) { Holidays.isHoliday(data) }
-    val tlo = when {
-        poza -> Color.Transparent
-        swieto -> Tokeny.warnBg
-        else -> kolory.fill
-    }
-    val obrys = when {
-        poza -> Paleta.POZA.line
-        swieto -> Tokeny.warnLine
-        else -> kolory.line
-    }
+    // Kolor czytamy przed rysowaniem — w `drawBehind` nie ma już kontekstu kompozycji.
+    val kolorSzrafury = Tokeny.swiateczny.copy(alpha = 0.22f)
+    val tlo = if (poza) Color.Transparent else kolory.fill
+    val obrys = if (poza) Paleta.POZA.line else kolory.line
     val atrament = if (poza) Tokeny.inkDisabled else kolory.ink
     val numer = when {
         poza -> Tokeny.inkDisabled
-        swieto -> Tokeny.warnInk
+        swieto -> Tokeny.swiateczny
         e?.shift?.isWork != true -> Tokeny.inkMuted
         else -> Tokeny.inkStrong
     }
@@ -323,6 +318,22 @@ private fun KafelekDnia(
             .border(1.dp, obrys, RoundedCornerShape(Dim.rCell))
             .then(if (pierscien != null) Modifier.border(1.5.dp, pierscien, RoundedCornerShape(Dim.rCell)) else Modifier)
             .clickable(enabled = !poza, onClick = naKlik)
+            .then(
+                // WARIANT E: ukośne paski w tle — faktura, nie barwa.
+                if (swieto && !poza) Modifier.drawBehind {
+                    val krok = 9.dp.toPx()
+                    var x = -size.height
+                    while (x < size.width) {
+                        drawLine(
+                            kolorSzrafury,
+                            start = androidx.compose.ui.geometry.Offset(x, size.height),
+                            end = androidx.compose.ui.geometry.Offset(x + size.height, 0f),
+                            strokeWidth = 2.dp.toPx()
+                        )
+                        x += krok
+                    }
+                } else Modifier
+            )
             .padding(horizontal = 6.dp, vertical = 7.dp)
     ) {
         // Każda informacja ma swój róg i nie wchodzi w drogę pozostałym:

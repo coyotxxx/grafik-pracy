@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -573,23 +574,31 @@ private fun KafelekDnia(
 ) {
     val p by postepWejscia(Motion.CELL_IN_MS, 780 + indeks * 60)
     val k = Paleta.of(typDniaZ(e.shift))
-    // Święto wyróżnia się całym kafelkiem — tak samo jak w kalendarzu miesiąca.
+    // Dzień ustawowo wolny znaczymy tą samą szrafurą co w kalendarzu miesiąca.
     val swieto = remember(e.date) { Holidays.isHoliday(e.date) }
+    val kolorSzrafury = Tokeny.swiateczny.copy(alpha = 0.22f)
     Column(
         modifier.height(84.dp)
             .alpha(p)
             .scale(0.94f + 0.06f * p)
             .clip(RoundedCornerShape(16.dp))
-            .background(if (swieto) Tokeny.warnBg else k.fill)
-            .border(
-                1.dp,
-                when {
-                    swieto -> Tokeny.warnLine
-                    wybrany -> k.line
-                    else -> Tokeny.line
-                },
-                RoundedCornerShape(16.dp)
+            .background(k.fill)
+            .then(
+                if (swieto) Modifier.drawBehind {
+                    val krok = 9.dp.toPx()
+                    var x = -size.height
+                    while (x < size.width) {
+                        drawLine(
+                            kolorSzrafury,
+                            start = Offset(x, size.height),
+                            end = Offset(x + size.height, 0f),
+                            strokeWidth = 2.dp.toPx()
+                        )
+                        x += krok
+                    }
+                } else Modifier
             )
+            .border(1.dp, if (wybrany) k.line else Tokeny.line, RoundedCornerShape(16.dp))
             .then(
                 if (wybrany) Modifier.border(1.5.dp, Tokeny.accent, RoundedCornerShape(16.dp))
                 else Modifier
@@ -608,7 +617,7 @@ private fun KafelekDnia(
             ),
             color = when {
                 // Dzień ustawowo wolny widać po numerze, tak jak w kalendarzu.
-                Holidays.isHoliday(e.date) -> Tokeny.warnInk
+                Holidays.isHoliday(e.date) -> Tokeny.swiateczny
                 wybrany -> Tokeny.ink
                 else -> Tokeny.ink2
             })
