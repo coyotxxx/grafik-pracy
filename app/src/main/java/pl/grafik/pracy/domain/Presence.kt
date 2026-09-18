@@ -192,11 +192,34 @@ object PresenceEngine {
         kind: DayKind,
         onFreeDay: Boolean,
         naNocce: Boolean = false,
-        wPorzeNocnej: Boolean = false
+        wPorzeNocnej: Boolean = false,
+        przedPierwszaPopoludniowka: Boolean = false
     ): OtRate =
-        if (onFreeDay || naNocce || wPorzeNocnej ||
+        if (onFreeDay || naNocce || wPorzeNocnej || przedPierwszaPopoludniowka ||
             kind == DayKind.NIEDZIELA || kind == DayKind.SWIETO
         ) OtRate.P100 else OtRate.P50
+
+    /**
+     * Wcześniejsze przyjście na PIERWSZĄ popołudniówkę w bloku idzie po 100 %.
+     *
+     * Reguła zakładu Macieja: godziny przed drugą zmianą liczą się zwykle po 50 %,
+     * ale gdy to pierwsza popołudniówka po innych zmianach albo po wolnem — po 100 %.
+     * Kolejne dni bloku mają już 50 %.
+     *
+     * @param zmiana zmiana z grafiku na ten dzień
+     * @param poprzedniaZmiana zmiana dnia poprzedniego; null = nie wiadomo albo wolne
+     * @param przedzialy przedziały nadgodzin
+     * @param startZmiany moment startu zmiany
+     */
+    fun przedPierwszaPopoludniowka(
+        zmiana: Shift?,
+        poprzedniaZmiana: Shift?,
+        przedzialy: List<Pair<LocalDateTime, LocalDateTime>>,
+        startZmiany: LocalDateTime?
+    ): Boolean {
+        if (zmiana != Shift.II || poprzedniaZmiana == Shift.II || startZmiany == null) return false
+        return przedzialy.any { it.first.isBefore(startZmiany) }
+    }
 
     /** Czy przedział choć w części wpada w porę nocną (22:00–6:00). */
     fun wPorzeNocnej(od: LocalDateTime, doKiedy: LocalDateTime): Boolean {
@@ -239,7 +262,9 @@ object PresenceEngine {
         span: PresenceSpan,
         shift: Shift?,
         kind: DayKind,
-        normUsed: Boolean = false
+        normUsed: Boolean = false,
+        /** Zmiana dnia poprzedniego — potrzebna, by rozpoznać pierwszą popołudniówkę w bloku. */
+        poprzedniaZmiana: Shift? = null
     ): PresenceResult {
         val upIn = roundUp(span.enter)
         val downOut = roundDown(span.exit)
@@ -291,8 +316,11 @@ object PresenceEngine {
         // Nadgodziny w porze nocnej idą po 100 % — sprawdzamy to na przedziałach,
         // a nie na całym pobycie, żeby dniówka kończąca się o 22:30 nie dostała setki.
         val naNocce = ot > 0 && zmiana == Shift.III
-        val nocneGodziny = ot > 0 &&
-            przedzialyNadgodzin(from, to, window).any { wPorzeNocnej(it.first, it.second) }
+        val przedzialy = if (ot > 0) przedzialyNadgodzin(from, to, window) else emptyList()
+        val nocneGodziny = przedzialy.any { wPorzeNocnej(it.first, it.second) }
+        val pierwszaPopo = przedPierwszaPopoludniowka(
+            zmiana, poprzedniaZmiana, przedzialy, window?.first
+        )
         return PresenceResult(
             date = date,
             span = span,
@@ -301,7 +329,7 @@ object PresenceEngine {
             countedHours = counted,
             normHours = norm,
             otHours = ot,
-            otRate = rateFor(kind, onFree, naNocce, nocneGodziny),
+            otRate = rateFor(kind, onFree, naNocce, nocneGodziny, pierwszaPopo),
             shift = zmiana,
             onFreeDay = onFree,
             recognized = rozpoznana

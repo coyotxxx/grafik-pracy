@@ -154,7 +154,13 @@ object PresenceRepo {
             }
         val normaZajeta = PresenceEngine.normAlreadyCounted(planowane, wczesniejsze)
 
-        val analiza = PresenceEngine.analyze(date, span, shift, Holidays.kindOf(date), normaZajeta)
+        // Zmiana dnia poprzedniego rozstrzyga, czy to pierwsza popołudniówka w bloku —
+        // wtedy godziny przed jej startem idą po 100 %.
+        val wczoraj = effectiveShift(ctx, cfg, date.minusDays(1))
+
+        val analiza = PresenceEngine.analyze(
+            date, span, shift, Holidays.kindOf(date), normaZajeta, wczoraj
+        )
 
         // Art. 132 KP — czy do następnej zmiany zostaje wymagane 11 h odpoczynku.
         val nastepne = listOfNotNull(
