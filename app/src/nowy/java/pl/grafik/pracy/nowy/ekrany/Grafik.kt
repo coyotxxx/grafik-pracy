@@ -284,7 +284,7 @@ private fun KafelekDnia(
     // w siatce trzydziestu dni pojedyncza czerwona cyfra ginie.
     val swieto = remember(data) { Holidays.isHoliday(data) }
     // Kolor czytamy przed rysowaniem — w `drawBehind` nie ma już kontekstu kompozycji.
-    val kolorSzrafury = Tokeny.swiateczny.copy(alpha = 0.22f)
+    val swiatecznaBarwa = Tokeny.swiateczny
     val tlo = if (poza) Color.Transparent else kolory.fill
     val obrys = if (poza) Paleta.POZA.line else kolory.line
     val atrament = if (poza) Tokeny.inkDisabled else kolory.ink
@@ -321,11 +321,16 @@ private fun KafelekDnia(
             .then(
                 // WARIANT E: ukośne paski w tle — faktura, nie barwa.
                 if (swieto && !poza) Modifier.drawBehind {
+                    // Deseń gaśnie ku dołowi kafelka, żeby nie zagłuszał oznaczenia zmiany.
                     val krok = 9.dp.toPx()
+                    val pedzel = androidx.compose.ui.graphics.Brush.verticalGradient(
+                        0f to swiatecznaBarwa.copy(alpha = 0.55f),
+                        1f to swiatecznaBarwa.copy(alpha = 0.10f)
+                    )
                     var x = -size.height
                     while (x < size.width) {
                         drawLine(
-                            kolorSzrafury,
+                            brush = pedzel,
                             start = androidx.compose.ui.geometry.Offset(x, size.height),
                             end = androidx.compose.ui.geometry.Offset(x + size.height, 0f),
                             strokeWidth = 2.dp.toPx()

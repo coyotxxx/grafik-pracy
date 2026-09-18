@@ -576,7 +576,7 @@ private fun KafelekDnia(
     val k = Paleta.of(typDniaZ(e.shift))
     // Dzień ustawowo wolny znaczymy tą samą szrafurą co w kalendarzu miesiąca.
     val swieto = remember(e.date) { Holidays.isHoliday(e.date) }
-    val kolorSzrafury = Tokeny.swiateczny.copy(alpha = 0.22f)
+    val swiatecznaBarwa = Tokeny.swiateczny
     Column(
         modifier.height(84.dp)
             .alpha(p)
@@ -585,11 +585,16 @@ private fun KafelekDnia(
             .background(k.fill)
             .then(
                 if (swieto) Modifier.drawBehind {
+                    // Ten sam deseń co w kalendarzu: czerwień gasnąca ku dołowi kafelka.
                     val krok = 9.dp.toPx()
+                    val pedzel = androidx.compose.ui.graphics.Brush.verticalGradient(
+                        0f to swiatecznaBarwa.copy(alpha = 0.55f),
+                        1f to swiatecznaBarwa.copy(alpha = 0.10f)
+                    )
                     var x = -size.height
                     while (x < size.width) {
                         drawLine(
-                            kolorSzrafury,
+                            brush = pedzel,
                             start = Offset(x, size.height),
                             end = Offset(x + size.height, 0f),
                             strokeWidth = 2.dp.toPx()
