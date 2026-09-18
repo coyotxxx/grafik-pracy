@@ -573,13 +573,23 @@ private fun KafelekDnia(
 ) {
     val p by postepWejscia(Motion.CELL_IN_MS, 780 + indeks * 60)
     val k = Paleta.of(typDniaZ(e.shift))
+    // Święto wyróżnia się całym kafelkiem — tak samo jak w kalendarzu miesiąca.
+    val swieto = remember(e.date) { Holidays.isHoliday(e.date) }
     Column(
         modifier.height(84.dp)
             .alpha(p)
             .scale(0.94f + 0.06f * p)
             .clip(RoundedCornerShape(16.dp))
-            .background(k.fill)
-            .border(1.dp, if (wybrany) k.line else Tokeny.line, RoundedCornerShape(16.dp))
+            .background(if (swieto) Tokeny.warnBg else k.fill)
+            .border(
+                1.dp,
+                when {
+                    swieto -> Tokeny.warnLine
+                    wybrany -> k.line
+                    else -> Tokeny.line
+                },
+                RoundedCornerShape(16.dp)
+            )
             .then(
                 if (wybrany) Modifier.border(1.5.dp, Tokeny.accent, RoundedCornerShape(16.dp))
                 else Modifier

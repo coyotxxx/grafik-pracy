@@ -279,12 +279,20 @@ private fun KafelekDnia(
     val lokalny = (((postepSiatki * calosc) - odMs) / Motion.CELL_IN_MS).coerceIn(0f, 1f)
 
     val kolory = Paleta.of(typDniaZ(e?.shift))
-    val tlo = if (poza) Color.Transparent else kolory.fill
-    val obrys = if (poza) Paleta.POZA.line else kolory.line
-    val atrament = if (poza) Tokeny.inkDisabled else kolory.ink
-    // Dzień ustawowo wolny od pracy poznaje się po numerze — tak jak w kalendarzu
-    // papierowym i w klasycznej wersji aplikacji.
+    // Dzień ustawowo wolny wyróżnia się całym kafelkiem, nie samym numerem —
+    // w siatce trzydziestu dni pojedyncza czerwona cyfra ginie.
     val swieto = remember(data) { Holidays.isHoliday(data) }
+    val tlo = when {
+        poza -> Color.Transparent
+        swieto -> Tokeny.warnBg
+        else -> kolory.fill
+    }
+    val obrys = when {
+        poza -> Paleta.POZA.line
+        swieto -> Tokeny.warnLine
+        else -> kolory.line
+    }
+    val atrament = if (poza) Tokeny.inkDisabled else kolory.ink
     val numer = when {
         poza -> Tokeny.inkDisabled
         swieto -> Tokeny.warnInk
