@@ -445,7 +445,10 @@ private fun KartaOdcinkow(ym: YearMonth) {
     val p by postepWejscia(Motion.RISE_MS, 150)
     val odcinki by remember { AppDb.get(ctx).payslipDao().observeAll() }
         .collectAsState(initial = emptyList())
-    val tegoMiesiaca = odcinki.firstOrNull { it.ym == ym.toString() }
+    // Odcinek przychodzi zwykle za miesiąc wstecz, a ekran pokazuje miesiąc z Grafiku —
+    // dlatego karta ma własny wybór, żeby nie trzeba było przestawiać kalendarza.
+    var miesiac by remember(ym) { mutableStateOf(ym) }
+    val tegoMiesiaca = odcinki.firstOrNull { it.ym == miesiac.toString() }
     var blad by remember { mutableStateOf<String?>(null) }
 
     val wybierz = rememberLauncherForActivityResult(
@@ -453,7 +456,7 @@ private fun KartaOdcinkow(ym: YearMonth) {
     ) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
         zakres.launch {
-            val wynik = Odcinki.dodaj(ctx, uri, ym)
+            val wynik = Odcinki.dodaj(ctx, uri, miesiac)
             blad = if (wynik.isFailure) "Nie udało się wczytać pliku." else null
         }
     }
@@ -475,11 +478,34 @@ private fun KartaOdcinkow(ym: YearMonth) {
             )
         }
         Text(
-            "Wgraj kartkę od wypłaty, a zostanie w aplikacji — będzie pod ręką, " +
-                "gdybyś chciał sprawdzić, jak zakład policzył dany miesiąc.",
+            "Wgraj kartkę od wypłaty — plik PDF albo zdjęcie. Zostanie w aplikacji " +
+                "i będzie pod ręką, gdybyś chciał sprawdzić, jak zakład policzył dany miesiąc.",
             fontSize = 11.sp, lineHeight = 16.5.sp, fontFamily = Jakarta,
             color = Tokeny.inkMuted
         )
+
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            PrzyciskKwadrat(IkonaWLewo, "Wcześniejszy miesiąc", rozmiar = 34.dp) {
+                miesiac = miesiac.minusMonths(1)
+            }
+            Text(
+                miesiacPay(miesiac).replaceFirstChar { it.uppercase(PL_PAY) },
+                modifier = Modifier.weight(1f),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
+                fontFamily = Jakarta, color = Tokeny.ink
+            )
+            PrzyciskKwadrat(
+                IkonaWPrawo, "Późniejszy miesiąc", rozmiar = 34.dp,
+                kolorIkony = if (miesiac < ym) Tokeny.ink2 else Tokeny.inkDisabled
+            ) {
+                if (miesiac < ym) miesiac = miesiac.plusMonths(1)
+            }
+        }
 
         Row(
             Modifier.fillMaxWidth().height(44.dp).clip(RoundedCornerShape(14.dp))
@@ -491,8 +517,8 @@ private fun KartaOdcinkow(ym: YearMonth) {
         ) {
             Icon(IkonaPlus, null, Modifier.size(15.dp), tint = Tokeny.ink2)
             Text(
-                if (tegoMiesiaca == null) "Dodaj odcinek za ${miesiacPay(ym)}"
-                else "Zastąp odcinek za ${miesiacPay(ym)}",
+                if (tegoMiesiaca == null) "Dodaj odcinek za ${miesiacPay(miesiac)}"
+                else "Zastąp odcinek za ${miesiacPay(miesiac)}",
                 fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
                 fontFamily = Jakarta, color = Tokeny.ink2
             )
