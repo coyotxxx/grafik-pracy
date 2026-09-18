@@ -191,7 +191,8 @@ private fun NowaApp(vm: Vm, pvm: PresenceVm, uvm: UpdateVm) {
                     vm,
                     naDzien = { otwartyDzien = it },
                     naEdycje = { edycja = true },
-                    naOdpoczynek = { podstrona = Podstrona.ODPOCZYNEK }
+                    naOdpoczynek = { podstrona = Podstrona.ODPOCZYNEK },
+                    naWyplate = { podstrona = Podstrona.WYPLATA }
                 )
                 Zakladka.BILANS -> EkranBilans(
                     vm,

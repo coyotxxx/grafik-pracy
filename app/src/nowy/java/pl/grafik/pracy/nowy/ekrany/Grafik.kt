@@ -26,6 +26,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import pl.grafik.pracy.domain.OtRate
+import androidx.compose.ui.platform.LocalContext
+import pl.grafik.pracy.data.AppDb
+import pl.grafik.pracy.data.Odcinki
 import pl.grafik.pracy.domain.Holidays
 import pl.grafik.pracy.domain.Shift
 import pl.grafik.pracy.nowy.theme.*
@@ -49,7 +52,8 @@ fun EkranGrafik(
     vm: Vm,
     naDzien: (LocalDate) -> Unit,
     naEdycje: () -> Unit,
-    naOdpoczynek: () -> Unit
+    naOdpoczynek: () -> Unit,
+    naWyplate: () -> Unit
 ) {
     val s by vm.state.collectAsState()
     val dzis = remember { LocalDate.now() }
@@ -66,7 +70,7 @@ fun EkranGrafik(
                 .padding(top = gornaKrawedz(), bottom = 12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Naglowek(s, vm)
+            Naglowek(s, naWyplate)
             KartaGodzin(s)
             PasekOdpoczynku(s, naOdpoczynek)
             SiatkaMiesiaca(
@@ -81,7 +85,7 @@ fun EkranGrafik(
 }
 
 @Composable
-private fun Naglowek(s: UiState, vm: Vm) {
+private fun Naglowek(s: UiState, naWyplate: () -> Unit) {
     val p by postepWejscia(Motion.RISE_MS)
     Row(
         Modifier.wejscie(p).padding(horizontal = Dim.screenGutter).fillMaxWidth(),
@@ -102,10 +106,48 @@ private fun Naglowek(s: UiState, vm: Vm) {
                 color = Tokeny.inkMuted, maxLines = 1, overflow = TextOverflow.Ellipsis
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            PrzyciskIkonowy(IkonaWLewo, "Poprzedni miesiąc") { vm.prevMonth() }
-            PrzyciskIkonowy(IkonaWPrawo, "Następny miesiąc") { vm.nextMonth() }
-        }
+        // Strzałek nie ma — miesiąc zmienia się przesunięciem palca po kalendarzu.
+        // W ich miejscu skrót do odcinka wypłaty za oglądany miesiąc.
+        SkrotDoOdcinka(s.ym, naWyplate)
+    }
+}
+
+/**
+ * Skrót do odcinka wypłaty za oglądany miesiąc.
+ *
+ * Gdy odcinek jest wgrany — dotknięcie otwiera go w czytniku. Gdy go nie ma, ikona
+ * jest przygaszona i prowadzi na ekran wypłaty, gdzie można wgrać kartkę; miesiąc
+ * jest tam już ustawiony na ten, który właśnie oglądasz.
+ */
+@Composable
+private fun SkrotDoOdcinka(ym: YearMonth, naWyplate: () -> Unit) {
+    val ctx = LocalContext.current
+    val odcinki by remember { AppDb.get(ctx).payslipDao().observeAll() }
+        .collectAsState(initial = emptyList())
+    val odcinek = odcinki.firstOrNull { it.ym == ym.toString() }
+
+    Box(
+        Modifier.size(40.dp).clip(RoundedCornerShape(13.dp))
+            .background(if (odcinek != null) Color(0x1FDAC559) else Tokeny.surface)
+            .border(
+                1.dp,
+                if (odcinek != null) Color(0x47DAC559) else Tokeny.lineStrong,
+                RoundedCornerShape(13.dp)
+            )
+            .clickable {
+                if (odcinek != null) {
+                    Odcinki.intencjaOtwarcia(ctx, odcinek)
+                        ?.let { runCatching { ctx.startActivity(it) } }
+                } else naWyplate()
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            IkonaWyplata,
+            if (odcinek != null) "Otwórz odcinek wypłaty" else "Wgraj odcinek wypłaty",
+            Modifier.size(19.dp),
+            tint = if (odcinek != null) Paleta.I.ink else Tokeny.inkDisabled
+        )
     }
 }
 
