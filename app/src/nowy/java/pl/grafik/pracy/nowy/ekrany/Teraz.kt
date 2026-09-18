@@ -107,7 +107,7 @@ fun EkranTeraz(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             PasekGorny(s, dzis, naUstawienia)
-            TarczaDoby(zmiana, teraz, s.obecnosc[dzis], Modifier.align(Alignment.CenterHorizontally))
+            TarczaDoby(zmiana, teraz, s.wPracyOd, Modifier.align(Alignment.CenterHorizontally))
             TrzyKafelki(s, naBilans)
             NajblizszeDni(
                 kolejne, wybrany, wybranyWpis,
@@ -206,7 +206,7 @@ private const val KULKA_R = 0.01875f
 private fun TarczaDoby(
     zm: NajblizszaZmiana?,
     teraz: LocalDateTime,
-    obecnosc: DayPresence?,
+    wPracyOd: LocalDateTime?,
     modifier: Modifier = Modifier
 ) {
     val kolory = Paleta.of(typDniaZ(zm?.shift))
@@ -294,7 +294,7 @@ private fun TarczaDoby(
             }
         }
 
-        SrodekTarczy(zm, teraz, kolory, obecnosc)
+        SrodekTarczy(zm, teraz, kolory, wPracyOd)
     }
 }
 
@@ -303,7 +303,7 @@ private fun SrodekTarczy(
     zm: NajblizszaZmiana?,
     teraz: LocalDateTime,
     kolory: DayColors,
-    obecnosc: DayPresence?
+    wPracyOd: LocalDateTime?
 ) {
     val p1 by postepWejscia(Motion.RISE_MS, 350)
     val p2 by postepWejscia(Motion.RISE_MS, 450)
@@ -366,7 +366,7 @@ private fun SrodekTarczy(
         }
 
         // Wykryta obecność — Maciej chciał wiedzieć wprost, że aplikacja widzi go w pracy.
-        if (obecnosc?.trwa == true) {
+        if (wPracyOd != null) {
             val p5 by postepWejscia(Motion.RISE_MS, 750)
             Row(
                 Modifier.padding(top = 2.dp).wejscie(p5)

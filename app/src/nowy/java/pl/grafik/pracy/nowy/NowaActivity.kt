@@ -49,6 +49,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import pl.grafik.pracy.data.SettingsStore
 import pl.grafik.pracy.events.PowiadomieniaWarunkowe
+import pl.grafik.pracy.location.PresenceRepo
 import pl.grafik.pracy.nowy.widzety.OdswiezanieWidzetow
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.CompositionLocalProvider
@@ -111,6 +112,11 @@ class NowaActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         pvm.ensureGeofence()
+        // Sprawdzamy od razu, czy jesteś w pracy — inaczej trzeba by czekać na kolejne
+        // przebudzenie watchdoga, a aplikacja pokazywałaby nieaktualny stan.
+        lifecycleScope.launch {
+            runCatching { PresenceRepo.watchdog(applicationContext) }
+        }
     }
 }
 

@@ -59,6 +59,14 @@ data class UiState(
     /** Nadgodziny każdego okresu roku — po jednym pasku na kwartał. */
     /** Godziny wykrytej obecności w dniach widocznej siatki. */
     val obecnosc: Map<LocalDate, DayPresence> = emptyMap(),
+    /**
+     * Od kiedy trwa pobyt w pracy; null = aplikacja nie widzi Cię teraz w pracy.
+     *
+     * Bierzemy to wprost ze stanu wykrywania, a nie z mapy [obecnosc], bo tam pobyt
+     * siedzi pod dniem grafiku — na nocce po północy to dzień poprzedni i szukanie
+     * pod dzisiejszą datą nic nie znajdowało.
+     */
+    val wPracyOd: LocalDateTime? = null,
     val okresy: List<PeriodStats> = emptyList(),
     /**
      * Dni wpisane ręcznie — reszta pochodzi z cyklu.
@@ -229,7 +237,7 @@ class Vm(app: Application) : AndroidViewModel(app) {
 
         UiState(ym, merged, ev, cfg, cols, tool, otH, otR, calc(wMiesiacu, ym), rem.first, rem.second,
             maluj, url, urlRok, urlPrev, motyw, okres,
-            obecnosc(presRows, otwartyPobyt, merged), okresy.first, saved.keys, okresy.second,
+            obecnosc(presRows, otwartyPobyt, merged), otwartyPobyt, okresy.first, saved.keys, okresy.second,
             Settlement.yearLimit(ym.year, okres),
             Odpoczynek.kolizjeDobowe(merged),
             Odpoczynek.tygodnie(merged, ym.atDay(1), ym.atEndOfMonth()),
