@@ -132,14 +132,19 @@ private fun PasekGorny(s: UiState, dzis: LocalDate, naUstawienia: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            // Nagłówek wyraźniejszy niż w makiecie — Maciej poprosił o większy,
+            // bo to pierwsza rzecz, na którą patrzy po otwarciu aplikacji.
             Text(
                 "BRYGADA ${s.cfg.brigade.uppercase(PL_TERAZ)}",
-                style = GrafikType.sectionLabel, color = Tokeny.accent
+                style = GrafikType.sectionLabel.copy(fontSize = 13.sp, letterSpacing = 1.04.sp),
+                fontWeight = FontWeight.Bold,
+                color = Tokeny.accent
             )
             Text(
                 "${dzienTygodnia(dzis)}, ${dzis.dayOfMonth} ${miesiacDopelniacz(dzis)}",
-                fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
-                fontFamily = Jakarta, color = Tokeny.inkStrong
+                fontSize = 19.sp, lineHeight = 23.sp, fontWeight = FontWeight.Bold,
+                fontFamily = Jakarta, color = Tokeny.ink,
+                maxLines = 2
             )
         }
         Box(
