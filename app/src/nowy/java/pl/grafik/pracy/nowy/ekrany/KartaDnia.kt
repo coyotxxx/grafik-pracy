@@ -20,6 +20,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import pl.grafik.pracy.domain.Holidays
 import pl.grafik.pracy.domain.OtRate
 import pl.grafik.pracy.domain.Shift
 import pl.grafik.pracy.nowy.theme.*
@@ -115,6 +116,12 @@ private fun NaglowekDnia(dzien: LocalDate, naZamkniecie: () -> Unit) {
                 "tydzień $tydzien" + if (dzien == dzis) " · dziś" else "",
                 style = GrafikType.caption, color = Tokeny.inkMuted
             )
+            Holidays.nameOf(dzien)?.let {
+                Text(
+                    "$it · święto ustawowo wolne",
+                    style = GrafikType.caption, color = Tokeny.warnInk
+                )
+            }
         }
         PrzyciskKwadrat(
             IkonaZamknij, "Zamknij",

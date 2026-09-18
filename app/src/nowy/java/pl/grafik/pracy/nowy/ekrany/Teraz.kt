@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import pl.grafik.pracy.domain.DayEntry
+import pl.grafik.pracy.domain.Holidays
 import pl.grafik.pracy.domain.PresenceEngine
 import pl.grafik.pracy.domain.Shift
 import pl.grafik.pracy.data.EventRow
@@ -518,6 +519,10 @@ private fun PlanDnia(
             )
         }
 
+        Holidays.nameOf(wpis.date)?.let {
+            WierszPlanu("$it · święto ustawowo wolne", Tokeny.warnInk)
+        }
+
         WierszPlanu(opisDnia(wpis.shift), k.ink)
 
         if (wpis.otHours > 0) {
@@ -591,7 +596,12 @@ private fun KafelekDnia(
                 fontSize = 17.sp, lineHeight = 17.sp, fontWeight = FontWeight.Bold,
                 fontFamily = Jakarta, fontFeatureSettings = TNUM
             ),
-            color = if (wybrany) Tokeny.ink else Tokeny.ink2)
+            color = when {
+                // Dzień ustawowo wolny widać po numerze, tak jak w kalendarzu.
+                Holidays.isHoliday(e.date) -> Tokeny.warnInk
+                wybrany -> Tokeny.ink
+                else -> Tokeny.ink2
+            })
         Text(oznaczenie(e.shift), fontSize = 12.sp, fontWeight = FontWeight.Bold,
             fontFamily = Jakarta, letterSpacing = 0.48.sp, color = k.ink,
             maxLines = 1, overflow = TextOverflow.Ellipsis)

@@ -25,6 +25,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import pl.grafik.pracy.domain.OtRate
+import pl.grafik.pracy.domain.Holidays
 import pl.grafik.pracy.domain.Shift
 import pl.grafik.pracy.nowy.theme.*
 import pl.grafik.pracy.nowy.ui.*
@@ -281,8 +282,12 @@ private fun KafelekDnia(
     val tlo = if (poza) Color.Transparent else kolory.fill
     val obrys = if (poza) Paleta.POZA.line else kolory.line
     val atrament = if (poza) Tokeny.inkDisabled else kolory.ink
+    // Dzień ustawowo wolny od pracy poznaje się po numerze — tak jak w kalendarzu
+    // papierowym i w klasycznej wersji aplikacji.
+    val swieto = remember(data) { Holidays.isHoliday(data) }
     val numer = when {
         poza -> Tokeny.inkDisabled
+        swieto -> Tokeny.warnInk
         e?.shift?.isWork != true -> Tokeny.inkMuted
         else -> Tokeny.inkStrong
     }
@@ -371,6 +376,7 @@ private fun PasekWybranego(s: UiState, dzien: LocalDate, naSzczegoly: () -> Unit
     // Wszystko, co tego dnia było albo jest zaplanowane — jedno pod drugim.
     // Maciej poprosił o to samo, co na ekranie „Teraz" (zgłoszenie z 17.09.2026).
     val pozycje = buildList {
+        Holidays.nameOf(dzien)?.let { add("$it · święto ustawowo wolne" to Tokeny.warnInk) }
         add(opisZmiany to Tokeny.inkMuted)
         if ((e?.otHours ?: 0) > 0) {
             add("Nadgodziny +${e!!.otHours} h · ${e.otRate.percent} %" to Paleta.II.ink)
