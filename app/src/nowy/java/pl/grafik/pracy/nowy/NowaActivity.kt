@@ -5,9 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.SystemBarStyle
 import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -53,6 +52,7 @@ import pl.grafik.pracy.location.PresenceRepo
 import pl.grafik.pracy.nowy.widzety.OdswiezanieWidzetow
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalContext
 import pl.grafik.pracy.nowy.theme.LocalPaleta
@@ -76,8 +76,13 @@ class NowaActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        schowajPasekNawigacji()
+        // Paski systemowe zostają widoczne, ale przezroczyste — motyw z `src/main`
+        // maluje je kolorem klasycznej aplikacji, przez co dolny pasek odcinał się
+        // od tła jako szara belka.
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
+        )
         // Powiadomienia warunkowe zna tylko nowy wygląd — klasyczna aplikacja ich nie planuje.
         lifecycleScope.launch {
             val cfg = SettingsStore(applicationContext).powiadomienia.first()
@@ -88,25 +93,6 @@ class NowaActivity : ComponentActivity() {
             OdswiezanieWidzetow.zaplanuj(applicationContext)
         }
         setContent { MotywAplikacji { NowaApp(vm, pvm, uvm) } }
-    }
-
-    /**
-     * Chowa dolny pasek nawigacji Androida — decyzja Macieja z 17.09.2026.
-     *
-     * Pasek wraca na chwilę po przeciągnięciu palcem od dołu i sam znika, gdy
-     * przestanie być potrzebny. Pasek stanu (zegar, bateria) zostaje na miejscu.
-     */
-    private fun schowajPasekNawigacji() {
-        val kontroler = WindowCompat.getInsetsController(window, window.decorView)
-        kontroler.systemBarsBehavior =
-            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-        kontroler.hide(WindowInsetsCompat.Type.navigationBars())
-    }
-
-    override fun onWindowFocusChanged(hasFocus: Boolean) {
-        super.onWindowFocusChanged(hasFocus)
-        // Po powrocie z innej aplikacji albo z rolety pasek lubi wrócić — chowamy go znowu.
-        if (hasFocus) schowajPasekNawigacji()
     }
 
     override fun onResume() {
@@ -268,6 +254,18 @@ private fun MotywAplikacji(tresc: @Composable () -> Unit) {
         TrybMotywu.JASNY -> true
         TrybMotywu.CIEMNY -> false
         TrybMotywu.SYSTEMOWY -> !isSystemInDarkTheme()
+    }
+
+    // W motywie jasnym ikony pasków systemowych muszą być ciemne, inaczej biały
+    // zegar ginie na białym tle.
+    val okno = (ctx as? android.app.Activity)?.window
+    LaunchedEffect(jasny, okno) {
+        okno?.let {
+            WindowCompat.getInsetsController(it, it.decorView).apply {
+                isAppearanceLightStatusBars = jasny
+                isAppearanceLightNavigationBars = jasny
+            }
+        }
     }
 
     CompositionLocalProvider(
