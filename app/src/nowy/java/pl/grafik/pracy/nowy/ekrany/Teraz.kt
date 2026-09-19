@@ -196,7 +196,7 @@ private fun kat(czas: LocalDateTime): Float = -90f + (czas.hour + czas.minute / 
  * Średnica tarczy doby. Makieta ma 240 dp, ale Maciej poprosił o większą, żeby
  * w środku było więcej miejsca na godzinę i opis zmiany (zgłoszenie z 17.09.2026).
  */
-private val TARCZA = 296.dp
+private val TARCZA = 330.dp
 
 // Proporcje względem średnicy — wszystkie wzięte z makiety (np. 96/240 = 0.40).
 private const val PROMIEN = 0.40f
@@ -220,8 +220,12 @@ private fun TarczaDoby(
     val pLuk by postepWejscia(Motion.ARC_DRAW_MS, Motion.ARC_DRAW_DELAY_MS)
     val pWsk by postepWejscia(Motion.SWEEP_MS, Motion.SWEEP_DELAY_MS)
 
-    val katStart = zm?.let { kat(it.start) } ?: 0f
-    val dlugosc = zm?.let {
+    // Łuk rysujemy tylko dla zmiany z DZISIEJSZEJ doby. W dniu wolnym następna zmiana
+    // bywa za kilkadziesiąt godzin i narysowana tutaj udawałaby dzisiejszą (zgłoszenie
+    // Macieja z 19.09.2026) — odliczanie zostaje, sam łuk znika.
+    val dzisiejsza = zm?.takeIf { it.trwa || it.start.toLocalDate() == teraz.toLocalDate() }
+    val katStart = dzisiejsza?.let { kat(it.start) } ?: 0f
+    val dlugosc = dzisiejsza?.let {
         (Duration.between(it.start, it.koniec).toMinutes() / 60f * 15f).coerceAtMost(360f)
     } ?: 0f
     val katTeraz = kat(teraz)
@@ -243,7 +247,7 @@ private fun TarczaDoby(
 
             drawCircle(kolorToru, radius = r, center = srodek, style = Stroke(grubosc))
 
-            if (zm != null && dlugosc > 0f) {
+            if (dzisiejsza != null && dlugosc > 0f) {
                 // Poświata łuku — drop-shadow(0 0 12px rgba(kolor,0.55)) z makiety.
                 drawIntoCanvas { plotno ->
                     val farba = androidx.compose.ui.graphics.Paint().apply {
@@ -321,6 +325,11 @@ private fun SrodekTarczy(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
+        // Gdy zmiana wypada dopiero któregoś z kolejnych dni, nagłówek mówi
+        // „dzień wolny", a o nadchodzącej zmianie informuje pigułka pod spodem.
+        val dzisPracujesz = zm != null &&
+            (zm.trwa || zm.start.toLocalDate() == teraz.toLocalDate())
+
         Row(
             Modifier.wejscie(p1),
             verticalAlignment = Alignment.CenterVertically,
@@ -328,13 +337,13 @@ private fun SrodekTarczy(
         ) {
             Box(
                 Modifier.size(7.dp).clip(RoundedCornerShape(999.dp))
-                    .background(if (zm != null) kolory.solid else Tokeny.inkDisabled)
+                    .background(if (dzisPracujesz) kolory.solid else Tokeny.inkDisabled)
             )
             Text(
-                if (zm != null) nazwaZmiany(zm.shift) else "DZIEŃ WOLNY",
+                if (dzisPracujesz) nazwaZmiany(zm!!.shift) else "DZIEŃ WOLNY",
                 fontSize = 11.sp, fontWeight = FontWeight.Bold, fontFamily = Jakarta,
                 letterSpacing = 1.1.sp,
-                color = if (zm != null) kolory.ink else Tokeny.inkMuted
+                color = if (dzisPracujesz) kolory.ink else Tokeny.inkMuted
             )
         }
         Text(
@@ -362,7 +371,10 @@ private fun SrodekTarczy(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    "${godzinyZmiany(zm.shift)} · ${zm.shift.hours} h",
+                    // Przy zmianie z innego dnia dopisujemy, kiedy ona wypada —
+                    // inaczej godziny wyglądałyby na dzisiejsze.
+                    if (dzisPracujesz) "${godzinyZmiany(zm.shift)} · ${zm.shift.hours} h"
+                    else "${skrotDnia(zm.data)} · ${godzinyZmiany(zm.shift)} · ${zm.shift.hours} h",
                     style = TextStyle(
                         fontSize = 11.sp, fontWeight = FontWeight.SemiBold,
                         fontFamily = Jakarta, fontFeatureSettings = TNUM
