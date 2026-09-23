@@ -91,6 +91,7 @@ fun KartaDnia(vm: Vm, dzien: LocalDate, naZamkniecie: () -> Unit) {
             WierszNadgodzin(s, dzien, vm)
             SekcjaObecnosci(s, dzien, vm)
             SekcjaWydarzen(s, dzien, vm)
+            SekcjaNotatki(s, dzien, vm)
             PrzyciskGlowny("Gotowe", akcja = naZamkniecie)
         }
     }
@@ -441,6 +442,101 @@ private fun SekcjaWydarzen(s: UiState, dzien: LocalDate, vm: Vm) {
                 Icon(IkonaPlusCienki, null, Modifier.size(16.dp), tint = Tokeny.ink2)
                 Text("Dodaj wydarzenie", fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
                     fontFamily = Jakarta, color = Tokeny.ink2)
+            }
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+// NOTATKA
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Notatka do dnia — jedno zdanie własnymi słowami: „zamiana z Krzyśkiem",
+ * „zabrać kask". Działa jak wydarzenie, tylko bez godziny i bez przypomnienia,
+ * a na kafelku znaczy ją kropka w innym kolorze.
+ */
+@Composable
+private fun SekcjaNotatki(s: UiState, dzien: LocalDate, vm: Vm) {
+    val zapisana = s.entries[dzien]?.note.orEmpty()
+    var edytuje by remember(dzien) { mutableStateOf(false) }
+    var tekst by remember(dzien, zapisana) { mutableStateOf(zapisana) }
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("NOTATKA", style = GrafikType.sectionLabel, color = Tokeny.inkFaint)
+
+        when {
+            edytuje -> Column(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(Dim.rCardSmall))
+                    .background(Tokeny.notatka.copy(alpha = 0.07f))
+                    .border(1.dp, Tokeny.notatka.copy(alpha = 0.30f), RoundedCornerShape(Dim.rCardSmall))
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                PoleTekstowe(tekst, "np. zamiana z Krzyśkiem") { tekst = it.take(200) }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    PrzyciskDrugorzedny("Anuluj", Modifier.weight(1f)) {
+                        tekst = zapisana; edytuje = false
+                    }
+                    Box(
+                        Modifier.weight(1f).height(44.dp).clip(RoundedCornerShape(13.dp))
+                            .background(Tokeny.accent)
+                            .clickable { vm.setNote(dzien, tekst); edytuje = false },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Zapisz", fontSize = 13.sp, fontWeight = FontWeight.Bold,
+                            fontFamily = Jakarta, color = Tokeny.accentOn)
+                    }
+                }
+            }
+
+            zapisana.isNotBlank() -> Row(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(Dim.rCardSmall))
+                    .background(Tokeny.surface)
+                    .border(1.dp, Tokeny.line, RoundedCornerShape(Dim.rCardSmall))
+                    .clickable { edytuje = true }
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Box(
+                    Modifier.size(7.dp).clip(RoundedCornerShape(999.dp))
+                        .background(Tokeny.notatka)
+                )
+                Text(zapisana, Modifier.weight(1f), style = GrafikType.cardTitle,
+                    color = Tokeny.ink, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                PrzyciskKwadrat(
+                    IkonaKosz, "Usuń notatkę",
+                    tlo = Color.Transparent, obrys = Tokeny.lineStrong,
+                    kolorIkony = Tokeny.inkIkona
+                ) { vm.setNote(dzien, ""); tekst = "" }
+            }
+
+            else -> {
+                val kolorKreski = Tokeny.lineSoft
+                Row(
+                    Modifier.fillMaxWidth().height(46.dp).clip(RoundedCornerShape(15.dp))
+                        .background(Tokeny.surface)
+                        .drawBehind {
+                            drawRoundRect(
+                                color = kolorKreski,
+                                style = androidx.compose.ui.graphics.drawscope.Stroke(
+                                    width = 1.dp.toPx(),
+                                    pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(
+                                        floatArrayOf(6.dp.toPx(), 5.dp.toPx())
+                                    )
+                                ),
+                                cornerRadius = androidx.compose.ui.geometry.CornerRadius(15.dp.toPx())
+                            )
+                        }
+                        .clickable { edytuje = true },
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
+                ) {
+                    Icon(IkonaPlusCienki, null, Modifier.size(16.dp), tint = Tokeny.ink2)
+                    Text("Dodaj notatkę", fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
+                        fontFamily = Jakarta, color = Tokeny.ink2)
+                }
             }
         }
     }

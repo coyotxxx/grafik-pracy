@@ -291,6 +291,7 @@ private fun SiatkaMiesiaca(
                         dzisiaj = d == dzis,
                         zaznaczony = d == wybrany,
                         maWydarzenie = s.events[d].orEmpty().isNotEmpty(),
+                        maNotatke = !s.entries[d]?.note.isNullOrBlank(),
                         kolizja = s.restZnacznik && d in dniZKolizja,
                         postepSiatki = pSiatki,
                         indeks = i,
@@ -312,6 +313,7 @@ private fun KafelekDnia(
     dzisiaj: Boolean,
     zaznaczony: Boolean,
     maWydarzenie: Boolean,
+    maNotatke: Boolean,
     kolizja: Boolean,
     postepSiatki: Float,
     indeks: Int,
@@ -389,12 +391,24 @@ private fun KafelekDnia(
         // numer i kropka kolizji u góry z lewej, obecność u góry z prawej,
         // oznaczenie zmiany na dole z lewej, nadgodziny na dole z prawej,
         // a kropka wydarzenia na dole pośrodku — jedyne wolne miejsce.
-        if (maWydarzenie && !poza) {
-            Box(
-                Modifier.align(Alignment.BottomCenter).size(5.dp)
-                    .clip(RoundedCornerShape(999.dp))
-                    .background(Tokeny.wydarzenie)
-            )
+        if ((maWydarzenie || maNotatke) && !poza) {
+            Row(
+                Modifier.align(Alignment.BottomCenter),
+                horizontalArrangement = Arrangement.spacedBy(3.dp)
+            ) {
+                if (maWydarzenie) {
+                    Box(
+                        Modifier.size(5.dp).clip(RoundedCornerShape(999.dp))
+                            .background(Tokeny.wydarzenie)
+                    )
+                }
+                if (maNotatke) {
+                    Box(
+                        Modifier.size(5.dp).clip(RoundedCornerShape(999.dp))
+                            .background(Tokeny.notatka)
+                    )
+                }
+            }
         }
         Row(Modifier.fillMaxWidth().align(Alignment.TopStart), verticalAlignment = Alignment.Bottom) {
             Text("${data.dayOfMonth}", style = GrafikType.dayNumber, color = numer)

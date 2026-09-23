@@ -55,6 +55,8 @@ data class Tokens(
     val trackBg: Color,
     /** Podpis przy dużej liczbie na kolorowej karcie (urlop, wypłata). */
     val inkNaKarcie: Color,
+    /** Kropka notatki na kafelku dnia — obok kropki wydarzenia, innym kolorem. */
+    val notatka: Color,
     /** Kropka wydarzenia na kafelku dnia — klasyczna aplikacja znaczy je tak samo. */
     val wydarzenie: Color,
     /** Barwa szrafury na dniach ustawowo wolnych — nie powtarza żadnego koloru zmiany. */
@@ -108,6 +110,7 @@ val TOKENY_CIEMNE = Tokens(
     trackBg = Color(0xFF1E2327),
     inkNaKarcie = Color(0xFFD7DBDE),
     wydarzenie = Color(0xFF7FC3F0),
+    notatka = Color(0xFFB39CF0),
     swiateczny = Color(0xFFFF4438),
     inkIkona = Color(0xFF8A939B),
     naklad = Color(0x4D000000),
@@ -156,6 +159,7 @@ val TOKENY_JASNE = Tokens(
     trackBg = LightTokens.trackBg,                // #ECEAE3
     inkNaKarcie = LightTokens.inkMuted,           // #5A6169
     wydarzenie = Color(0xFF2B7FB8),
+    notatka = Color(0xFF6D4FB8),
     swiateczny = Color(0xFFD32F20),               // na jasnym tle czerwień musi być głębsza
     inkIkona = LightTokens.inkFaint,              // #8A9099
     naklad = Color(0x0F000000),

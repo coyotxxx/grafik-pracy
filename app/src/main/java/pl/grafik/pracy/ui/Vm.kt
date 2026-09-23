@@ -522,6 +522,18 @@ class Vm(app: Application) : AndroidViewModel(app) {
     }
 
     /**
+     * Notatka do dnia — „zamiana z Krzyśkiem", „zabrać kask".
+     *
+     * Pole `note` istniało w bazie od początku i było pokazywane w kalendarzu,
+     * ale nie było jak go wypełnić. Pusty tekst kasuje notatkę.
+     */
+    fun setNote(d: LocalDate, tekst: String) = viewModelScope.launch {
+        val cur = state.value.entries[d] ?: DayEntry(date = d)
+        zapamietajDoCofniecia(d)
+        dao.upsert(DayRow.from(cur.copy(note = tekst.trim().take(200))))
+    }
+
+    /**
      * Ustawia dokładną liczbę nadgodzin i stawkę na dniu.
      * Stepper narzędzia chodzi co 2 h w zakresie 2–12, a karta dnia potrzebuje
      * kroku 1 od zera — stąd osobna funkcja zamiast obchodzenia tamtej.
