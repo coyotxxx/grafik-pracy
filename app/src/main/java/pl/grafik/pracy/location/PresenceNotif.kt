@@ -8,7 +8,7 @@ import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import pl.grafik.pracy.MainActivity
+import pl.grafik.pracy.events.ekranStartowy
 import pl.grafik.pracy.R
 import pl.grafik.pracy.domain.PresenceEngine
 import pl.grafik.pracy.domain.PresenceResult
@@ -61,7 +61,7 @@ object PresenceNotif {
         }
 
         val open = PendingIntent.getActivity(
-            ctx, id.toInt(), Intent(ctx, MainActivity::class.java),
+            ctx, id.toInt(), ekranStartowy(ctx),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 

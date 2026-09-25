@@ -109,7 +109,12 @@ fun EkranTeraz(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             PasekGorny(s, dzis, naUstawienia)
-            TarczaDoby(zmiana, teraz, s.wPracyOd, Modifier.align(Alignment.CenterHorizontally))
+            TarczaDoby(
+                zmiana, teraz, s.wPracyOd,
+                dzisiejszyTyp = s.entries[dzis]?.shift,
+                swietoDzis = Holidays.isHoliday(dzis),
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
             TrzyKafelki(s, naBilans)
             NajblizszeDni(
                 kolejne, wybrany, wybranyWpis,
@@ -214,9 +219,14 @@ private fun TarczaDoby(
     zm: NajblizszaZmiana?,
     teraz: LocalDateTime,
     wPracyOd: LocalDateTime?,
+    dzisiejszyTyp: Shift?,
+    swietoDzis: Boolean,
     modifier: Modifier = Modifier
 ) {
+    // Dwa zestawy kolorów: łuk i pigułka opisują NADCHODZĄCĄ zmianę, a nagłówek
+    // w środku mówi o DZISIEJSZYM dniu. Przy urlopie to dwie różne rzeczy.
     val kolory = Paleta.of(typDniaZ(zm?.shift))
+    val koloryDzis = Paleta.of(typDniaZ(dzisiejszyTyp))
     val pLuk by postepWejscia(Motion.ARC_DRAW_MS, Motion.ARC_DRAW_DELAY_MS)
     val pWsk by postepWejscia(Motion.SWEEP_MS, Motion.SWEEP_DELAY_MS)
 
@@ -305,7 +315,7 @@ private fun TarczaDoby(
             }
         }
 
-        SrodekTarczy(zm, teraz, kolory, wPracyOd)
+        SrodekTarczy(zm, teraz, kolory, koloryDzis, dzisiejszyTyp, swietoDzis, wPracyOd)
     }
 }
 
@@ -314,6 +324,9 @@ private fun SrodekTarczy(
     zm: NajblizszaZmiana?,
     teraz: LocalDateTime,
     kolory: DayColors,
+    koloryDzis: DayColors,
+    dzisiejszyTyp: Shift?,
+    swietoDzis: Boolean,
     wPracyOd: LocalDateTime?
 ) {
     val p1 by postepWejscia(Motion.RISE_MS, 350)
@@ -335,15 +348,29 @@ private fun SrodekTarczy(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
+            // Gdy dziś nie pracujesz, nagłówek nazywa TEN dzień — urlop, zwolnienie
+            // czy wolne za święto to nie to samo co zwykłe wolne w cyklu.
+            val wolneZTypem = !dzisPracujesz && dzisiejszyTyp != null && dzisiejszyTyp != Shift.W5
             Box(
                 Modifier.size(7.dp).clip(RoundedCornerShape(999.dp))
-                    .background(if (dzisPracujesz) kolory.solid else Tokeny.inkDisabled)
+                    .background(
+                        when {
+                            dzisPracujesz -> kolory.solid
+                            wolneZTypem -> koloryDzis.solid
+                            else -> Tokeny.inkDisabled
+                        }
+                    )
             )
             Text(
-                if (dzisPracujesz) nazwaZmiany(zm!!.shift) else "DZIEŃ WOLNY",
+                if (dzisPracujesz) nazwaZmiany(zm!!.shift)
+                else nazwaDnia(dzisiejszyTyp, swietoDzis),
                 fontSize = 11.sp, fontWeight = FontWeight.Bold, fontFamily = Jakarta,
                 letterSpacing = 1.1.sp,
-                color = if (dzisPracujesz) kolory.ink else Tokeny.inkMuted
+                color = when {
+                    dzisPracujesz -> kolory.ink
+                    wolneZTypem -> koloryDzis.ink
+                    else -> Tokeny.inkMuted
+                }
             )
         }
         Text(
@@ -766,6 +793,16 @@ private fun RzadAkcji(naGrafik: () -> Unit, naDzisiaj: () -> Unit) {
 // ─────────────────────────────────────────────────────────────
 // TEKSTY
 // ─────────────────────────────────────────────────────────────
+
+/** Nagłówek tarczy w dniu bez zmiany — nazywa ten dzień, zamiast zwać wszystko wolnym. */
+private fun nazwaDnia(s: Shift?, swieto: Boolean): String = when (s) {
+    Shift.URLOP -> "URLOP"
+    Shift.L4 -> "ZWOLNIENIE L4"
+    Shift.WS -> "WOLNE ZA ŚWIĘTO"
+    Shift.DWN -> "DZIEŃ ZA NIEDZIELĘ"
+    Shift.BWN -> "WOLNA NIEDZIELA"
+    else -> if (swieto) "ŚWIĘTO" else "DZIEŃ WOLNY"
+}
 
 private fun nazwaZmiany(s: Shift): String = when (s) {
     Shift.I -> "ZMIANA RANNA"

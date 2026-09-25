@@ -11,7 +11,6 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.work.*
 import kotlinx.coroutines.flow.first
-import pl.grafik.pracy.MainActivity
 import pl.grafik.pracy.R
 import pl.grafik.pracy.data.AppDb
 import pl.grafik.pracy.data.EventRow
@@ -118,7 +117,7 @@ object Reminders {
         val tresc = ev.joinToString("\n") { "• ${opis(it)}" }
 
         val open = PendingIntent.getActivity(
-            ctx, NOTIF_ID, Intent(ctx, MainActivity::class.java),
+            ctx, NOTIF_ID, ekranStartowy(ctx),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         val n = NotificationCompat.Builder(ctx, CHANNEL)
@@ -139,7 +138,7 @@ object Reminders {
         ensureChannel(ctx)
         if (!NotificationManagerCompat.from(ctx).areNotificationsEnabled()) return
         val open = PendingIntent.getActivity(
-            ctx, id, Intent(ctx, MainActivity::class.java),
+            ctx, id, ekranStartowy(ctx),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         val n = NotificationCompat.Builder(ctx, CHANNEL)
