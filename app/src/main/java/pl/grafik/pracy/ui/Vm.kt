@@ -388,6 +388,28 @@ class Vm(app: Application) : AndroidViewModel(app) {
         return lista to otRok
     }
 
+    /** Dołącza zdjęcie z galerii do notatki dnia. Stare zdjęcie zastępujemy. */
+    fun setNotePhoto(d: LocalDate, zrodlo: android.net.Uri) = viewModelScope.launch {
+        val app = getApplication<android.app.Application>()
+        val cur = state.value.entries[d] ?: DayEntry(date = d)
+        pl.grafik.pracy.data.ZdjeciaNotatek.dodaj(app, zrodlo, d).onSuccess { nazwa ->
+            cur.notePhoto?.takeIf { it != nazwa }?.let {
+                pl.grafik.pracy.data.ZdjeciaNotatek.usun(app, it)
+            }
+            zapamietajDoCofniecia(d)
+            dao.upsert(DayRow.from(cur.copy(notePhoto = nazwa)))
+        }
+    }
+
+    /** Usuwa zdjęcie z notatki — sama notatka zostaje. */
+    fun clearNotePhoto(d: LocalDate) = viewModelScope.launch {
+        val app = getApplication<android.app.Application>()
+        val cur = state.value.entries[d] ?: return@launch
+        cur.notePhoto?.let { pl.grafik.pracy.data.ZdjeciaNotatek.usun(app, it) }
+        zapamietajDoCofniecia(d)
+        dao.upsert(DayRow.from(cur.copy(notePhoto = null)))
+    }
+
     /**
      * Odrzuca pojedyncze wykrycie — „tego nie było".
      *

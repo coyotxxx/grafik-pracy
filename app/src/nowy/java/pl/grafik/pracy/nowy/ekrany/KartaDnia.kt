@@ -11,6 +11,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.runtime.produceState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import pl.grafik.pracy.data.ZdjeciaNotatek
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
@@ -467,9 +477,15 @@ private fun SekcjaWydarzen(s: UiState, dzien: LocalDate, vm: Vm) {
  */
 @Composable
 private fun SekcjaNotatki(s: UiState, dzien: LocalDate, vm: Vm) {
+    val ctx = LocalContext.current
     val zapisana = s.entries[dzien]?.note.orEmpty()
+    val zdjecie = s.entries[dzien]?.notePhoto
     var edytuje by remember(dzien) { mutableStateOf(false) }
     var tekst by remember(dzien, zapisana) { mutableStateOf(zapisana) }
+
+    val wybierzZdjecie = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri -> if (uri != null) vm.setNotePhoto(dzien, uri) }
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("NOTATKA", style = GrafikType.sectionLabel, color = Tokeny.inkFaint)
@@ -483,6 +499,15 @@ private fun SekcjaNotatki(s: UiState, dzien: LocalDate, vm: Vm) {
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 PoleTekstowe(tekst, "np. zamiana z Krzyśkiem") { tekst = it.take(200) }
+
+                if (zdjecie != null) {
+                    PodgladZdjecia(zdjecie, ctx) { vm.clearNotePhoto(dzien) }
+                } else {
+                    PrzyciskDrugorzedny("Dodaj zdjęcie z galerii", Modifier.fillMaxWidth()) {
+                        wybierzZdjecie.launch(arrayOf("image/*"))
+                    }
+                }
+
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     PrzyciskDrugorzedny("Anuluj", Modifier.weight(1f)) {
                         tekst = zapisana; edytuje = false
@@ -499,26 +524,16 @@ private fun SekcjaNotatki(s: UiState, dzien: LocalDate, vm: Vm) {
                 }
             }
 
-            zapisana.isNotBlank() -> Row(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(Dim.rCardSmall))
-                    .background(Tokeny.surface)
-                    .border(1.dp, Tokeny.line, RoundedCornerShape(Dim.rCardSmall))
-                    .clickable { edytuje = true }
-                    .padding(horizontal = 14.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            zapisana.isNotBlank() || zdjecie != null -> Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Box(
-                    Modifier.size(7.dp).clip(RoundedCornerShape(999.dp))
-                        .background(Tokeny.notatka)
-                )
-                Text(zapisana, Modifier.weight(1f), style = GrafikType.cardTitle,
-                    color = Tokeny.ink, maxLines = 3, overflow = TextOverflow.Ellipsis)
-                PrzyciskKwadrat(
-                    IkonaKosz, "Usuń notatkę",
-                    tlo = Color.Transparent, obrys = Tokeny.lineStrong,
-                    kolorIkony = Tokeny.inkIkona
-                ) { vm.setNote(dzien, ""); tekst = "" }
+                if (zdjecie != null) PodgladZdjecia(zdjecie, ctx) { vm.clearNotePhoto(dzien) }
+                if (zapisana.isBlank()) {
+                    PrzyciskDrugorzedny("Dopisz notatkę", Modifier.fillMaxWidth()) { edytuje = true }
+                }
+                if (zapisana.isNotBlank()) WierszNotatki(zapisana, { edytuje = true }) {
+                    vm.setNote(dzien, ""); tekst = ""
+                }
             }
 
             else -> {
@@ -548,6 +563,88 @@ private fun SekcjaNotatki(s: UiState, dzien: LocalDate, vm: Vm) {
                 }
             }
         }
+    }
+}
+
+/** Wiersz z zapisaną notatką: dotknięcie edytuje, kosz kasuje. */
+@Composable
+private fun WierszNotatki(tekst: String, naEdycje: () -> Unit, naUsuniecie: () -> Unit) {
+    Row(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(Dim.rCardSmall))
+                    .background(Tokeny.surface)
+                    .border(1.dp, Tokeny.line, RoundedCornerShape(Dim.rCardSmall))
+                    .clickable(onClick = naEdycje)
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Box(
+                    Modifier.size(7.dp).clip(RoundedCornerShape(999.dp))
+                        .background(Tokeny.notatka)
+                )
+                Text(tekst, Modifier.weight(1f), style = GrafikType.cardTitle,
+                    color = Tokeny.ink, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                PrzyciskKwadrat(
+            IkonaKosz, "Usuń notatkę",
+            tlo = Color.Transparent, obrys = Tokeny.lineStrong,
+            kolorIkony = Tokeny.inkIkona,
+            akcja = naUsuniecie
+        )
+    }
+}
+
+/**
+ * Zdjęcie dołączone do notatki. Dotknięcie otwiera je w przeglądarce obrazów,
+ * kosz odpina od notatki i kasuje plik z pamięci aplikacji.
+ */
+@Composable
+private fun PodgladZdjecia(nazwa: String, ctx: android.content.Context, naUsuniecie: () -> Unit) {
+    val plik = remember(nazwa) { ZdjeciaNotatek.plik(ctx, nazwa) }
+    // Miniaturę wczytujemy pomniejszoną i poza wątkiem rysowania — pełne zdjęcie
+    // z aparatu ma kilkanaście megapikseli i zjadłoby pamięć na nic.
+    val miniatura by produceState<android.graphics.Bitmap?>(null, plik.path) {
+        value = withContext(Dispatchers.IO) { miniaturaZ(plik, 160) }
+    }
+
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(Dim.rCardSmall))
+            .background(Tokeny.surface)
+            .border(1.dp, Tokeny.line, RoundedCornerShape(Dim.rCardSmall))
+            .clickable {
+                ZdjeciaNotatek.intencjaOtwarcia(ctx, nazwa)
+                    ?.let { runCatching { ctx.startActivity(it) } }
+            }
+            .padding(10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Box(
+            Modifier.size(56.dp).clip(RoundedCornerShape(12.dp))
+                .background(Tokeny.surfaceInput),
+            contentAlignment = Alignment.Center
+        ) {
+            miniatura?.let {
+                Image(
+                    bitmap = it.asImageBitmap(),
+                    contentDescription = "Zdjęcie dołączone do notatki",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+        }
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text("Zdjęcie", style = GrafikType.cardTitle, color = Tokeny.ink)
+            Text(
+                "${(plik.length() / 1024).coerceAtLeast(1)} kB · dotknij, aby otworzyć",
+                style = GrafikType.caption, color = Tokeny.inkMuted
+            )
+        }
+        PrzyciskKwadrat(
+            IkonaKosz, "Usuń zdjęcie",
+            tlo = Color.Transparent, obrys = Tokeny.lineStrong,
+            kolorIkony = Tokeny.inkIkona,
+            akcja = naUsuniecie
+        )
     }
 }
 
@@ -611,3 +708,18 @@ private fun zrodloWykrycia(s: String): String = when {
     s == "manual" -> "wpis ręczny"
     else -> s
 }
+
+/** Pomniejszona kopia zdjęcia — tyle, ile trzeba na miniaturę w karcie dnia. */
+private fun miniaturaZ(plik: java.io.File, bok: Int): android.graphics.Bitmap? = runCatching {
+    if (!plik.exists()) return null
+    val wymiary = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    android.graphics.BitmapFactory.decodeFile(plik.path, wymiary)
+    var skala = 1
+    while (wymiary.outWidth / (skala * 2) >= bok && wymiary.outHeight / (skala * 2) >= bok) {
+        skala *= 2
+    }
+    android.graphics.BitmapFactory.decodeFile(
+        plik.path,
+        android.graphics.BitmapFactory.Options().apply { inSampleSize = skala }
+    )
+}.getOrNull()

@@ -156,6 +156,29 @@ class KopiaTest {
     }
 
     @Test
+    fun zdjecie_notatki_wchodzi_do_kopii_i_wraca() = runBlocking {
+        // notatka ze zdjęciem — plik musi przeżyć zmianę telefonu razem z tekstem
+        val plik = pl.grafik.pracy.data.ZdjeciaNotatek.plik(ctx, "2026-09-24.jpg")
+        plik.parentFile?.mkdirs()
+        plik.writeBytes(byteArrayOf(1, 2, 3, 4, 5))
+        AppDb.get(ctx).dayDao().upsert(
+            DayRow(date = "2026-09-24", shift = "II", note = "zamiana", notePhoto = "2026-09-24.jpg")
+        )
+
+        val json = Kopia.zrzut(ctx, "test")
+        Kopia.wyczyscWszystko(ctx)
+        assertFalse("czyszczenie kasuje też zdjęcia", plik.exists())
+
+        Kopia.wczytaj(ctx, json).getOrThrow()
+
+        val dzien = AppDb.get(ctx).dayDao().get("2026-09-24")
+        assertEquals("zamiana", dzien?.note)
+        assertEquals("2026-09-24.jpg", dzien?.notePhoto)
+        assertTrue("sam plik też musi wrócić", plik.exists())
+        assertArrayEquals(byteArrayOf(1, 2, 3, 4, 5), plik.readBytes())
+    }
+
+    @Test
     fun rozmiar_pisze_sie_po_ludzku() {
         assertEquals("512 B", Kopia.PlikKopii("a", 512, java.io.File("a")).rozmiar)
         assertEquals("34 kB", Kopia.PlikKopii("a", 34_500, java.io.File("a")).rozmiar)

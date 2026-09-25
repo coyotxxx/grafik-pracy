@@ -15,6 +15,8 @@ data class DayRow(
     val otRate: Int = 100,
     val deviation: Boolean = false,
     val note: String = "",
+    /** Nazwa pliku ze zdjęciem dołączonym do notatki; null = bez zdjęcia. */
+    val notePhoto: String? = null,
     val dwnFor: String? = null
 ) {
     fun toEntry(): DayEntry = DayEntry(
@@ -24,6 +26,7 @@ data class DayRow(
         otRate = if (otRate == 50) OtRate.P50 else OtRate.P100,
         deviation = deviation,
         note = note,
+        notePhoto = notePhoto,
         dwnFor = dwnFor?.let { LocalDate.parse(it) }
     )
 
@@ -35,6 +38,7 @@ data class DayRow(
             otRate = e.otRate.percent,
             deviation = e.deviation,
             note = e.note,
+            notePhoto = e.notePhoto,
             dwnFor = e.dwnFor?.toString()
         )
     }
@@ -207,7 +211,7 @@ interface PayslipDao {
 
 @Database(
     entities = [DayRow::class, PresenceRow::class, EventRow::class, PayslipRow::class],
-    version = 5, exportSchema = false
+    version = 6, exportSchema = false
 )
 abstract class AppDb : RoomDatabase() {
     abstract fun dayDao(): DayDao
@@ -288,10 +292,22 @@ abstract class AppDb : RoomDatabase() {
             }
         }
 
+        /**
+         * v5 -> v6: zdjęcie dołączone do notatki dnia. Sam plik leży w pamięci
+         * aplikacji, w bazie trzymamy tylko jego nazwę.
+         */
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `days` ADD COLUMN `notePhoto` TEXT")
+            }
+        }
+
         @Volatile private var inst: AppDb? = null
         fun get(ctx: Context): AppDb = inst ?: synchronized(this) {
             inst ?: Room.databaseBuilder(ctx.applicationContext, AppDb::class.java, "grafik.db")
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                .addMigrations(
+                    MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6
+                )
                 .build().also { inst = it }
         }
     }

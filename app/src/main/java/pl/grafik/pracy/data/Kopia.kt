@@ -118,6 +118,7 @@ object Kopia {
                     .put("otRate", r.otRate)
                     .put("deviation", r.deviation)
                     .put("note", r.note)
+                    .put("notePhoto", r.notePhoto ?: JSONObject.NULL)
                     .put("dwnFor", r.dwnFor ?: JSONObject.NULL)
             )
         }
@@ -170,6 +171,18 @@ object Kopia {
             )
         }
         root.put("odcinki", odcinki)
+
+        // Zdjęcia notatek — bez nich kopia odtworzyłaby notatkę bez obrazka.
+        val zdjecia = JSONArray()
+        ZdjeciaNotatek.wszystkie(ctx).forEach { plik ->
+            val tresc = runCatching {
+                Base64.encodeToString(plik.readBytes(), Base64.NO_WRAP)
+            }.getOrDefault("")
+            if (tresc.isNotEmpty()) {
+                zdjecia.put(JSONObject().put("nazwa", plik.name).put("plik", tresc))
+            }
+        }
+        root.put("zdjeciaNotatek", zdjecia)
 
         root.toString()
     }
@@ -232,6 +245,7 @@ object Kopia {
                             otRate = o.optInt("otRate", 100),
                             deviation = o.optBoolean("deviation"),
                             note = o.optString("note"),
+                            notePhoto = o.tekstAlboNull("notePhoto"),
                             dwnFor = o.tekstAlboNull("dwnFor")
                         )
                     }
@@ -300,6 +314,17 @@ object Kopia {
                         }
                         db.payslipDao().upsert(row)
                         ileOdcinkow++
+                    }
+                }
+
+                root.optJSONArray("zdjeciaNotatek")?.let { tab ->
+                    for (i in 0 until tab.length()) {
+                        val o = tab.getJSONObject(i)
+                        runCatching {
+                            val cel = ZdjeciaNotatek.plik(ctx, o.getString("nazwa"))
+                            cel.parentFile?.mkdirs()
+                            cel.writeBytes(Base64.decode(o.getString("plik"), Base64.NO_WRAP))
+                        }
                     }
                 }
 
@@ -398,6 +423,7 @@ object Kopia {
         db.eventDao().clearAll()
         db.presenceDao().clearAll()
         wyczyscOdcinki(ctx)
+        ZdjeciaNotatek.wszystkie(ctx).forEach { runCatching { it.delete() } }
         SettingsStore(ctx).clearAll()
         Log.i(TAG, "wyczyszczono wszystkie dane")
     }

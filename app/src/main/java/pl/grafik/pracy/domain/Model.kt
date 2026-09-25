@@ -31,6 +31,8 @@ data class DayEntry(
     /** Odbieg od stałego schematu — żółte tło w arkuszu zakładowym. */
     val deviation: Boolean = false,
     val note: String = "",
+    /** Zdjęcie dołączone do notatki — nazwa pliku w pamięci aplikacji. */
+    val notePhoto: String? = null,
     /** Dla DWN: za którą pracującą niedzielę odbierany jest ten dzień. */
     val dwnFor: LocalDate? = null
 ) {
