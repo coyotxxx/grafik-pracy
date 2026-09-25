@@ -113,7 +113,16 @@ data class EventRow(
     val time: String = "",
     val text: String,
     /** Czy przypomnieć dzień wcześniej. */
-    val remind: Boolean = true
+    val remind: Boolean = true,
+    /**
+     * Rodzaj wpisu: pusty dla zwykłego wydarzenia, inaczej „urodziny", „imieniny"
+     * albo „rocznica". Uroczystości różnią się tym, że wracają co roku.
+     */
+    val rodzaj: String = "",
+    /** Czyja uroczystość — imię i nazwisko albo osoba wybrana z kontaktów. */
+    val osoba: String = "",
+    /** Czy wpis wraca co roku tego samego dnia i miesiąca. */
+    val coroczne: Boolean = false
 )
 
 @Dao
@@ -123,6 +132,17 @@ interface EventDao {
 
     @Query("SELECT * FROM events WHERE date >= :from AND date <= :to ORDER BY date, time")
     fun observeRange(from: String, to: String): Flow<List<EventRow>>
+
+    /**
+     * Uroczystości — wracają co roku, więc nie da się ich wybrać zakresem dat.
+     * Jest ich najwyżej kilkadziesiąt, więc bierzemy wszystkie i dopasowujemy
+     * dzień z miesiącem już w pamięci.
+     */
+    @Query("SELECT * FROM events WHERE coroczne = 1 ORDER BY substr(date, 6), text")
+    fun observeCoroczne(): Flow<List<EventRow>>
+
+    @Query("SELECT * FROM events WHERE coroczne = 1 ORDER BY substr(date, 6), text")
+    suspend fun corocznePełna(): List<EventRow>
 
     @Query("SELECT * FROM events WHERE date = :date ORDER BY time")
     suspend fun forDate(date: String): List<EventRow>
@@ -211,7 +231,7 @@ interface PayslipDao {
 
 @Database(
     entities = [DayRow::class, PresenceRow::class, EventRow::class, PayslipRow::class],
-    version = 6, exportSchema = false
+    version = 7, exportSchema = false
 )
 abstract class AppDb : RoomDatabase() {
     abstract fun dayDao(): DayDao
@@ -302,11 +322,24 @@ abstract class AppDb : RoomDatabase() {
             }
         }
 
+        /**
+         * v6 -> v7: uroczystości — urodziny, imieniny, rocznice. Siedzą w tej samej
+         * tabeli co wydarzenia, bo zachowują się tak samo, tylko wracają co roku.
+         */
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `events` ADD COLUMN `rodzaj` TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE `events` ADD COLUMN `osoba` TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE `events` ADD COLUMN `coroczne` INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
         @Volatile private var inst: AppDb? = null
         fun get(ctx: Context): AppDb = inst ?: synchronized(this) {
             inst ?: Room.databaseBuilder(ctx.applicationContext, AppDb::class.java, "grafik.db")
                 .addMigrations(
-                    MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6
+                    MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6,
+                    MIGRATION_6_7
                 )
                 .build().also { inst = it }
         }

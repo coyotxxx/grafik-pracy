@@ -576,8 +576,8 @@ private fun PlanDnia(
 
         wydarzenia.forEach { ev ->
             WierszPlanu(
-                listOfNotNull(ev.time.ifEmpty { null }, ev.text).joinToString(" · "),
-                Tokeny.warnInk
+                opisWpisu(ev),
+                if (ev.rodzaj.isBlank()) Tokeny.warnInk else Tokeny.uroczystosc
             )
         }
 
@@ -692,22 +692,31 @@ private fun KartaWydarzenia(
     val (data, ev) = nastepne
     val p by postepWejscia(Motion.RISE_MS, 950)
 
+    // Uroczystość nosi własną barwę wszędzie, także tutaj — inaczej ta jedna karta
+    // wyglądałaby jak ostrzeżenie o czyichś urodzinach.
+    val swietuje = ev.rodzaj.isNotBlank()
+    val tlo = if (swietuje) Tokeny.uroczystosc.copy(alpha = 0.07f) else Color(0x12FF937E)
+    val obrys = if (swietuje) Tokeny.uroczystosc.copy(alpha = 0.32f) else Color(0x38FF937E)
+    val tloIkony = if (swietuje) Tokeny.uroczystosc.copy(alpha = 0.16f) else Color(0x24FF937E)
+
     Row(
         Modifier.wejscie(p).padding(horizontal = Dim.screenGutter).fillMaxWidth()
             .clip(RoundedCornerShape(18.dp))
-            .background(Color(0x12FF937E))
-            .border(1.dp, Color(0x38FF937E), RoundedCornerShape(18.dp))
+            .background(tlo)
+            .border(1.dp, obrys, RoundedCornerShape(18.dp))
             .clickable { naDzien(data) }
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Box(
-            Modifier.size(34.dp).clip(RoundedCornerShape(11.dp))
-                .background(Color(0x24FF937E)),
+            Modifier.size(34.dp).clip(RoundedCornerShape(11.dp)).background(tloIkony),
             contentAlignment = Alignment.Center
         ) {
-            Icon(IkonaDzwonek, null, Modifier.size(17.dp), tint = Tokeny.warnInk)
+            Icon(
+                if (swietuje) IkonaTort else IkonaDzwonek, null, Modifier.size(17.dp),
+                tint = if (swietuje) Tokeny.uroczystosc else Tokeny.warnInk
+            )
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
@@ -730,6 +739,9 @@ private fun tytulWydarzenia(ev: EventRow, data: LocalDate, dzis: LocalDate): Str
         dzis -> "Dziś"
         dzis.plusDays(1) -> "Jutro"
         else -> "${dzienTygodnia(data)} ${data.dayOfMonth} ${miesiacDopelniacz(data)}"
+    }
+    if (ev.rodzaj.isNotBlank()) {
+        return "$kiedy — ${etykietaRodzaju(ev.rodzaj).lowercase(PL_TERAZ)} ${ev.osoba.ifBlank { ev.text }}"
     }
     val godzina = if (ev.time.isNotBlank()) " ${ev.time}" else ""
     return "$kiedy$godzina — ${ev.text}"

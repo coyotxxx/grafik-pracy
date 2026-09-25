@@ -79,6 +79,23 @@ private fun godzinyZmiany(s: Shift?): String = when {
 fun KartaDnia(vm: Vm, dzien: LocalDate, naZamkniecie: () -> Unit) {
     val s by vm.state.collectAsState()
     val stan = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val ctx = LocalContext.current
+
+    // Konfetti wita uroczystość raz. Przy piątym wejściu w ten sam dzień karta
+    // otwiera się już normalnie — inaczej po tygodniu zaczęłoby to przeszkadzać.
+    val maUroczystosc = s.events[dzien].orEmpty().any { it.rodzaj.isNotBlank() }
+    var wysyp by remember(dzien) { mutableStateOf<String?>(null) }
+    LaunchedEffect(dzien, maUroczystosc) {
+        if (!maUroczystosc) return@LaunchedEffect
+        val klucz = dzien.toString()
+        if (PamiecKonfetti.czyPokazano(ctx, klucz)) return@LaunchedEffect
+        PamiecKonfetti.zapamietaj(ctx, klucz)
+        wysyp = klucz
+    }
+    val barwyKonfetti = listOf(
+        Tokeny.uroczystosc, Tokeny.accent, Tokeny.wydarzenie,
+        Tokeny.notatka, Paleta.II.ink
+    )
 
     ModalBottomSheet(
         onDismissRequest = naZamkniecie,
@@ -92,18 +109,25 @@ fun KartaDnia(vm: Vm, dzien: LocalDate, naZamkniecie: () -> Unit) {
             }
         }
     ) {
-        Column(
-            Modifier.fillMaxWidth().imePadding().verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp).padding(bottom = 22.dp + dolnaKrawedz(minimum = 0.dp)),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            NaglowekDnia(dzien, naZamkniecie)
-            KartaTypuDnia(s, dzien, vm)
-            WierszNadgodzin(s, dzien, vm)
-            SekcjaObecnosci(s, dzien, vm)
-            SekcjaWydarzen(s, dzien, vm)
-            SekcjaNotatki(s, dzien, vm)
-            PrzyciskGlowny("Gotowe", akcja = naZamkniecie)
+        Box(Modifier.fillMaxWidth()) {
+            Column(
+                Modifier.fillMaxWidth().imePadding().verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp).padding(bottom = 22.dp + dolnaKrawedz(minimum = 0.dp)),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                NaglowekDnia(dzien, naZamkniecie)
+                KartaTypuDnia(s, dzien, vm)
+                WierszNadgodzin(s, dzien, vm)
+                SekcjaObecnosci(s, dzien, vm)
+                SekcjaWydarzen(s, dzien, vm)
+                SekcjaNotatki(s, dzien, vm)
+                PrzyciskGlowny("Gotowe", akcja = naZamkniecie)
+            }
+            // Warstwa nad treścią, ale bez łapania dotknięć — w trakcie wysypu
+            // wszystko pod spodem działa normalnie.
+            wysyp?.let { klucz ->
+                Konfetti(klucz, Modifier.matchParentSize(), barwyKonfetti)
+            }
         }
     }
 }
@@ -329,10 +353,18 @@ private fun SekcjaObecnosci(s: UiState, dzien: LocalDate, vm: Vm) {
 @Composable
 private fun SekcjaWydarzen(s: UiState, dzien: LocalDate, vm: Vm) {
     val wydarzenia = s.events[dzien].orEmpty()
+    val ctx = LocalContext.current
     var dodaje by remember(dzien) { mutableStateOf(false) }
     var godzina by remember(dzien) { mutableStateOf("") }
     var nazwa by remember(dzien) { mutableStateOf("") }
     var przypomnij by remember(dzien) { mutableStateOf(true) }
+    var rodzaj by remember(dzien) { mutableStateOf(RODZAJE.first()) }
+    var osoba by remember(dzien) { mutableStateOf("") }
+    var coroczne by remember(dzien) { mutableStateOf(true) }
+
+    val wybierzKontakt = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickContact()
+    ) { uri -> if (uri != null) imieZKontaktu(ctx, uri)?.let { osoba = it } }
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -343,25 +375,51 @@ private fun SekcjaWydarzen(s: UiState, dzien: LocalDate, vm: Vm) {
         }
 
         wydarzenia.forEach { ev ->
+            // Uroczystość zamiast godziny dostaje tort i własną barwę — nie ma pory dnia,
+            // ma osobę.
+            val swietuje = ev.rodzaj.isNotBlank()
             Row(
                 Modifier.fillMaxWidth().clip(RoundedCornerShape(Dim.rCardSmall))
-                    .background(Tokeny.surface)
-                    .border(1.dp, Tokeny.line, RoundedCornerShape(Dim.rCardSmall))
+                    .background(
+                        if (swietuje) Tokeny.uroczystosc.copy(alpha = 0.07f) else Tokeny.surface
+                    )
+                    .border(
+                        1.dp,
+                        if (swietuje) Tokeny.uroczystosc.copy(alpha = 0.32f) else Tokeny.line,
+                        RoundedCornerShape(Dim.rCardSmall)
+                    )
                     .padding(horizontal = 14.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text(
-                    ev.time, Modifier.width(44.dp),
-                    style = TextStyle(
-                        fontFamily = Jakarta, fontSize = 14.sp, fontWeight = FontWeight.Bold,
-                        fontFeatureSettings = TNUM
-                    ),
-                    color = Paleta.III.ink
-                )
+                if (swietuje) {
+                    Icon(
+                        IkonaTort, null, Modifier.width(44.dp).size(20.dp),
+                        tint = Tokeny.uroczystosc
+                    )
+                } else {
+                    Text(
+                        ev.time, Modifier.width(44.dp),
+                        style = TextStyle(
+                            fontFamily = Jakarta, fontSize = 14.sp, fontWeight = FontWeight.Bold,
+                            fontFeatureSettings = TNUM
+                        ),
+                        color = Paleta.III.ink
+                    )
+                }
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text(ev.text, style = GrafikType.cardTitle, color = Tokeny.ink,
-                        maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(
+                        if (swietuje) ev.osoba.ifBlank { ev.text } else ev.text,
+                        style = GrafikType.cardTitle, color = Tokeny.ink,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis
+                    )
+                    if (swietuje) {
+                        Text(
+                            etykietaRodzaju(ev.rodzaj) +
+                                if (ev.coroczne) " · co roku" else " · tylko ten rok",
+                            style = GrafikType.caption, color = Tokeny.uroczystosc
+                        )
+                    }
                     if (ev.remind) {
                         Row(verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(5.dp)) {
@@ -387,14 +445,67 @@ private fun SekcjaWydarzen(s: UiState, dzien: LocalDate, vm: Vm) {
                     .padding(horizontal = 14.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Column(Modifier.width(92.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                        Text("godzina", fontSize = 10.sp, fontFamily = Jakarta, color = Tokeny.inkMuted)
-                        PoleTekstowe(godzina, "9 20", cyfry = true) { godzina = it.filter(Char::isDigit).take(4) }
+                // Rodzaj rozstrzyga, o co pytamy dalej: wydarzenie ma godzinę i nazwę,
+                // uroczystość — osobę i powtarzanie co roku.
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    RODZAJE.forEach { r ->
+                        val wybrany = r == rodzaj
+                        Box(
+                            Modifier.weight(1f).height(34.dp).clip(RoundedCornerShape(11.dp))
+                                .background(if (wybrany) Tokeny.accentTintBg else Tokeny.surfaceInput)
+                                .border(
+                                    1.dp,
+                                    if (wybrany) Tokeny.accentTintLine else Tokeny.lineInput,
+                                    RoundedCornerShape(11.dp)
+                                )
+                                .clickable { rodzaj = r },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                etykietaRodzaju(r), fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold, fontFamily = Jakarta,
+                                color = if (wybrany) Tokeny.accent else Tokeny.inkMuted,
+                                maxLines = 1
+                            )
+                        }
                     }
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                        Text("co to za wydarzenie", fontSize = 10.sp, fontFamily = Jakarta, color = Tokeny.inkMuted)
-                        PoleTekstowe(nazwa, "np. badania okresowe") { nazwa = it.take(80) }
+                }
+
+                if (rodzaj.isEmpty()) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Column(Modifier.width(92.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                            Text("godzina", fontSize = 10.sp, fontFamily = Jakarta, color = Tokeny.inkMuted)
+                            PoleTekstowe(godzina, "9 20", cyfry = true) { godzina = it.filter(Char::isDigit).take(4) }
+                        }
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                            Text("co to za wydarzenie", fontSize = 10.sp, fontFamily = Jakarta, color = Tokeny.inkMuted)
+                            PoleTekstowe(nazwa, "np. badania okresowe") { nazwa = it.take(80) }
+                        }
+                    }
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                        Text("czyje ${etykietaRodzaju(rodzaj).lowercase(PLL)}", fontSize = 10.sp,
+                            fontFamily = Jakarta, color = Tokeny.inkMuted)
+                        PoleTekstowe(osoba, "imię i nazwisko") { osoba = it.take(80) }
+                    }
+                    PrzyciskDrugorzedny("Wybierz z kontaktów", Modifier.fillMaxWidth()) {
+                        runCatching { wybierzKontakt.launch(null) }
+                    }
+                    Row(
+                        Modifier.fillMaxWidth().clickable { coroczne = !coroczne },
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Checkbox(
+                            coroczne, { coroczne = it },
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = Tokeny.accent,
+                                checkmarkColor = Tokeny.accentOn,
+                                uncheckedColor = Tokeny.lineSoft
+                            )
+                        )
+                        Text("Powtarzaj co roku", fontSize = 13.sp,
+                            fontFamily = Jakarta, color = Tokeny.ink)
                     }
                 }
                 Row(
@@ -419,11 +530,16 @@ private fun SekcjaWydarzen(s: UiState, dzien: LocalDate, vm: Vm) {
                         Modifier.weight(1f).height(44.dp).clip(RoundedCornerShape(13.dp))
                             .background(Tokeny.accent)
                             .clickable {
-                                val g = godzina.padStart(4, '0')
-                                val czas = "${g.take(2).toInt()}:${g.takeLast(2)}"
-                                if (nazwa.isNotBlank()) {
-                                    vm.addEvent(dzien, czas, nazwa.trim(), przypomnij)
-                                    dodaje = false; godzina = ""; nazwa = ""
+                                if (rodzaj.isEmpty()) {
+                                    val g = godzina.padStart(4, '0')
+                                    val czas = "${g.take(2).toInt()}:${g.takeLast(2)}"
+                                    if (nazwa.isNotBlank()) {
+                                        vm.addEvent(dzien, czas, nazwa.trim(), przypomnij)
+                                        dodaje = false; godzina = ""; nazwa = ""
+                                    }
+                                } else if (osoba.isNotBlank()) {
+                                    vm.addUroczystosc(dzien, rodzaj, osoba, przypomnij, coroczne)
+                                    dodaje = false; osoba = ""
                                 }
                             },
                         contentAlignment = Alignment.Center
@@ -459,8 +575,8 @@ private fun SekcjaWydarzen(s: UiState, dzien: LocalDate, vm: Vm) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
             ) {
                 Icon(IkonaPlusCienki, null, Modifier.size(16.dp), tint = Tokeny.ink2)
-                Text("Dodaj wydarzenie", fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
-                    fontFamily = Jakarta, color = Tokeny.ink2)
+                Text("Dodaj wydarzenie lub uroczystość", fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold, fontFamily = Jakarta, color = Tokeny.ink2)
             }
         }
     }
@@ -723,3 +839,28 @@ private fun miniaturaZ(plik: java.io.File, bok: Int): android.graphics.Bitmap? =
         android.graphics.BitmapFactory.Options().apply { inSampleSize = skala }
     )
 }.getOrNull()
+
+/** Rodzaje wpisów: pusty to zwykłe wydarzenie, reszta to uroczystości. */
+private val RODZAJE = listOf("", "urodziny", "imieniny", "rocznica")
+
+internal fun etykietaRodzaju(r: String): String = when (r) {
+    "urodziny" -> "Urodziny"
+    "imieniny" -> "Imieniny"
+    "rocznica" -> "Rocznica"
+    else -> "Wydarzenie"
+}
+
+/**
+ * Imię osoby wskazanej w systemowym oknie kontaktów.
+ *
+ * Nie prosimy o dostęp do całej książki adresowej — wybór przez system daje
+ * dostęp wyłącznie do tej jednej osoby, którą wskazałeś.
+ */
+private fun imieZKontaktu(ctx: android.content.Context, uri: android.net.Uri): String? =
+    runCatching {
+        ctx.contentResolver.query(
+            uri,
+            arrayOf(android.provider.ContactsContract.Contacts.DISPLAY_NAME),
+            null, null, null
+        )?.use { c -> if (c.moveToFirst()) c.getString(0) else null }
+    }.getOrNull()

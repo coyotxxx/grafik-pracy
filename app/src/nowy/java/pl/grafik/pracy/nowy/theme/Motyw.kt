@@ -57,6 +57,8 @@ data class Tokens(
     val inkNaKarcie: Color,
     /** Kropka notatki na kafelku dnia — obok kropki wydarzenia, innym kolorem. */
     val notatka: Color,
+    /** Uroczystości: urodziny, imieniny, rocznice. */
+    val uroczystosc: Color,
     /** Kropka wydarzenia na kafelku dnia — klasyczna aplikacja znaczy je tak samo. */
     val wydarzenie: Color,
     /** Barwa szrafury na dniach ustawowo wolnych — nie powtarza żadnego koloru zmiany. */
@@ -111,6 +113,7 @@ val TOKENY_CIEMNE = Tokens(
     inkNaKarcie = Color(0xFFD7DBDE),
     wydarzenie = Color(0xFF7FC3F0),
     notatka = Color(0xFFB39CF0),
+    uroczystosc = Color(0xFFF2C15E),
     swiateczny = Color(0xFFFF4438),
     inkIkona = Color(0xFF8A939B),
     naklad = Color(0x4D000000),
@@ -160,6 +163,8 @@ val TOKENY_JASNE = Tokens(
     inkNaKarcie = LightTokens.inkMuted,           // #5A6169
     wydarzenie = Color(0xFF2B7FB8),
     notatka = Color(0xFF6D4FB8),
+    uroczystosc = Color(0xFFA9741B),      // na jasnym tle bursztyn musi ściemnieć
+
     swiateczny = Color(0xFFD32F20),               // na jasnym tle czerwień musi być głębsza
     inkIkona = LightTokens.inkFaint,              // #8A9099
     naklad = Color(0x0F000000),

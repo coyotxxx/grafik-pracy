@@ -100,7 +100,9 @@ data class UiState(
      */
     val ot100Okresu: Int = 0,
     /** Czy wyświetlany miesiąc zamyka okres rozliczeniowy. */
-    val ostatniMiesiacOkresu: Boolean = false
+    val ostatniMiesiacOkresu: Boolean = false,
+    /** Wszystkie uroczystości — urodziny, imieniny, rocznice. Wracają co roku. */
+    val uroczystosci: List<EventRow> = emptyList()
 ) {
     /**
      * Bilans urlopu w roku wyświetlanego miesiąca.
@@ -196,7 +198,8 @@ class Vm(app: Application) : AndroidViewModel(app) {
         },
         settings.odpoczynek,
         settings.powiadomienia,
-        settings.stawki
+        settings.stawki,
+        events.observeCoroczne()
     ) { arr ->
         @Suppress("UNCHECKED_CAST")
         val ym = arr[0] as YearMonth
@@ -226,6 +229,8 @@ class Vm(app: Application) : AndroidViewModel(app) {
         val rest = arr[18] as Pair<Boolean, Boolean>
         val notif = arr[19] as PowiadomieniaCfg
         val stawki = arr[20] as StawkiCfg
+        @Suppress("UNCHECKED_CAST")
+        val uroczystosci = arr[21] as List<EventRow>
 
         val okresy = calcOkresy(rokRows, ym, cfg, okres)
 
@@ -237,7 +242,28 @@ class Vm(app: Application) : AndroidViewModel(app) {
         gen.forEach { (d, s) -> merged[d] = saved[d] ?: DayEntry(date = d, shift = s) }
         saved.forEach { (d, e) -> merged[d] = e }
 
-        val ev = evRows.groupBy { LocalDate.parse(it.date) }
+        // Uroczystości wracają co roku, więc do widocznej siatki wchodzą po dniu
+        // i miesiącu, a nie po pełnej dacie. Zapis z 2024 roku pokazuje się i dziś.
+        val ev = LinkedHashMap<LocalDate, MutableList<EventRow>>()
+        evRows.filter { !it.coroczne }.forEach { r ->
+            runCatching { LocalDate.parse(r.date) }.getOrNull()
+                ?.let { ev.getOrPut(it) { mutableListOf() }.add(r) }
+        }
+        if (uroczystosci.isNotEmpty()) {
+            var d = gStart
+            while (!d.isAfter(gEnd)) {
+                val dzien = d
+                uroczystosci.forEach { u ->
+                    val data = runCatching { LocalDate.parse(u.date) }.getOrNull()
+                    if (data != null && data.monthValue == dzien.monthValue &&
+                        data.dayOfMonth == dzien.dayOfMonth
+                    ) {
+                        ev.getOrPut(dzien) { mutableListOf() }.add(u.copy(date = dzien.toString()))
+                    }
+                }
+                d = d.plusDays(1)
+            }
+        }
         // Statystyki liczymy TYLKO z bieżącego miesiąca, mimo że siatka pokazuje więcej.
         val wMiesiacu = merged.filterKeys { YearMonth.from(it) == ym }
 
@@ -253,7 +279,8 @@ class Vm(app: Application) : AndroidViewModel(app) {
             Odpoczynek.kolizjeDobowe(merged),
             Odpoczynek.tygodnie(merged, ym.atDay(1), ym.atEndOfMonth()),
             rest.first, rest.second, notif, stawki,
-            ot100wOkresie(rokRows, ym, okres), Settlement.periodOf(ym, okres).to == ym)
+            ot100wOkresie(rokRows, ym, okres), Settlement.periodOf(ym, okres).to == ym,
+            uroczystosci)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState())
 
     /**
@@ -651,6 +678,28 @@ class Vm(app: Application) : AndroidViewModel(app) {
     fun addEvent(d: LocalDate, time: String, text: String, remind: Boolean) = viewModelScope.launch {
         if (text.isBlank()) return@launch
         events.upsert(EventRow(date = d.toString(), time = time.trim(), text = text.trim(), remind = remind))
+        Reminders.schedule(getApplication())
+    }
+
+    /**
+     * Uroczystość — urodziny, imieniny albo rocznica. Wraca co roku tego samego
+     * dnia i miesiąca, więc zapisujemy ją raz i nie trzeba jej powtarzać.
+     */
+    fun addUroczystosc(
+        d: LocalDate, rodzaj: String, osoba: String, remind: Boolean, coroczne: Boolean = true
+    ) = viewModelScope.launch {
+        if (osoba.isBlank() || rodzaj.isBlank()) return@launch
+        events.upsert(
+            EventRow(
+                date = d.toString(),
+                time = "",
+                text = "$rodzaj — ${osoba.trim()}",
+                remind = remind,
+                rodzaj = rodzaj,
+                osoba = osoba.trim(),
+                coroczne = coroczne
+            )
+        )
         Reminders.schedule(getApplication())
     }
 

@@ -86,7 +86,15 @@ fun EkranUstawienia(vm: Vm, pvm: PresenceVm, uvm: UpdateVm, naPodstrone: (Podstr
                 )
             }
 
-            Grupa("AUTOMATYKA", 160) {
+            Grupa("KALENDARZ", 160) {
+                Wiersz(
+                    IkonaTort, Tokeny.uroczystosc, "Uroczystości",
+                    opisUroczystosci(s), gotowe = true,
+                    akcja = { naPodstrone(Podstrona.UROCZYSTOSCI) }
+                )
+            }
+
+            Grupa("AUTOMATYKA", 220) {
                 Wiersz(
                     IkonaLokalizacja, Paleta.III.ink, "Wykrywanie pracy",
                     opisWykrywania(p.place), gotowe = true,
@@ -100,7 +108,7 @@ fun EkranUstawienia(vm: Vm, pvm: PresenceVm, uvm: UpdateVm, naPodstrone: (Podstr
                 )
             }
 
-            Grupa("APLIKACJA", 240) {
+            Grupa("APLIKACJA", 290) {
                 Wiersz(
                     IkonaPaleta, Tokeny.ink2, "Wygląd i kolory",
                     "ciemny · zestaw „${s.motyw.label}”", gotowe = true,
@@ -374,6 +382,13 @@ private fun opisStawek(s: UiState): String {
 }
 
 /** „11 h na dobę, 35 h w tygodniu" albo liczba kolizji, gdy jakieś są. */
+private fun opisUroczystosci(s: UiState): String = when (s.uroczystosci.size) {
+    0 -> "urodziny, imieniny, rocznice"
+    1 -> "jedna zapisana"
+    in 2..4 -> "${s.uroczystosci.size} zapisane"
+    else -> "${s.uroczystosci.size} zapisanych"
+}
+
 private fun opisOdpoczynku(s: UiState): String =
     if (s.kolizje.isEmpty()) "11 h na dobę, 35 h w tygodniu · bez kolizji"
     else "11 h na dobę, 35 h w tygodniu · sprawdź ${s.kolizje.size} dzień"

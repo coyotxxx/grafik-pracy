@@ -290,7 +290,8 @@ private fun SiatkaMiesiaca(
                         poza = YearMonth.from(d) != s.ym,
                         dzisiaj = d == dzis,
                         zaznaczony = d == wybrany,
-                        maWydarzenie = s.events[d].orEmpty().isNotEmpty(),
+                        maWydarzenie = s.events[d].orEmpty().any { it.rodzaj.isBlank() },
+                        maUroczystosc = s.events[d].orEmpty().any { it.rodzaj.isNotBlank() },
                         maNotatke = !s.entries[d]?.note.isNullOrBlank(),
                         kolizja = s.restZnacznik && d in dniZKolizja,
                         postepSiatki = pSiatki,
@@ -313,6 +314,7 @@ private fun KafelekDnia(
     dzisiaj: Boolean,
     zaznaczony: Boolean,
     maWydarzenie: Boolean,
+    maUroczystosc: Boolean,
     maNotatke: Boolean,
     kolizja: Boolean,
     postepSiatki: Float,
@@ -390,8 +392,8 @@ private fun KafelekDnia(
         // Każda informacja ma swój róg i nie wchodzi w drogę pozostałym:
         // numer i kropka kolizji u góry z lewej, obecność u góry z prawej,
         // oznaczenie zmiany na dole z lewej, nadgodziny na dole z prawej,
-        // a kropka wydarzenia na dole pośrodku — jedyne wolne miejsce.
-        if ((maWydarzenie || maNotatke) && !poza) {
+        // a kropki wydarzenia, uroczystości i notatki na dole pośrodku — jedyne wolne miejsce.
+        if ((maWydarzenie || maUroczystosc || maNotatke) && !poza) {
             Row(
                 Modifier.align(Alignment.BottomCenter),
                 horizontalArrangement = Arrangement.spacedBy(3.dp)
@@ -400,6 +402,12 @@ private fun KafelekDnia(
                     Box(
                         Modifier.size(5.dp).clip(RoundedCornerShape(999.dp))
                             .background(Tokeny.wydarzenie)
+                    )
+                }
+                if (maUroczystosc) {
+                    Box(
+                        Modifier.size(5.dp).clip(RoundedCornerShape(999.dp))
+                            .background(Tokeny.uroczystosc)
                     )
                 }
                 if (maNotatke) {
@@ -476,7 +484,8 @@ private fun PasekWybranego(s: UiState, dzien: LocalDate, naSzczegoly: () -> Unit
         }
         s.events[dzien].orEmpty().forEach { ev ->
             add(
-                listOfNotNull(ev.time.ifEmpty { null }, ev.text).joinToString(" · ") to Tokeny.warnInk
+                opisWpisu(ev) to
+                    if (ev.rodzaj.isBlank()) Tokeny.warnInk else Tokeny.uroczystosc
             )
         }
         if (!e?.note.isNullOrBlank()) add(e!!.note to Tokeny.inkFaint)

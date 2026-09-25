@@ -254,6 +254,18 @@ val IkonaDane: ImageVector = ikona(1.8f) {
 }
 
 /** Kółko z „i" — „O aplikacji". */
+/** Tort ze świeczką — uroczystości (urodziny, imieniny, rocznice). */
+val IkonaTort: ImageVector = ikona(1.8f) {
+    moveTo(3.5f, 20.5f); horizontalLineToRelative(17f)
+    moveTo(5f, 20.5f); verticalLineTo(13.5f)
+    horizontalLineToRelative(14f); verticalLineTo(20.5f)
+    moveTo(5f, 16.8f); horizontalLineToRelative(14f)
+    moveTo(12f, 13.5f); verticalLineTo(9.6f)
+    moveTo(12f, 6.2f)
+    curveToRelative(1.5f, 1.5f, 1.5f, 3.4f, 0f, 3.4f)
+    curveToRelative(-1.5f, 0f, -1.5f, -1.9f, 0f, -3.4f)
+}
+
 val IkonaInfo: ImageVector = ikona(1.8f) {
     okrag(12f, 12f, 9f)
     moveTo(12f, 11f); verticalLineToRelative(5f)
