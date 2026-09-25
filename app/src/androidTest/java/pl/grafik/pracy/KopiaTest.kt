@@ -179,6 +179,62 @@ class KopiaTest {
     }
 
     @Test
+    fun uroczystosc_wraca_z_kopii_kompletna() = runBlocking {
+        // Uroczystość różni się od wydarzenia trzema polami. Bez nich wróciłaby
+        // jako zwykły wpis z napisem „urodziny — Krzysiek" i przestałaby wracać co roku.
+        AppDb.get(ctx).eventDao().upsert(
+            EventRow(
+                date = "2026-12-05", time = "", text = "urodziny — Krzysiek Nowak",
+                remind = true, rodzaj = "urodziny", osoba = "Krzysiek Nowak", coroczne = true
+            )
+        )
+
+        val json = Kopia.zrzut(ctx, "test")
+        Kopia.wyczyscWszystko(ctx)
+        Kopia.wczytaj(ctx, json).getOrThrow()
+
+        val wpis = AppDb.get(ctx).eventDao().rangeOnce("2026-12-01", "2026-12-31").single()
+        assertEquals("urodziny", wpis.rodzaj)
+        assertEquals("Krzysiek Nowak", wpis.osoba)
+        assertTrue("uroczystość ma dalej wracać co roku", wpis.coroczne)
+        assertEquals("", wpis.time)
+    }
+
+    @Test
+    fun zwykle_wydarzenie_nie_zaczyna_udawac_uroczystosci() = runBlocking {
+        AppDb.get(ctx).eventDao().upsert(
+            EventRow(date = "2026-09-20", time = "10:00", text = "fryzjer")
+        )
+
+        val json = Kopia.zrzut(ctx, "test")
+        Kopia.wyczyscWszystko(ctx)
+        Kopia.wczytaj(ctx, json).getOrThrow()
+
+        val wpis = AppDb.get(ctx).eventDao().rangeOnce("2026-09-01", "2026-09-30").single()
+        assertEquals("", wpis.rodzaj)
+        assertEquals("", wpis.osoba)
+        assertFalse(wpis.coroczne)
+        assertEquals("10:00", wpis.time)
+    }
+
+    @Test
+    fun kopia_sprzed_uroczystosci_dalej_sie_wczytuje() = runBlocking {
+        // Plik zrobiony starszą wersją aplikacji nie zna trzech nowych pól.
+        val stara = """
+            {"aplikacja":"grafik-pracy","format":1,
+             "wydarzenia":[{"date":"2026-09-20","time":"10:00","text":"fryzjer","remind":true}]}
+        """.trimIndent()
+
+        val podsumowanie = Kopia.wczytaj(ctx, stara).getOrThrow()
+        assertEquals(1, podsumowanie.wydarzenia)
+
+        val wpis = AppDb.get(ctx).eventDao().rangeOnce("2026-09-01", "2026-09-30").single()
+        assertEquals("fryzjer", wpis.text)
+        assertEquals("stary wpis to zwykłe wydarzenie", "", wpis.rodzaj)
+        assertFalse(wpis.coroczne)
+    }
+
+    @Test
     fun rozmiar_pisze_sie_po_ludzku() {
         assertEquals("512 B", Kopia.PlikKopii("a", 512, java.io.File("a")).rozmiar)
         assertEquals("34 kB", Kopia.PlikKopii("a", 34_500, java.io.File("a")).rozmiar)

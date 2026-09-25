@@ -132,6 +132,11 @@ object Kopia {
                     .put("time", r.time)
                     .put("text", r.text)
                     .put("remind", r.remind)
+                    // Uroczystość bez tych trzech pól wróciłaby jako zwykłe wydarzenie
+                    // z napisem „urodziny — ktoś tam" i przestałaby wracać co roku.
+                    .put("rodzaj", r.rodzaj)
+                    .put("osoba", r.osoba)
+                    .put("coroczne", r.coroczne)
             )
         }
         root.put("wydarzenia", wydarzenia)
@@ -259,7 +264,12 @@ object Kopia {
                             date = o.getString("date"),
                             time = o.optString("time"),
                             text = o.optString("text"),
-                            remind = o.optBoolean("remind", true)
+                            remind = o.optBoolean("remind", true),
+                            // Kopie zrobione przed uroczystościami tych pól nie mają —
+                            // wpis z takiej kopii wraca jako zwykłe wydarzenie i tak ma być.
+                            rodzaj = o.optString("rodzaj"),
+                            osoba = o.optString("osoba"),
+                            coroczne = o.optBoolean("coroczne", false)
                         )
                     }
                 }
