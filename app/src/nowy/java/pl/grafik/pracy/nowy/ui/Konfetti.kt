@@ -1,6 +1,7 @@
 package pl.grafik.pracy.nowy.ui
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
@@ -12,15 +13,19 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.rotateRad
 import androidx.compose.ui.unit.dp
-import pl.grafik.pracy.nowy.theme.Motion
 import kotlin.math.PI
 import kotlin.random.Random
 
 /** Ile ścinków leci przez ekran. Przez całą wysokość potrzeba ich więcej niż garści. */
 private const val ILE = 44
 
-/** Czas przelotu przez cały ekran — od górnej krawędzi poza dolną. */
-const val KONFETTI_MS = 1700
+/**
+ * Czas przelotu przez cały ekran — od górnej krawędzi poza dolną.
+ *
+ * Spokojne cztery sekundy, żeby dało się na to popatrzeć. Ścinki startują
+ * rozrzucone w czasie, więc deszcz trwa jeszcze chwilę dłużej.
+ */
+const val KONFETTI_MS = 4000
 
 /** Jeden ścinek: skąd startuje, jak szybko leci i jak się obraca. */
 private data class Scinek(
@@ -73,7 +78,11 @@ fun Konfetti(
 
     LaunchedEffect(klucz) {
         postep.snapTo(0f)
-        postep.animateTo(1f, tween(durationMillis = KONFETTI_MS, easing = Motion.Ease))
+        // Jedyne miejsce w aplikacji bez krzywej projektu, i to celowo: „0.22, 1, 0.36, 1"
+        // to ruch typu wystrzel-i-zwolnij. Ścinki pokonywały nim większość ekranu
+        // w pierwszym ułamku sekundy, a potem pełzły przy dolnej krawędzi — nie dało się
+        // tego zobaczyć. Spadanie ma być równomierne.
+        postep.animateTo(1f, tween(durationMillis = KONFETTI_MS, easing = LinearEasing))
     }
 
     val p = postep.value

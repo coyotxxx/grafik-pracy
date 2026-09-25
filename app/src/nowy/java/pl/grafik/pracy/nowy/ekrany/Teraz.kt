@@ -773,11 +773,18 @@ private fun KartaWydarzenia(
     dzis: LocalDate,
     naDzien: (LocalDate) -> Unit
 ) {
+    // Dzisiejsze uroczystości stoją już na pasku powitalnym u góry — ta karta
+    // pokazuje więc to, czego tam nie widać. Inaczej te same imieniny wisiałyby
+    // na ekranie dwa razy.
     val nastepne = remember(s.events, dzis) {
         s.events.filterKeys { !it.isBefore(dzis) }
             .toSortedMap()
-            .entries.firstOrNull()
-            ?.let { (d, lista) -> d to lista.first() }
+            .asSequence()
+            .mapNotNull { (d, lista) ->
+                val bezPaska = lista.filterNot { d == dzis && it.rodzaj.isNotBlank() }
+                bezPaska.firstOrNull()?.let { d to it }
+            }
+            .firstOrNull()
     } ?: return
 
     val (data, ev) = nastepne
