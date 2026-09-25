@@ -131,6 +131,53 @@ object PresenceRepo {
             return null                                    // przejazd obok, nie dzień pracy
         }
 
+        // Krótkie wyjście sklejamy z poprzednim pobytem. Bez tego mignięcie geofence
+        // rozcinało jedną obecność na dwie — Maciej dostał wpisy 13:45–18:25
+        // i 18:26–22:05, czyli rozdzielone JEDNĄ minutą (zgłoszenie z 25.09.2026).
+        // Ustawienie „krótkie wyjście sklejane do X min" istniało od początku,
+        // ale nic go nie czytało.
+        val doScalenia = znajdzDoScalenia(ctx, enter, wp)
+        if (doScalenia != null) {
+            val odKiedy = runCatching { LocalDateTime.parse(doScalenia.enterAt) }.getOrNull()
+            if (odKiedy != null) {
+                AppDb.get(ctx).presenceDao().delete(doScalenia.id)
+                Log.i(TAG, "sklejam z pobytem #${doScalenia.id} (przerwa ${
+                    java.time.Duration.between(
+                        LocalDateTime.parse(doScalenia.exitAt), enter
+                    ).toMinutes()
+                } min)")
+                return closeSpanZ(ctx, odKiedy, exitAt, wp, source)
+            }
+        }
+        return closeSpanZ(ctx, enter, exitAt, wp, source)
+    }
+
+    /**
+     * Ostatni pobyt, z którym nowy powinien się skleić: zakończony nie dawniej
+     * niż `mergeGapMin` minut przed nowym wejściem.
+     */
+    private suspend fun znajdzDoScalenia(
+        ctx: Context, enter: LocalDateTime, wp: WorkPlace
+    ): pl.grafik.pracy.data.PresenceRow? {
+        val dao = AppDb.get(ctx).presenceDao()
+        val kandydaci = (dao.forDate(enter.toLocalDate().toString()) +
+            dao.forDate(enter.toLocalDate().minusDays(1).toString()))
+            .filter { it.status != "rejected" }
+        return kandydaci
+            .mapNotNull { r ->
+                val koniec = runCatching { LocalDateTime.parse(r.exitAt) }.getOrNull()
+                if (koniec == null || koniec.isAfter(enter)) null else r to koniec
+            }
+            .filter { (_, koniec) -> PresenceEngine.czyScalic(koniec, enter, wp.mergeGapMin) }
+            .maxByOrNull { (_, koniec) -> koniec }
+            ?.first
+    }
+
+    /** Właściwy zapis pobytu — po ewentualnym sklejeniu z poprzednim. */
+    private suspend fun closeSpanZ(
+        ctx: Context, enter: LocalDateTime, exitAt: LocalDateTime, wp: WorkPlace, source: String
+    ): Long? {
+        val span = PresenceSpan(enter, exitAt)
         val db = AppDb.get(ctx)
         val cfg = SettingsStore(ctx).config.first()
         // Zmiany wyliczamy z góry — assignDate nie jest funkcją zawieszającą.

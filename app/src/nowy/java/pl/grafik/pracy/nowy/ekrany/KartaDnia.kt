@@ -580,7 +580,18 @@ private fun WierszWykryciaDnia(w: pl.grafik.pracy.data.PresenceRow, naOdrzucenie
                 color = Tokeny.ink
             )
             Text(
-                "wykryto przez ${zrodloWykrycia(w.source)} · liczone $policzone h",
+                // Policzony zakres bywa inny niż wykryty — grafik zostaje grafikiem,
+                // więc spóźnienie nie obcina normy. Pokazujemy oba, żeby liczba
+                // godzin nie wyglądała na wziętą z powietrza.
+                buildString {
+                    append("wykryto przez ${zrodloWykrycia(w.source)}")
+                    if (odKiedy != null && doKiedy != null) {
+                        append(" · liczone ${odKiedy.format(GODZINA)}–${doKiedy.format(GODZINA)}")
+                        append(" ($policzone h)")
+                    } else {
+                        append(" · liczone $policzone h")
+                    }
+                },
                 style = GrafikType.caption, color = Tokeny.inkMuted
             )
         }

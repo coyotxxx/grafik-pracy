@@ -1,6 +1,8 @@
 package pl.grafik.pracy
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Assert.assertNull
 import org.junit.Test
 import pl.grafik.pracy.domain.DayKind
@@ -125,6 +127,44 @@ class DwaPobytyTest {
         )
         assertEquals("razem osiem godzin, nie jedenaście",
             8, pierwszy.countedHours + drugi.countedHours)
+    }
+
+    // ─── sklejanie krótkiego wyjścia ────────────────────────────
+
+    @Test
+    fun minutowa_przerwa_to_ten_sam_pobyt() {
+        // dokładnie przypadek Macieja: wpisy 13:45–18:25 i 18:26–22:05
+        assertTrue(
+            PresenceEngine.czyScalic(o(18, 25), o(18, 26), 30)
+        )
+    }
+
+    @Test
+    fun przerwa_w_granicach_ustawienia_sie_sklei() {
+        assertTrue(PresenceEngine.czyScalic(o(18), o(18, 30), 30))
+        assertTrue(PresenceEngine.czyScalic(o(18), o(18), 30))
+    }
+
+    @Test
+    fun dluzsza_przerwa_to_juz_osobny_pobyt() {
+        assertFalse("31 minut przy progu 30", PresenceEngine.czyScalic(o(18), o(18, 31), 30))
+        assertFalse("kilka godzin to na pewno osobny pobyt",
+            PresenceEngine.czyScalic(o(10), o(14), 30))
+    }
+
+    @Test
+    fun wejscie_przed_koncem_poprzedniego_nie_jest_powrotem() {
+        assertFalse(PresenceEngine.czyScalic(o(18), o(17), 30))
+    }
+
+    @Test
+    fun sklejony_pobyt_liczy_sie_jak_jeden() {
+        // 13:45–18:25 + 18:26–22:05 sklejone w 13:45–22:05 to jedna zmiana, bez nadgodzin
+        val sklejony = PresenceEngine.analyze(
+            dzien, PresenceSpan(o(13, 45), o(22, 5)), Shift.II, DayKind.ZWYKLY
+        )
+        assertEquals(8, sklejony.countedHours)
+        assertEquals("żadnych wymyślonych nadgodzin", 0, sklejony.otHours)
     }
 
     @Test

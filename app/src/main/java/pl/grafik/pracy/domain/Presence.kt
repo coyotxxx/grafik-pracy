@@ -179,6 +179,18 @@ object PresenceEngine {
         return najlepszy
     }
 
+    /**
+     * Czy nowe wejście to powrót po krótkim wyjściu, a nie osobny pobyt.
+     *
+     * Bez tego mignięcie geofence rozcinało jedną obecność na dwie: wpisy
+     * 13:45–18:25 i 18:26–22:05 rozdzielone jedną minutą. Ustawienie
+     * „krótkie wyjście sklejane do X min" istniało, ale nic go nie czytało.
+     */
+    fun czyScalic(koniecPoprzedniego: LocalDateTime, noweWejscie: LocalDateTime, lukaMin: Int): Boolean {
+        if (noweWejscie.isBefore(koniecPoprzedniego)) return false
+        return Duration.between(koniecPoprzedniego, noweWejscie).toMinutes() <= lukaMin
+    }
+
     fun normAlreadyCounted(planned: Pair<LocalDateTime, LocalDateTime>?, previous: List<PresenceSpan>): Boolean {
         if (planned == null) return false
         return previous.any { it.enter.isBefore(planned.second) && it.exit.isAfter(planned.first) }
