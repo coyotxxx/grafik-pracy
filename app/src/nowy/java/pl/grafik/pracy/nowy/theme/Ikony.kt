@@ -254,6 +254,14 @@ val IkonaDane: ImageVector = ikona(1.8f) {
 }
 
 /** Kółko z „i" — „O aplikacji". */
+/** Sylwetka osoby — podpowiedź z kontaktów telefonu. */
+val IkonaOsoba: ImageVector = ikona(1.8f) {
+    okrag(12f, 8f, 3.4f)
+    moveTo(5.5f, 19.5f)
+    curveToRelative(0f, -3.6f, 2.9f, -5.6f, 6.5f, -5.6f)
+    reflectiveCurveToRelative(6.5f, 2f, 6.5f, 5.6f)
+}
+
 /** Tort ze świeczką — uroczystości (urodziny, imieniny, rocznice). */
 val IkonaTort: ImageVector = ikona(1.8f) {
     moveTo(3.5f, 20.5f); horizontalLineToRelative(17f)

@@ -486,7 +486,11 @@ private fun SekcjaWydarzen(s: UiState, dzien: LocalDate, vm: Vm) {
                     Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
                         Text("czyje ${etykietaRodzaju(rodzaj).lowercase(PLL)}", fontSize = 10.sp,
                             fontFamily = Jakarta, color = Tokeny.inkMuted)
-                        PoleTekstowe(osoba, "imię i nazwisko") { osoba = it.take(80) }
+                        PoleOsoby(
+                            osoba,
+                            naZmiane = { osoba = it },
+                            naWybor = { k -> osoba = k.imie }
+                        )
                     }
                     PrzyciskDrugorzedny("Wybierz z kontaktów", Modifier.fillMaxWidth()) {
                         runCatching { wybierzKontakt.launch(null) }

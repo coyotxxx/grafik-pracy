@@ -2,6 +2,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!--
+        Kontakty czytamy tylko po to, żeby przy uroczystości podpowiedzieć imię
+        i wziąć datę urodzin. Ma to wyłącznie nowy wygląd — klasyczna aplikacja
+        o kontakty nie prosi. Pytamy dopiero przy pierwszym szukaniu, a odmowa
+        niczego nie psuje: zostaje systemowe okno wyboru kontaktu.
+    -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+
     <application>
         <!--
             Klasyczny ekran startowy zostaje w pakiecie, ale przestaje być tym, który

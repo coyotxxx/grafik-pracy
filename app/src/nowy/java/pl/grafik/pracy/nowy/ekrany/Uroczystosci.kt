@@ -168,6 +168,7 @@ private fun FormularzUroczystosci(vm: Vm, naZamkniecie: () -> Unit) {
     var miesiac by remember { mutableStateOf("") }
     var przypomnij by remember { mutableStateOf(true) }
     var coroczne by remember { mutableStateOf(true) }
+    var zKontaktu by remember { mutableStateOf("") }
 
     val data = remember(dzien, miesiac) { dataUroczystosci(dzien, miesiac, dzis.year) }
     val moznaDodac = osoba.isNotBlank() && data != null
@@ -208,7 +209,21 @@ private fun FormularzUroczystosci(vm: Vm, naZamkniecie: () -> Unit) {
 
         Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
             Text("czyje", fontSize = 10.sp, fontFamily = Jakarta, color = Tokeny.inkMuted)
-            PoleTekstowe(osoba, "imię i nazwisko") { osoba = it.take(80) }
+            PoleOsoby(
+                osoba,
+                naZmiane = { osoba = it },
+                naWybor = { k ->
+                    osoba = k.imie
+                    // Kontakt z datą urodzin wypełnia też dzień i miesiąc —
+                    // po to jest dostęp do kontaktów.
+                    if (k.maUrodziny) {
+                        dzien = k.dzien.toString()
+                        miesiac = k.miesiac.toString()
+                        rodzaj = "urodziny"
+                        zKontaktu = k.imie
+                    }
+                }
+            )
         }
         PrzyciskDrugorzedny("Wybierz z kontaktów", Modifier.fillMaxWidth()) {
             runCatching { wybierzKontakt.launch(null) }
@@ -223,6 +238,13 @@ private fun FormularzUroczystosci(vm: Vm, naZamkniecie: () -> Unit) {
                 Text("miesiąc", fontSize = 10.sp, fontFamily = Jakarta, color = Tokeny.inkMuted)
                 PoleTekstowe(miesiac, "9", cyfry = true) { miesiac = it.filter(Char::isDigit).take(2) }
             }
+        }
+
+        if (zKontaktu.isNotBlank() && zKontaktu == osoba && data != null) {
+            Text(
+                "Datę urodzin wzięto z kontaktów.",
+                style = GrafikType.caption, color = Tokeny.uroczystosc
+            )
         }
 
         // 31 lutego nie istnieje, a wpisać się da — więc mówimy o tym od razu,
