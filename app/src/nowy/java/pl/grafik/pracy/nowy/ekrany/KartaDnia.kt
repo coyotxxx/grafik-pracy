@@ -81,22 +81,6 @@ fun KartaDnia(vm: Vm, dzien: LocalDate, naZamkniecie: () -> Unit) {
     val stan = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val ctx = LocalContext.current
 
-    // Konfetti wita uroczystość raz. Przy piątym wejściu w ten sam dzień karta
-    // otwiera się już normalnie — inaczej po tygodniu zaczęłoby to przeszkadzać.
-    val maUroczystosc = s.events[dzien].orEmpty().any { it.rodzaj.isNotBlank() }
-    var wysyp by remember(dzien) { mutableStateOf<String?>(null) }
-    LaunchedEffect(dzien, maUroczystosc) {
-        if (!maUroczystosc) return@LaunchedEffect
-        val klucz = dzien.toString()
-        if (PamiecKonfetti.czyPokazano(ctx, klucz)) return@LaunchedEffect
-        PamiecKonfetti.zapamietaj(ctx, klucz)
-        wysyp = klucz
-    }
-    val barwyKonfetti = listOf(
-        Tokeny.uroczystosc, Tokeny.accent, Tokeny.wydarzenie,
-        Tokeny.notatka, Paleta.II.ink
-    )
-
     ModalBottomSheet(
         onDismissRequest = naZamkniecie,
         sheetState = stan,
@@ -109,25 +93,18 @@ fun KartaDnia(vm: Vm, dzien: LocalDate, naZamkniecie: () -> Unit) {
             }
         }
     ) {
-        Box(Modifier.fillMaxWidth()) {
-            Column(
-                Modifier.fillMaxWidth().imePadding().verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp).padding(bottom = 22.dp + dolnaKrawedz(minimum = 0.dp)),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                NaglowekDnia(dzien, naZamkniecie)
-                KartaTypuDnia(s, dzien, vm)
-                WierszNadgodzin(s, dzien, vm)
-                SekcjaObecnosci(s, dzien, vm)
-                SekcjaWydarzen(s, dzien, vm)
-                SekcjaNotatki(s, dzien, vm)
-                PrzyciskGlowny("Gotowe", akcja = naZamkniecie)
-            }
-            // Warstwa nad treścią, ale bez łapania dotknięć — w trakcie wysypu
-            // wszystko pod spodem działa normalnie.
-            wysyp?.let { klucz ->
-                Konfetti(klucz, Modifier.matchParentSize(), barwyKonfetti)
-            }
+        Column(
+            Modifier.fillMaxWidth().imePadding().verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp).padding(bottom = 22.dp + dolnaKrawedz(minimum = 0.dp)),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            NaglowekDnia(dzien, naZamkniecie)
+            KartaTypuDnia(s, dzien, vm)
+            WierszNadgodzin(s, dzien, vm)
+            SekcjaObecnosci(s, dzien, vm)
+            SekcjaWydarzen(s, dzien, vm)
+            SekcjaNotatki(s, dzien, vm)
+            PrzyciskGlowny("Gotowe", akcja = naZamkniecie)
         }
     }
 }

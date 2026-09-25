@@ -41,6 +41,11 @@ import pl.grafik.pracy.nowy.ekrany.TrybEdycji
 import java.time.LocalDate
 import pl.grafik.pracy.nowy.theme.*
 import pl.grafik.pracy.nowy.ui.dolnaKrawedz
+import pl.grafik.pracy.nowy.ui.Konfetti
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import android.util.Log
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import pl.grafik.pracy.ui.PresenceVm
 import pl.grafik.pracy.ui.UpdateVm
 import pl.grafik.pracy.ui.Vm
@@ -93,7 +98,16 @@ class NowaActivity : ComponentActivity() {
             OdswiezanieWidzetow.odswiez(applicationContext)
             OdswiezanieWidzetow.zaplanuj(applicationContext)
         }
-        setContent { MotywAplikacji { NowaApp(vm, pvm, uvm) } }
+        setContent {
+            MotywAplikacji {
+                // Konfetti jest warstwą nad całą aplikacją, nie nad pojedynczym ekranem —
+                // ma lecieć od górnej krawędzi po dolną, także nad paskiem nawigacji.
+                Box(Modifier.fillMaxSize()) {
+                    NowaApp(vm, pvm, uvm)
+                    KonfettiUroczystosci(vm)
+                }
+            }
+        }
     }
 
     override fun onResume() {
@@ -118,6 +132,41 @@ private enum class Zakladka(val etykieta: String, val ikona: ImageVector) {
     GRAFIK("Grafik", IkonaGrafik),
     BILANS("Bilans", IkonaBilans),
     USTAWIENIA("Ustawienia", IkonaUstawienia)
+}
+
+/**
+ * Powitanie uroczystości: konfetti przez cały ekran, przy każdym wejściu do aplikacji.
+ *
+ * „Przy wejściu" liczymy od wyjścia aplikacji na pierwszy plan, a nie od zimnego startu
+ * — powrót z tła też jest wejściem. Przełączanie zakładek wewnątrz aplikacji niczego
+ * nie powtarza, bo to wciąż ta sama wizyta.
+ */
+@Composable
+private fun KonfettiUroczystosci(vm: Vm) {
+    val s by vm.state.collectAsState()
+    val dzis = remember { LocalDate.now() }
+    val swietujemy = s.events[dzis].orEmpty().any { it.rodzaj.isNotBlank() }
+
+    // Każde wyjście na pierwszy plan to nowa wizyta, czyli nowy wysyp.
+    val wlasciciel = LocalLifecycleOwner.current
+    var wizyta by remember { mutableIntStateOf(0) }
+    DisposableEffect(wlasciciel) {
+        val obserwator = LifecycleEventObserver { _, zdarzenie ->
+            if (zdarzenie == Lifecycle.Event.ON_START) {
+                wizyta++
+                Log.i("GrafikKonfetti", "wejscie do aplikacji nr $wizyta")
+            }
+        }
+        wlasciciel.lifecycle.addObserver(obserwator)
+        onDispose { wlasciciel.lifecycle.removeObserver(obserwator) }
+    }
+
+    if (!swietujemy) return
+
+    val barwy = listOf(
+        Tokeny.uroczystosc, Tokeny.accent, Tokeny.wydarzenie, Tokeny.notatka, Paleta.II.ink
+    )
+    Konfetti("$dzis#$wizyta", Modifier.fillMaxSize(), barwy)
 }
 
 @Composable

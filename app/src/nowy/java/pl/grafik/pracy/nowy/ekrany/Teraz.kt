@@ -11,6 +11,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -109,6 +112,9 @@ fun EkranTeraz(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             PasekGorny(s, dzis, naUstawienia)
+            PasekUroczystosci(s.events[dzis].orEmpty().filter { it.rodzaj.isNotBlank() }) {
+                naDzien(dzis)
+            }
             TarczaDoby(
                 zmiana, teraz, s.wPracyOd,
                 dzisiejszyTyp = s.entries[dzis]?.shift,
@@ -122,6 +128,91 @@ fun EkranTeraz(
             ) { wybrany = it }
             KartaWydarzenia(s, dni, dzis, naDzien)
             RzadAkcji(naGrafik) { naDzien(dzis) }
+        }
+    }
+}
+
+/**
+ * Pasek powitalny uroczystości — zjeżdża z góry, raz przechodzi po nim smuga światła.
+ *
+ * Podaje imię od razu, bez wchodzenia w dzień. Trwa dobę: nazajutrz uroczystości
+ * już nie ma na liście dnia, więc pasek znika sam.
+ */
+@Composable
+private fun PasekUroczystosci(uroczystosci: List<EventRow>, naDzien: () -> Unit) {
+    if (uroczystosci.isEmpty()) return
+
+    val gramy = animacjeWlaczone()
+    val zjazd = remember { Animatable(if (gramy) 0f else 1f) }
+    val smuga = remember { Animatable(if (gramy) 0f else 1f) }
+
+    LaunchedEffect(gramy) {
+        if (!gramy) return@LaunchedEffect
+        zjazd.snapTo(0f)
+        zjazd.animateTo(1f, tween(600, easing = Motion.Ease))
+        smuga.snapTo(0f)
+        smuga.animateTo(1f, tween(1100, easing = Motion.Ease))
+    }
+
+    val barwa = Tokeny.uroczystosc
+    val przesuw = smuga.value
+
+    Column(
+        Modifier.padding(horizontal = Dim.screenGutter),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        uroczystosci.forEach { u ->
+            Row(
+                Modifier.fillMaxWidth()
+                    .graphicsLayer {
+                        alpha = zjazd.value
+                        translationY = (zjazd.value - 1f) * 14.dp.toPx()
+                    }
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(barwa.copy(alpha = 0.09f))
+                    .drawBehind {
+                        // Smuga przejeżdża raz i znika — szerokość pasa to jedna trzecia karty.
+                        if (przesuw <= 0f || przesuw >= 1f) return@drawBehind
+                        val pas = size.width / 3f
+                        val srodek = -pas + przesuw * (size.width + 2 * pas)
+                        drawRect(
+                            brush = androidx.compose.ui.graphics.Brush.horizontalGradient(
+                                0f to Color.Transparent,
+                                0.5f to barwa.copy(alpha = 0.26f),
+                                1f to Color.Transparent,
+                                startX = srodek - pas / 2f,
+                                endX = srodek + pas / 2f
+                            ),
+                            size = size
+                        )
+                    }
+                    .border(1.dp, barwa.copy(alpha = 0.32f), RoundedCornerShape(16.dp))
+                    .clickable { naDzien() }
+                    .padding(horizontal = 15.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Box(
+                    Modifier.size(38.dp).clip(RoundedCornerShape(12.dp))
+                        .background(barwa.copy(alpha = 0.16f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(IkonaTort, null, Modifier.size(21.dp), tint = barwa)
+                }
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        "Dziś ${etykietaRodzaju(u.rodzaj).lowercase(PL_TERAZ)}",
+                        fontSize = 10.5.sp, fontWeight = FontWeight.SemiBold,
+                        fontFamily = Jakarta, letterSpacing = 1.sp, color = barwa
+                    )
+                    Text(
+                        u.osoba.ifBlank { u.text },
+                        fontSize = 13.5.sp, fontWeight = FontWeight.Bold,
+                        fontFamily = Jakarta, color = Tokeny.ink,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
         }
     }
 }
