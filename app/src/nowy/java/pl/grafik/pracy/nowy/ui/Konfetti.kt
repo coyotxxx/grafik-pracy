@@ -16,16 +16,19 @@ import androidx.compose.ui.unit.dp
 import kotlin.math.PI
 import kotlin.random.Random
 
-/** Ile ścinków leci przez ekran. Przez całą wysokość potrzeba ich więcej niż garści. */
-private const val ILE = 44
+/**
+ * Ile ścinków leci przez ekran. Przy dłuższym wysypie potrzeba ich więcej, żeby
+ * deszcz był gęsty od początku do końca, a nie rozrzedzał się w połowie.
+ */
+private const val ILE = 80
 
 /**
  * Czas przelotu przez cały ekran — od górnej krawędzi poza dolną.
  *
- * Spokojne cztery sekundy, żeby dało się na to popatrzeć. Ścinki startują
- * rozrzucone w czasie, więc deszcz trwa jeszcze chwilę dłużej.
+ * Siedem sekund — tyle, żeby spokojnie popatrzeć, a nie łapać wzrokiem. Ścinki
+ * startują rozrzucone w czasie, więc ostatnie schodzą z ekranu jeszcze później.
  */
-const val KONFETTI_MS = 4000
+const val KONFETTI_MS = 7000
 
 /** Jeden ścinek: skąd startuje, jak szybko leci i jak się obraca. */
 private data class Scinek(
@@ -43,10 +46,12 @@ private fun losujScinki(ziarno: Int, ile: Int = ILE): List<Scinek> {
     return List(ile) { i ->
         Scinek(
             xUlamek = 0.02f + los.nextFloat() * 0.96f,
-            // Rozjazd startów rozbija „ścianę" ścinków na deszcz.
-            opoznienie = los.nextFloat() * 0.34f,
+            // Rozjazd startów rozbija „ścianę" ścinków na deszcz. Sięga połowy wysypu,
+            // więc kiedy pierwsze schodzą z ekranu, następne dopiero wchodzą u góry.
+            opoznienie = los.nextFloat() * 0.52f,
             // Ponad 1.0, żeby każdy wyleciał poza dolną krawędź, a nie zatrzymał się na niej.
-            zasieg = 1.06f + los.nextFloat() * 0.34f,
+            // Rozpiętość daje różne prędkości opadania — cięższe i lżejsze ścinki.
+            zasieg = 1.08f + los.nextFloat() * 0.62f,
             zniesienie = los.nextFloat() * 70f - 35f,
             obrot = (los.nextFloat() * 5f - 2.5f) * PI.toFloat(),
             wysokosc = 7f + los.nextFloat() * 6f,
