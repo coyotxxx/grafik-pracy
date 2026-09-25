@@ -159,7 +159,8 @@ object PresenceRepo {
         val wczoraj = effectiveShift(ctx, cfg, date.minusDays(1))
 
         val analiza = PresenceEngine.analyze(
-            date, span, shift, Holidays.kindOf(date), normaZajeta, wczoraj
+            date, span, shift, Holidays.kindOf(date), normaZajeta, wczoraj,
+            policzone = wczesniejsze
         )
 
         // Art. 132 KP — czy do następnej zmiany zostaje wymagane 11 h odpoczynku.

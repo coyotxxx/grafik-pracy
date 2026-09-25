@@ -29,6 +29,7 @@ import pl.grafik.pracy.ui.Tool
 import pl.grafik.pracy.ui.UiState
 import pl.grafik.pracy.ui.Vm
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle as JavaTextStyle
 import java.time.temporal.WeekFields
@@ -284,6 +285,14 @@ private fun SekcjaObecnosci(s: UiState, dzien: LocalDate, vm: Vm) {
                         style = GrafikType.caption, color = Tokeny.inkMuted)
                 }
             }
+            // Poszczególne wykrycia z prawdziwymi godzinami — żeby dało się porównać
+            // z tym, jak było naprawdę, i odrzucić to, czego nie było.
+            val wykrycia = s.wykrycia[dzien].orEmpty()
+            if (wykrycia.isNotEmpty()) {
+                Box(Modifier.fillMaxWidth().height(1.dp).background(Tokeny.line))
+                wykrycia.forEach { w -> WierszWykryciaDnia(w) { vm.odrzucWykrycie(w.id) } }
+            }
+
             if (ob == null || ob.reczne) {
                 Box(Modifier.fillMaxWidth().height(1.dp).background(Tokeny.line))
                 Row(
@@ -540,4 +549,54 @@ private fun SekcjaNotatki(s: UiState, dzien: LocalDate, vm: Vm) {
             }
         }
     }
+}
+
+/**
+ * Jedno wykrycie pobytu: godziny WEJŚCIA i WYJŚCIA prosto z czujników, obok
+ * policzone godziny i źródło. Kosz odrzuca wykrycie, gdy go nie było.
+ */
+@Composable
+private fun WierszWykryciaDnia(w: pl.grafik.pracy.data.PresenceRow, naOdrzucenie: () -> Unit) {
+    val wejscie = remember(w.enterAt) { runCatching { LocalDateTime.parse(w.enterAt) }.getOrNull() }
+    val wyjscie = remember(w.exitAt) { runCatching { LocalDateTime.parse(w.exitAt) }.getOrNull() }
+    val odKiedy = remember(w.countedFrom) { runCatching { LocalDateTime.parse(w.countedFrom) }.getOrNull() }
+    val doKiedy = remember(w.countedTo) { runCatching { LocalDateTime.parse(w.countedTo) }.getOrNull() }
+    val policzone = pl.grafik.pracy.domain.PresenceEngine.countedHours(odKiedy, doKiedy)
+
+    Row(
+        Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                if (wejscie != null && wyjscie != null)
+                    "${wejscie.format(GODZINA)} – ${wyjscie.format(GODZINA)}"
+                else "godziny nieznane",
+                style = TextStyle(
+                    fontFamily = Jakarta, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
+                    fontFeatureSettings = TNUM
+                ),
+                color = Tokeny.ink
+            )
+            Text(
+                "wykryto przez ${zrodloWykrycia(w.source)} · liczone $policzone h",
+                style = GrafikType.caption, color = Tokeny.inkMuted
+            )
+        }
+        PrzyciskKwadrat(
+            IkonaKosz, "Odrzuć to wykrycie",
+            tlo = Color.Transparent, obrys = Tokeny.lineStrong,
+            kolorIkony = Tokeny.inkIkona,
+            akcja = naOdrzucenie
+        )
+    }
+}
+
+private fun zrodloWykrycia(s: String): String = when {
+    s.contains("wifi") && s.contains("geo") -> "lokalizację i Wi-Fi"
+    s.contains("wifi") -> "Wi-Fi"
+    s.contains("geo") -> "lokalizację"
+    s == "manual" -> "wpis ręczny"
+    else -> s
 }

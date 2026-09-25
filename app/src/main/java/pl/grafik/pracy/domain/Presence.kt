@@ -139,6 +139,46 @@ object PresenceEngine {
      * zaliczonych, nie po samym istnieniu wpisu — krótkie zajrzenie do pracy
      * niczego nie pokrywa i nie może zabrać normy właściwej zmianie.
      */
+    /**
+     * Część pobytu, która NIE pokrywa się z czasem już policzonym tego dnia.
+     *
+     * Bez tego druga wizyta w godzinach zmiany dopisywała swoje godziny jako
+     * nadgodziny — norma była „zajęta" przez pierwszy pobyt, więc cały drugi
+     * liczył się ponad nią. Maciej zgłosił to 25.09.2026: wykrycie 14:00–22:00
+     * dostało jeszcze „+3 h po 50 %" za czas w środku tej samej zmiany.
+     *
+     * Zwraca najdłuższy nieobjęty kawałek albo null, gdy wszystko już policzono.
+     */
+    fun nowaCzesc(
+        od: LocalDateTime,
+        doKiedy: LocalDateTime,
+        policzone: List<PresenceSpan>
+    ): Pair<LocalDateTime, LocalDateTime>? {
+        if (!doKiedy.isAfter(od)) return null
+        val zajete = policzone
+            .map { maxOf(it.enter, od) to minOf(it.exit, doKiedy) }
+            .filter { it.second.isAfter(it.first) }
+            .sortedBy { it.first }
+        if (zajete.isEmpty()) return od to doKiedy
+
+        var najlepszy: Pair<LocalDateTime, LocalDateTime>? = null
+        fun rozwaz(a: LocalDateTime, b: LocalDateTime) {
+            if (!b.isAfter(a)) return
+            val obecny = najlepszy
+            if (obecny == null ||
+                Duration.between(a, b) > Duration.between(obecny.first, obecny.second)
+            ) najlepszy = a to b
+        }
+
+        var kursor = od
+        zajete.forEach { (poczatek, koniec) ->
+            rozwaz(kursor, poczatek)
+            if (koniec.isAfter(kursor)) kursor = koniec
+        }
+        rozwaz(kursor, doKiedy)
+        return najlepszy
+    }
+
     fun normAlreadyCounted(planned: Pair<LocalDateTime, LocalDateTime>?, previous: List<PresenceSpan>): Boolean {
         if (planned == null) return false
         return previous.any { it.enter.isBefore(planned.second) && it.exit.isAfter(planned.first) }
@@ -264,7 +304,9 @@ object PresenceEngine {
         kind: DayKind,
         normUsed: Boolean = false,
         /** Zmiana dnia poprzedniego — potrzebna, by rozpoznać pierwszą popołudniówkę w bloku. */
-        poprzedniaZmiana: Shift? = null
+        poprzedniaZmiana: Shift? = null,
+        /** Pobyty tego dnia już policzone — ich czasu nie liczymy drugi raz. */
+        policzone: List<PresenceSpan> = emptyList()
     ): PresenceResult {
         val upIn = roundUp(span.enter)
         val downOut = roundDown(span.exit)
@@ -299,16 +341,22 @@ object PresenceEngine {
             else -> shift
         }
 
-        val from: LocalDateTime
-        val to: LocalDateTime
+        val surowyOd: LocalDateTime
+        val surowyDo: LocalDateTime
         if (window != null) {
             // Spóźnienie nie obcina normy, wcześniejsze wyjście też nie — grafik zostaje grafikiem.
-            from = minOf(window.first, upIn)
-            to = maxOf(window.second, downOut)
+            surowyOd = minOf(window.first, upIn)
+            surowyDo = maxOf(window.second, downOut)
         } else {
-            from = upIn
-            to = downOut
+            surowyOd = upIn
+            surowyDo = downOut
         }
+
+        // Czas policzony przy wcześniejszych wizytach tego dnia odpada — inaczej
+        // druga wizyta w godzinach zmiany dopisywałaby go jako nadgodziny.
+        val nowe = nowaCzesc(surowyOd, surowyDo, policzone)
+        val from = nowe?.first ?: surowyOd
+        val to = nowe?.second ?: surowyOd
         val norm = if (window != null) (zmiana?.hours ?: 0) else 0
 
         val counted = if (to.isAfter(from)) Duration.between(from, to).toHours().toInt() else 0

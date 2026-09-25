@@ -60,6 +60,12 @@ data class UiState(
     /** Godziny wykrytej obecności w dniach widocznej siatki. */
     val obecnosc: Map<LocalDate, DayPresence> = emptyMap(),
     /**
+     * Pojedyncze wykrycia z widocznego zakresu, po dniach — z prawdziwymi godzinami
+     * wejścia i wyjścia. Karta dnia pokazuje je wprost, żeby dało się porównać
+     * z rzeczywistością i odrzucić to, czego nie było.
+     */
+    val wykrycia: Map<LocalDate, List<PresenceRow>> = emptyMap(),
+    /**
      * Od kiedy trwa pobyt w pracy; null = aplikacja nie widzi Cię teraz w pracy.
      *
      * Bierzemy to wprost ze stanu wykrywania, a nie z mapy [obecnosc], bo tam pobyt
@@ -237,7 +243,12 @@ class Vm(app: Application) : AndroidViewModel(app) {
 
         UiState(ym, merged, ev, cfg, cols, tool, otH, otR, calc(wMiesiacu, ym), rem.first, rem.second,
             maluj, url, urlRok, urlPrev, motyw, okres,
-            obecnosc(presRows, otwartyPobyt, merged), otwartyPobyt, okresy.first, saved.keys, okresy.second,
+            obecnosc(presRows, otwartyPobyt, merged),
+            presRows.filter { it.status != "rejected" }
+                .groupBy { runCatching { LocalDate.parse(it.date) }.getOrNull() }
+                .filterKeys { it != null }
+                .mapKeys { it.key!! },
+            otwartyPobyt, okresy.first, saved.keys, okresy.second,
             Settlement.yearLimit(ym.year, okres),
             Odpoczynek.kolizjeDobowe(merged),
             Odpoczynek.tygodnie(merged, ym.atDay(1), ym.atEndOfMonth()),
@@ -375,6 +386,16 @@ class Vm(app: Application) : AndroidViewModel(app) {
             )
         }
         return lista to otRok
+    }
+
+    /**
+     * Odrzuca pojedyncze wykrycie — „tego nie było".
+     *
+     * Potrzebne, gdy wykrywanie zapisze pobyt, którego nie było (mignięcie geofence
+     * albo druga wizyta policzona osobno). Odrzucone wykrycie znika z rachunku dnia.
+     */
+    fun odrzucWykrycie(id: Long) = viewModelScope.launch {
+        pl.grafik.pracy.location.PresenceRepo.reject(getApplication(), id)
     }
 
     /** „Byłem w pracy" z karty dnia — godziny bierzemy ze zmiany, bez wpisywania. */
