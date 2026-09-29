@@ -254,6 +254,24 @@ val IkonaDane: ImageVector = ikona(1.8f) {
 }
 
 /** Kółko z „i" — „O aplikacji". */
+/** Kartka z zagiętym rogiem — notatki. */
+val IkonaNotatka: ImageVector = ikona(1.8f) {
+    moveTo(5f, 4f); horizontalLineTo(15.5f); lineTo(19f, 7.5f); verticalLineTo(20f)
+    horizontalLineTo(5f); close()
+    moveTo(15.5f, 4f); verticalLineTo(7.5f); horizontalLineTo(19f)
+    moveTo(8f, 11f); horizontalLineToRelative(8f)
+    moveTo(8f, 15f); horizontalLineToRelative(5f)
+}
+
+/** Obrazek — notatka ze zdjęciem, którego miniatury nie da się wczytać. */
+val IkonaObrazek: ImageVector = ikona(1.7f) {
+    moveTo(3.5f, 6.5f); horizontalLineToRelative(17f); verticalLineToRelative(11f)
+    horizontalLineToRelative(-17f); close()
+    okrag(8.5f, 10.5f, 1.5f)
+    moveTo(4.5f, 17f); lineTo(9.5f, 12.5f); lineTo(13.5f, 15.5f)
+    lineTo(16.5f, 13.5f); lineTo(20f, 16.5f)
+}
+
 /** Sylwetka osoby — podpowiedź z kontaktów telefonu. */
 val IkonaOsoba: ImageVector = ikona(1.8f) {
     okrag(12f, 8f, 3.4f)

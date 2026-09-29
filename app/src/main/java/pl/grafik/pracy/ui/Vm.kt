@@ -524,6 +524,24 @@ class Vm(app: Application) : AndroidViewModel(app) {
      *
      * Kolejność jak w kalendarzu: wpis własny wygrywa z cyklem.
      */
+    /**
+     * Wszystkie notatki, od najnowszych — osobno od [state], bo lista nie zależy
+     * od oglądanego miesiąca i ma sięgać wstecz tak daleko, jak sięgają wpisy.
+     *
+     * Dniom bez własnej zmiany dokładamy tę z cyklu: notatka bywa dopisana do dnia,
+     * którego nikt ręcznie nie zmieniał, a na liście zmiana ma być widoczna.
+     */
+    val notatki: StateFlow<List<DayEntry>> =
+        combine(settings.config, dao.observeZNotatka()) { cfg, rows ->
+            rows.mapNotNull { r ->
+                runCatching {
+                    val e = r.toEntry()
+                    if (e.shift != null) e
+                    else e.copy(shift = CycleGenerator.shiftFor(cfg, e.date))
+                }.getOrNull()
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     val najblizszeDni: StateFlow<List<DayEntry>> = run {
         val od = LocalDate.now().minusDays(1)
         val doKiedy = od.plusDays(23)

@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import pl.grafik.pracy.nowy.ekrany.EkranBilans
 import pl.grafik.pracy.nowy.ekrany.EkranUroczystosci
+import pl.grafik.pracy.nowy.ekrany.EkranNotatki
 import pl.grafik.pracy.nowy.ekrany.EkranGrafik
 import pl.grafik.pracy.nowy.ekrany.EkranTeraz
 import pl.grafik.pracy.nowy.ekrany.KartaDnia
@@ -124,7 +125,7 @@ class NowaActivity : ComponentActivity() {
 /** Podstrony ustawień — dochodzą po kolei, każda z własnej makiety. */
 enum class Podstrona {
     CYKL, CZAS_PRACY, URLOP, WYKRYWANIE, WYGLAD, ODPOCZYNEK, POWIADOMIENIA, PLANER, WYPLATA,
-    DANE, UROCZYSTOSCI
+    DANE, UROCZYSTOSCI, NOTATKI
 }
 
 private enum class Zakladka(val etykieta: String, val ikona: ImageVector) {
@@ -205,6 +206,11 @@ private fun NowaApp(vm: Vm, pvm: PresenceVm, uvm: UpdateVm) {
         Podstrona.WYPLATA -> { EkranWyplata(vm) { podstrona = null }; return }
         Podstrona.DANE -> { EkranDane(uvm) { podstrona = null }; return }
         Podstrona.UROCZYSTOSCI -> { EkranUroczystosci(vm) { podstrona = null }; return }
+        Podstrona.NOTATKI -> {
+            EkranNotatki(vm, naPowrot = { podstrona = null },
+                naDzien = { podstrona = null; otwartyDzien = it })
+            return
+        }
         Podstrona.ODPOCZYNEK -> {
             EkranOdpoczynek(vm, naPowrot = { podstrona = null },
                 naDzien = { podstrona = null; otwartyDzien = it })

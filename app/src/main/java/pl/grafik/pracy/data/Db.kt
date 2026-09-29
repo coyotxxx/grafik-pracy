@@ -178,6 +178,16 @@ interface DayDao {
     @Query("SELECT * FROM days WHERE shift = :code AND date >= :from AND date <= :to ORDER BY date")
     fun observeWithShift(code: String, from: String, to: String): Flow<List<DayRow>>
 
+    /**
+     * Wszystkie dni, przy których cokolwiek zanotowano — tekst albo zdjęcie.
+     * Od najnowszych, bo tak się na to patrzy.
+     */
+    @Query(
+        "SELECT * FROM days WHERE trim(note) != '' OR notePhoto IS NOT NULL " +
+            "ORDER BY date DESC"
+    )
+    fun observeZNotatka(): Flow<List<DayRow>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(row: DayRow)
 

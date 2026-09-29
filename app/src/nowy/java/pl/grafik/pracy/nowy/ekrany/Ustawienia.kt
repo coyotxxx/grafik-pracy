@@ -92,6 +92,11 @@ fun EkranUstawienia(vm: Vm, pvm: PresenceVm, uvm: UpdateVm, naPodstrone: (Podstr
                     opisUroczystosci(s), gotowe = true,
                     akcja = { naPodstrone(Podstrona.UROCZYSTOSCI) }
                 )
+                Wiersz(
+                    IkonaNotatka, Tokeny.notatka, "Notatki",
+                    opisNotatek(s), gotowe = true,
+                    akcja = { naPodstrone(Podstrona.NOTATKI) }
+                )
             }
 
             Grupa("AUTOMATYKA", 220) {
@@ -382,6 +387,13 @@ private fun opisStawek(s: UiState): String {
 }
 
 /** „11 h na dobę, 35 h w tygodniu" albo liczba kolizji, gdy jakieś są. */
+private fun opisNotatek(s: UiState): String {
+    // Liczymy z tego, co i tak jest w pamięci — dokładną liczbę pokazuje sam ekran.
+    val ile = s.entries.values.count { it.note.isNotBlank() || !it.notePhoto.isNullOrBlank() }
+    return if (ile == 0) "wszystkie notatki w jednym miejscu"
+    else "w tym miesiącu: $ile"
+}
+
 private fun opisUroczystosci(s: UiState): String = when (s.uroczystosci.size) {
     0 -> "urodziny, imieniny, rocznice"
     1 -> "jedna zapisana"
