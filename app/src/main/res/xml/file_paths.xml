@@ -3,4 +3,6 @@
     <cache-path name="updates" path="updates/" />
     <!-- archiwum odcinków wypłaty — czytelnia PDF dostaje dostęp tylko do tego katalogu -->
     <files-path name="odcinki" path="odcinki/" />
+    <!-- zdjęcia dołączone do notatek — przeglądarka obrazów dostaje dostęp tylko tutaj -->
+    <files-path name="notatki" path="notatki/" />
 </paths>

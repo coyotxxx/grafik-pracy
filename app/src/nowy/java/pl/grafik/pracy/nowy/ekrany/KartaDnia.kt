@@ -702,14 +702,19 @@ private fun PodgladZdjecia(nazwa: String, ctx: android.content.Context, naUsunie
     val miniatura by produceState<android.graphics.Bitmap?>(null, plik.path) {
         value = withContext(Dispatchers.IO) { miniaturaZ(plik, 160) }
     }
+    // Nieudane otwarcie musi być widoczne. Wcześniej błąd ginął po cichu i dotknięcie
+    // zdjęcia wyglądało na martwe (zgłoszenie Macieja z 29.09.2026).
+    var nieUdaloSie by remember(nazwa) { mutableStateOf(false) }
 
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
     Row(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(Dim.rCardSmall))
             .background(Tokeny.surface)
             .border(1.dp, Tokeny.line, RoundedCornerShape(Dim.rCardSmall))
             .clickable {
-                ZdjeciaNotatek.intencjaOtwarcia(ctx, nazwa)
-                    ?.let { runCatching { ctx.startActivity(it) } }
+                val intencja = ZdjeciaNotatek.intencjaOtwarcia(ctx, nazwa)
+                nieUdaloSie = intencja == null ||
+                    runCatching { ctx.startActivity(intencja) }.isFailure
             }
             .padding(10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -742,6 +747,13 @@ private fun PodgladZdjecia(nazwa: String, ctx: android.content.Context, naUsunie
             kolorIkony = Tokeny.inkIkona,
             akcja = naUsuniecie
         )
+    }
+        if (nieUdaloSie) {
+            Text(
+                "Nie udało się otworzyć zdjęcia — brak aplikacji do oglądania obrazów.",
+                style = GrafikType.caption, color = Tokeny.warnInk
+            )
+        }
     }
 }
 

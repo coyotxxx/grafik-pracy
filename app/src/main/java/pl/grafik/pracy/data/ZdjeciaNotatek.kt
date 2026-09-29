@@ -57,7 +57,13 @@ object ZdjeciaNotatek {
         Unit
     }
 
-    /** Otwarcie zdjęcia w przeglądarce obrazów zainstalowanej na telefonie. */
+    /**
+     * Otwarcie zdjęcia w przeglądarce obrazów zainstalowanej na telefonie.
+     *
+     * Zwraca `null`, gdy nie da się wydać adresu pliku — wtedy trzeba to pokazać
+     * użytkownikowi, a nie przemilczeć. Katalog musi być wymieniony w `file_paths.xml`,
+     * inaczej FileProvider odmawia.
+     */
     fun intencjaOtwarcia(ctx: Context, nazwa: String): Intent? = runCatching {
         val uri = FileProvider.getUriForFile(
             ctx, "${ctx.packageName}.fileprovider", plik(ctx, nazwa)
@@ -66,7 +72,8 @@ object ZdjeciaNotatek {
             setDataAndType(uri, typ(nazwa))
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
         }
-    }.getOrNull()
+    }.onFailure { Log.e(TAG, "nie udało się przygotować podglądu zdjęcia $nazwa", it) }
+        .getOrNull()
 
     private fun typ(nazwa: String): String =
         when (nazwa.substringAfterLast('.', "").lowercase()) {
