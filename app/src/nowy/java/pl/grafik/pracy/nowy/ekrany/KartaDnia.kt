@@ -22,6 +22,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import pl.grafik.pracy.data.ZdjeciaNotatek
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
@@ -702,20 +706,21 @@ private fun PodgladZdjecia(nazwa: String, ctx: android.content.Context, naUsunie
     val miniatura by produceState<android.graphics.Bitmap?>(null, plik.path) {
         value = withContext(Dispatchers.IO) { miniaturaZ(plik, 160) }
     }
-    // Nieudane otwarcie musi być widoczne. Wcześniej błąd ginął po cichu i dotknięcie
-    // zdjęcia wyglądało na martwe (zgłoszenie Macieja z 29.09.2026).
-    var nieUdaloSie by remember(nazwa) { mutableStateOf(false) }
+    // Zdjęcie pokazujemy u siebie. Oddawanie go obcej galerii bywa zawodne: na części
+    // telefonów system melduje, że otworzył podgląd, a nic się nie pojawia — i tak było
+    // u Macieja (zgłoszenie z 29.09.2026). Własny podgląd działa wszędzie tak samo.
+    var pokazPelny by remember(nazwa) { mutableStateOf(false) }
+
+    if (pokazPelny) {
+        PelnyEkranZdjecia(nazwa, plik) { pokazPelny = false }
+    }
 
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
     Row(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(Dim.rCardSmall))
             .background(Tokeny.surface)
             .border(1.dp, Tokeny.line, RoundedCornerShape(Dim.rCardSmall))
-            .clickable {
-                val intencja = ZdjeciaNotatek.intencjaOtwarcia(ctx, nazwa)
-                nieUdaloSie = intencja == null ||
-                    runCatching { ctx.startActivity(intencja) }.isFailure
-            }
+            .clickable { pokazPelny = true }
             .padding(10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -748,11 +753,104 @@ private fun PodgladZdjecia(nazwa: String, ctx: android.content.Context, naUsunie
             akcja = naUsuniecie
         )
     }
-        if (nieUdaloSie) {
-            Text(
-                "Nie udało się otworzyć zdjęcia — brak aplikacji do oglądania obrazów.",
-                style = GrafikType.caption, color = Tokeny.warnInk
+    }
+}
+
+/**
+ * Zdjęcie notatki na pełnym ekranie, we własnej aplikacji.
+ *
+ * Zdjęcie bywa pismem albo paragonem, więc samo dopasowanie do ekranu nie wystarcza —
+ * da się je przybliżyć dwoma palcami i przesuwać. Podwójne dotknięcie wraca do całości.
+ *
+ * Przycisk „Otwórz w galerii" zostaje dla tych, którzy wolą swoją przeglądarkę, ale
+ * nic już od niej nie zależy.
+ */
+@Composable
+private fun PelnyEkranZdjecia(nazwa: String, plik: java.io.File, naZamkniecie: () -> Unit) {
+    val ctx = LocalContext.current
+    val gestosc = androidx.compose.ui.platform.LocalDensity.current
+    val konfiguracja = androidx.compose.ui.platform.LocalConfiguration.current
+    val bokPx = remember(konfiguracja) {
+        with(gestosc) { maxOf(konfiguracja.screenWidthDp, konfiguracja.screenHeightDp).dp.roundToPx() }
+    }
+
+    val obraz by produceState<android.graphics.Bitmap?>(null, plik.path, bokPx) {
+        value = withContext(Dispatchers.IO) { miniaturaZ(plik, bokPx) }
+    }
+
+    var powiekszenie by remember { mutableStateOf(1f) }
+    var przesuwX by remember { mutableStateOf(0f) }
+    var przesuwY by remember { mutableStateOf(0f) }
+
+    androidx.compose.ui.window.Dialog(
+        onDismissRequest = naZamkniecie,
+        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Box(
+            Modifier.fillMaxSize().background(Color(0xF2000000))
+                .pointerInput(Unit) {
+                    detectTransformGestures { _, pan, zoom, _ ->
+                        powiekszenie = (powiekszenie * zoom).coerceIn(1f, 6f)
+                        if (powiekszenie > 1f) {
+                            przesuwX += pan.x
+                            przesuwY += pan.y
+                        } else {
+                            przesuwX = 0f
+                            przesuwY = 0f
+                        }
+                    }
+                }
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onDoubleTap = {
+                            powiekszenie = if (powiekszenie > 1f) 1f else 2.5f
+                            przesuwX = 0f
+                            przesuwY = 0f
+                        }
+                    )
+                }
+        ) {
+            obraz?.let {
+                Image(
+                    bitmap = it.asImageBitmap(),
+                    contentDescription = "Zdjęcie dołączone do notatki",
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.fillMaxSize()
+                        .graphicsLayer {
+                            scaleX = powiekszenie
+                            scaleY = powiekszenie
+                            translationX = przesuwX
+                            translationY = przesuwY
+                        }
+                )
+            } ?: Text(
+                "Nie udało się wczytać zdjęcia.",
+                Modifier.align(Alignment.Center),
+                style = GrafikType.cardTitle, color = Tokeny.ink
             )
+
+            Row(
+                Modifier.align(Alignment.TopEnd)
+                    .padding(top = gornaKrawedz(), end = 12.dp)
+                    .padding(top = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                PrzyciskKwadrat(
+                    IkonaZamknij, "Zamknij podgląd",
+                    tlo = Tokeny.bgElevated, obrys = Tokeny.lineStrong,
+                    akcja = naZamkniecie
+                )
+            }
+
+            PrzyciskDrugorzedny(
+                "Otwórz w galerii",
+                Modifier.align(Alignment.BottomCenter)
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = dolnaKrawedz(24.dp))
+            ) {
+                ZdjeciaNotatek.intencjaOtwarcia(ctx, nazwa)
+                    ?.let { runCatching { ctx.startActivity(it) } }
+            }
         }
     }
 }
