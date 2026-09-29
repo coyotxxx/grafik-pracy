@@ -17,6 +17,12 @@ data class DayRow(
     val note: String = "",
     /** Nazwa pliku ze zdjęciem dołączonym do notatki; null = bez zdjęcia. */
     val notePhoto: String? = null,
+    /**
+     * Do kiedy notatka obowiązuje (ISO yyyy-MM-dd); null = bez terminu.
+     * Kara porządkowa zaciera się po roku (art. 113 § 1 KP), badania i szkolenia
+     * mają własne okresy — stąd dowolna data, a nie sztywne 12 miesięcy.
+     */
+    val noteUntil: String? = null,
     val dwnFor: String? = null
 ) {
     fun toEntry(): DayEntry = DayEntry(
@@ -27,6 +33,7 @@ data class DayRow(
         deviation = deviation,
         note = note,
         notePhoto = notePhoto,
+        noteUntil = noteUntil?.let { runCatching { LocalDate.parse(it) }.getOrNull() },
         dwnFor = dwnFor?.let { LocalDate.parse(it) }
     )
 
@@ -39,6 +46,7 @@ data class DayRow(
             deviation = e.deviation,
             note = e.note,
             notePhoto = e.notePhoto,
+            noteUntil = e.noteUntil?.toString(),
             dwnFor = e.dwnFor?.toString()
         )
     }
@@ -241,7 +249,7 @@ interface PayslipDao {
 
 @Database(
     entities = [DayRow::class, PresenceRow::class, EventRow::class, PayslipRow::class],
-    version = 7, exportSchema = false
+    version = 8, exportSchema = false
 )
 abstract class AppDb : RoomDatabase() {
     abstract fun dayDao(): DayDao
@@ -344,12 +352,20 @@ abstract class AppDb : RoomDatabase() {
             }
         }
 
+        /** Termin ważności notatki — kara porządkowa, badania, szkolenie. */
+        val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `days` ADD COLUMN `noteUntil` TEXT")
+            }
+        }
+
         @Volatile private var inst: AppDb? = null
         fun get(ctx: Context): AppDb = inst ?: synchronized(this) {
             inst ?: Room.databaseBuilder(ctx.applicationContext, AppDb::class.java, "grafik.db")
                 .addMigrations(
                     MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6,
-                    MIGRATION_6_7
+                    MIGRATION_6_7,
+                    MIGRATION_7_8
                 )
                 .build().also { inst = it }
         }

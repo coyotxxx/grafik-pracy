@@ -119,6 +119,7 @@ object Kopia {
                     .put("deviation", r.deviation)
                     .put("note", r.note)
                     .put("notePhoto", r.notePhoto ?: JSONObject.NULL)
+                    .put("noteUntil", r.noteUntil ?: JSONObject.NULL)
                     .put("dwnFor", r.dwnFor ?: JSONObject.NULL)
             )
         }
@@ -251,6 +252,7 @@ object Kopia {
                             deviation = o.optBoolean("deviation"),
                             note = o.optString("note"),
                             notePhoto = o.tekstAlboNull("notePhoto"),
+                            noteUntil = o.tekstAlboNull("noteUntil"),
                             dwnFor = o.tekstAlboNull("dwnFor")
                         )
                     }

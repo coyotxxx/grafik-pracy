@@ -33,6 +33,8 @@ data class DayEntry(
     val note: String = "",
     /** Zdjęcie dołączone do notatki — nazwa pliku w pamięci aplikacji. */
     val notePhoto: String? = null,
+    /** Do kiedy notatka obowiązuje; null = notatka bez terminu. */
+    val noteUntil: LocalDate? = null,
     /** Dla DWN: za którą pracującą niedzielę odbierany jest ten dzień. */
     val dwnFor: LocalDate? = null
 ) {

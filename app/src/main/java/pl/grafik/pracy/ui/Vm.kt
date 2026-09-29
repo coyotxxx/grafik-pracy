@@ -721,6 +721,13 @@ class Vm(app: Application) : AndroidViewModel(app) {
         Reminders.schedule(getApplication())
     }
 
+    /** Termin ważności notatki. `null` kasuje sam termin — notatka zostaje. */
+    fun setNoteUntil(d: LocalDate, doKiedy: LocalDate?) = viewModelScope.launch {
+        val cur = state.value.entries[d] ?: DayEntry(date = d)
+        zapamietajDoCofniecia(d)
+        dao.upsert(DayRow.from(cur.copy(noteUntil = doKiedy)))
+    }
+
     fun updateEvent(e: EventRow) = viewModelScope.launch {
         events.update(e)
         Reminders.schedule(getApplication())

@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.sp
 import pl.grafik.pracy.domain.Holidays
 import pl.grafik.pracy.domain.OtRate
 import pl.grafik.pracy.domain.Shift
+import pl.grafik.pracy.domain.Waznosc
 import pl.grafik.pracy.nowy.theme.*
 import pl.grafik.pracy.nowy.ui.*
 import pl.grafik.pracy.ui.Tool
@@ -635,6 +636,7 @@ private fun SekcjaNotatki(s: UiState, dzien: LocalDate, vm: Vm) {
                 if (zapisana.isNotBlank()) WierszNotatki(zapisana, { edytuje = true }) {
                     vm.setNote(dzien, ""); tekst = ""
                 }
+                TerminNotatki(dzien, s.entries[dzien]?.noteUntil) { vm.setNoteUntil(dzien, it) }
             }
 
             else -> {
@@ -668,6 +670,180 @@ private fun SekcjaNotatki(s: UiState, dzien: LocalDate, vm: Vm) {
 }
 
 /** Wiersz z zapisaną notatką: dotknięcie edytuje, kosz kasuje. */
+/**
+ * Termin ważności notatki: kara porządkowa, badania okresowe, szkolenie.
+ *
+ * Domyślnie dwanaście miesięcy, bo tyle wynika z art. 113 § 1 Kodeksu pracy —
+ * po roku nienagannej pracy karę uważa się za niebyłą, a odpis znika z akt.
+ * Odliczamy kalendarzowo i mówimy o tym wprost: kolejna kara przesuwa termin,
+ * a tego aplikacja nie zgadnie.
+ */
+@Composable
+private fun TerminNotatki(dzien: LocalDate, doKiedy: LocalDate?, naZmiane: (LocalDate?) -> Unit) {
+    var wlasna by remember(dzien) { mutableStateOf(false) }
+    var dzienPola by remember(dzien) { mutableStateOf("") }
+    var miesiacPola by remember(dzien) { mutableStateOf("") }
+    var rokPola by remember(dzien) { mutableStateOf("") }
+
+    val wlaczony = doKiedy != null
+
+    Column(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(Dim.rCardSmall))
+            .background(
+                if (wlaczony) Tokeny.warnBg else Tokeny.surface
+            )
+            .border(
+                1.dp,
+                if (wlaczony) Tokeny.warnLine else Tokeny.line,
+                RoundedCornerShape(Dim.rCardSmall)
+            )
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(11.dp)
+        ) {
+            Box(
+                Modifier.size(34.dp).clip(RoundedCornerShape(11.dp))
+                    .background(Tokeny.warnInk.copy(alpha = 0.14f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(IkonaZegarek, null, Modifier.size(17.dp), tint = Tokeny.warnInk)
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text("Notatka ma termin", style = GrafikType.cardTitle, color = Tokeny.ink)
+                Text("np. kara, badania, szkolenie", style = GrafikType.caption,
+                    color = Tokeny.inkMuted)
+            }
+            Switch(
+                checked = wlaczony,
+                onCheckedChange = { wl ->
+                    wlasna = false
+                    naZmiane(if (wl) dzien.plusMonths(Waznosc.MIESIECY_KARA.toLong()) else null)
+                },
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = Tokeny.warnInk,
+                    checkedTrackColor = Tokeny.warnInk.copy(alpha = 0.32f),
+                    checkedBorderColor = Tokeny.warnLine,
+                    uncheckedThumbColor = Tokeny.inkFaint,
+                    uncheckedTrackColor = Tokeny.surfaceInput,
+                    uncheckedBorderColor = Tokeny.lineInput
+                )
+            )
+        }
+
+        if (wlaczony) {
+            val skroty = listOf(12 to "12 miesięcy", 6 to "6 miesięcy", 24 to "2 lata")
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                skroty.forEach { (miesiecy, etykieta) ->
+                    val wybrany = !wlasna && doKiedy == dzien.plusMonths(miesiecy.toLong())
+                    ChipTerminu(etykieta, wybrany) {
+                        wlasna = false
+                        naZmiane(dzien.plusMonths(miesiecy.toLong()))
+                    }
+                }
+                ChipTerminu("Własna data", wlasna) {
+                    wlasna = true
+                    doKiedy?.let {
+                        dzienPola = it.dayOfMonth.toString()
+                        miesiacPola = it.monthValue.toString()
+                        rokPola = it.year.toString()
+                    }
+                }
+            }
+
+            if (wlasna) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Box(Modifier.weight(1f)) {
+                        PoleTekstowe(dzienPola, "dzień", cyfry = true) {
+                            dzienPola = it.filter(Char::isDigit).take(2)
+                            zmienTermin(dzienPola, miesiacPola, rokPola, naZmiane)
+                        }
+                    }
+                    Box(Modifier.weight(1f)) {
+                        PoleTekstowe(miesiacPola, "miesiąc", cyfry = true) {
+                            miesiacPola = it.filter(Char::isDigit).take(2)
+                            zmienTermin(dzienPola, miesiacPola, rokPola, naZmiane)
+                        }
+                    }
+                    Box(Modifier.weight(1.2f)) {
+                        PoleTekstowe(rokPola, "rok", cyfry = true) {
+                            rokPola = it.filter(Char::isDigit).take(4)
+                            zmienTermin(dzienPola, miesiacPola, rokPola, naZmiane)
+                        }
+                    }
+                }
+            }
+
+            doKiedy?.let { termin ->
+                val stan = Waznosc.stan(termin)
+                Row(
+                    Modifier.fillMaxWidth().padding(top = 2.dp),
+                    verticalAlignment = Alignment.Bottom,
+                    horizontalArrangement = Arrangement.spacedBy(9.dp)
+                ) {
+                    Text(
+                        termin.format(DATA_TERMINU),
+                        style = TextStyle(
+                            fontFamily = Jakarta, fontSize = 19.sp, fontWeight = FontWeight.ExtraBold,
+                            fontFeatureSettings = TNUM
+                        ),
+                        color = Tokeny.ink
+                    )
+                    Text(
+                        when (stan) {
+                            is Waznosc.Stan.Minal -> "termin minął"
+                            is Waznosc.Stan.Biegnie -> Waznosc.ileZostalo(termin).orEmpty()
+                        },
+                        style = TextStyle(
+                            fontFamily = Jakarta, fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold
+                        ),
+                        color = if (stan is Waznosc.Stan.Minal) Tokeny.accent else Tokeny.warnInk,
+                        modifier = Modifier.padding(bottom = 2.dp)
+                    )
+                }
+                Text(
+                    "12 miesięcy to termin zatarcia kary porządkowej z art. 113 § 1 Kodeksu " +
+                        "pracy. Liczymy kalendarzowo od dnia notatki — przepis mówi o roku " +
+                        "nienagannej pracy, więc kolejna kara przesuwa ten termin.",
+                    style = GrafikType.caption, color = Tokeny.inkFaint
+                )
+            }
+        }
+    }
+}
+
+private val DATA_TERMINU = DateTimeFormatter.ofPattern("d.MM.yyyy", PLL)
+
+private fun zmienTermin(d: String, m: String, r: String, naZmiane: (LocalDate?) -> Unit) {
+    val dd = d.toIntOrNull() ?: return
+    val mm = m.toIntOrNull() ?: return
+    val rr = r.toIntOrNull()?.takeIf { it in 2000..2100 } ?: return
+    runCatching { LocalDate.of(rr, mm, dd) }.getOrNull()?.let(naZmiane)
+}
+
+@Composable
+private fun ChipTerminu(tekst: String, wybrany: Boolean, akcja: () -> Unit) {
+    Box(
+        Modifier.clip(RoundedCornerShape(999.dp))
+            .background(if (wybrany) Tokeny.warnInk.copy(alpha = 0.14f) else Tokeny.surfaceInput)
+            .border(
+                1.dp,
+                if (wybrany) Tokeny.warnLine else Tokeny.lineInput,
+                RoundedCornerShape(999.dp)
+            )
+            .clickable(onClick = akcja)
+            .padding(horizontal = 10.dp, vertical = 6.dp)
+    ) {
+        Text(
+            tekst, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, fontFamily = Jakarta,
+            color = if (wybrany) Tokeny.warnInk else Tokeny.inkMuted, maxLines = 1
+        )
+    }
+}
+
 @Composable
 private fun WierszNotatki(tekst: String, naEdycje: () -> Unit, naUsuniecie: () -> Unit) {
     Row(

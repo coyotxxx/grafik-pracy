@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
@@ -29,6 +30,7 @@ import kotlinx.coroutines.withContext
 import pl.grafik.pracy.data.ZdjeciaNotatek
 import pl.grafik.pracy.domain.DayEntry
 import pl.grafik.pracy.domain.Shift
+import pl.grafik.pracy.domain.Waznosc
 import pl.grafik.pracy.nowy.theme.*
 import pl.grafik.pracy.nowy.ui.*
 import pl.grafik.pracy.ui.Vm
@@ -207,11 +209,15 @@ private fun WierszNotatkiZListy(w: DayEntry, naKlik: () -> Unit) {
         }
     }
 
+    // Po upływie terminu wiersz blednie — kara jest zatarta, ale zdarzenie zostaje.
+    val minelo = w.noteUntil?.let { Waznosc.stan(it) is Waznosc.Stan.Minal } == true
+
     Row(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(Dim.rCardSmall))
             .background(Tokeny.surface)
             .border(1.dp, Tokeny.line, RoundedCornerShape(Dim.rCardSmall))
             .clickable(onClick = naKlik)
+            .alpha(if (minelo) 0.62f else 1f)
             .padding(horizontal = 12.dp, vertical = 11.dp),
         verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.spacedBy(11.dp)
@@ -252,6 +258,7 @@ private fun WierszNotatkiZListy(w: DayEntry, naKlik: () -> Unit) {
                     Text(it, style = GrafikType.caption, color = Tokeny.inkFaint)
                 }
             }
+            w.noteUntil?.let { OdznakaTerminu(it) }
         }
 
         Box(
@@ -277,6 +284,50 @@ private fun WierszNotatkiZListy(w: DayEntry, naKlik: () -> Unit) {
         }
     }
 }
+
+/**
+ * Termin ważności w jednej linijce: konkretna data i ile zostało.
+ *
+ * Barwa mówi, na czym stoimy — daleko, blisko, czy już po. Po upływie piszemy
+ * „zatarta", bo tak nazywa to Kodeks pracy przy karach porządkowych.
+ */
+@Composable
+private fun OdznakaTerminu(doKiedy: LocalDate) {
+    val stan = Waznosc.stan(doKiedy)
+    val barwa = when {
+        stan is Waznosc.Stan.Minal -> Tokeny.accent
+        stan is Waznosc.Stan.Biegnie && stan.blisko -> Tokeny.uroczystosc
+        else -> Tokeny.warnInk
+    }
+    val tekst = when (stan) {
+        is Waznosc.Stan.Minal -> "ZATARTA ${doKiedy.format(DATA_ODZNAKI)}"
+        is Waznosc.Stan.Biegnie ->
+            "WAŻNA DO ${doKiedy.format(DATA_ODZNAKI)} · ${Waznosc.ileZostalo(doKiedy)?.uppercase(PL_NOTATKI)}"
+    }
+
+    Row(
+        Modifier.clip(RoundedCornerShape(5.dp))
+            .background(barwa.copy(alpha = 0.13f))
+            .padding(horizontal = 6.dp, vertical = 3.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Icon(
+            if (stan is Waznosc.Stan.Minal) IkonaPtaszek else IkonaZegarek,
+            null, Modifier.size(10.dp), tint = barwa
+        )
+        Text(
+            tekst,
+            style = TextStyle(
+                fontFamily = Jakarta, fontSize = 9.sp, fontWeight = FontWeight.Bold,
+                letterSpacing = 0.3.sp, fontFeatureSettings = TNUM
+            ),
+            color = barwa, maxLines = 1, overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+private val DATA_ODZNAKI = java.time.format.DateTimeFormatter.ofPattern("d.MM.yyyy", PL_NOTATKI)
 
 @Composable
 private fun ZnacznikZmiany(s: Shift) {
