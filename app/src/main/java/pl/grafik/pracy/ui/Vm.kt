@@ -18,6 +18,14 @@ import java.time.YearMonth
 
 enum class Tool { I, II, III, W5, WS, DWN, BWN, URLOP, L4, OT, DEV, ERASE }
 
+/** Dzień wczytany poza widoczną siatką — wpis z grafiku plus faktyczna obecność. */
+data class SkrotDnia(
+    val wpis: DayEntry? = null,
+    val od: java.time.LocalDateTime? = null,
+    val doKiedy: java.time.LocalDateTime? = null,
+    val godziny: Int = 0
+)
+
 /**
  * Obecność wykryta w danym dniu — to, co kalendarz wypisuje w rogu kafelka.
  * Liczba godzin bierze się z zaliczonego czasu, nie z samego pobytu w strefie.
@@ -719,6 +727,30 @@ class Vm(app: Application) : AndroidViewModel(app) {
             )
         )
         Reminders.schedule(getApplication())
+    }
+
+    /**
+     * Co się działo w danym dniu — dla dni spoza oglądanego miesiąca.
+     *
+     * [state] niesie tylko widoczną siatkę, a dzień odrabiany bywa kilka miesięcy dalej.
+     * Stąd osobny odczyt: inaczej przy grudniu nie dałoby się pokazać, na jakiej zmianie
+     * i w jakich godzinach pracowało się w październiku.
+     */
+    suspend fun skrotDnia(d: LocalDate): SkrotDnia {
+        val db = AppDb.get(getApplication())
+        val wpis = dao.get(d.toString())?.toEntry()
+        val pobyty = db.presenceDao().forDate(d.toString()).filter { it.status != "rejected" }
+        fun czas(s: String?) = s?.let { runCatching { LocalDateTime.parse(it) }.getOrNull() }
+        return SkrotDnia(
+            wpis = wpis,
+            od = pobyty.mapNotNull { czas(it.enterAt) }.minOrNull(),
+            doKiedy = pobyty.mapNotNull { czas(it.exitAt) }.maxOrNull(),
+            godziny = pobyty.sumOf {
+                pl.grafik.pracy.domain.PresenceEngine.countedHours(
+                    czas(it.countedFrom), czas(it.countedTo)
+                )
+            }
+        )
     }
 
     /**

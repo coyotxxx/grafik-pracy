@@ -236,12 +236,37 @@ private fun SekcjaOdpracowania(s: UiState, dzien: LocalDate, vm: Vm) {
             horizontalArrangement = Arrangement.spacedBy(11.dp)
         ) {
             Icon(IkonaZamiana, null, Modifier.size(19.dp), tint = Tokeny.ok)
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text("Dzień odrobiony", style = GrafikType.cardTitle, color = Tokeny.ink)
+
+                val kiedy = wpis!!.dwnFor!!
                 Text(
-                    "odpracowany ${wpis!!.dwnFor!!.format(DATA_ODPRAC)}",
+                    "odpracowany ${kiedy.format(DATA_ODPRAC)}" +
+                        " · ${dzienTygodniaKrotko(kiedy)}",
                     style = GrafikType.caption, color = Tokeny.inkMuted
                 )
+
+                // Dzień odrabiany bywa w innym miesiącu niż oglądany, więc nie ma go
+                // w pamięci siatki — doczytujemy go osobno z bazy.
+                val skrot by produceState(pl.grafik.pracy.ui.SkrotDnia(), kiedy) {
+                    value = vm.skrotDnia(kiedy)
+                }
+
+                skrot.wpis?.shift?.takeIf { it.isWork }?.let { zm ->
+                    Text(
+                        "${nazwaZmiany(zm).lowercase(PLL)} · ${zm.from} – ${zm.to}",
+                        style = GrafikType.caption, color = Tokeny.ok
+                    )
+                }
+
+                val odKiedy = skrot.od?.format(GODZINA)
+                val doKiedy = skrot.doKiedy?.format(GODZINA)
+                if (odKiedy != null && doKiedy != null) {
+                    Text(
+                        "w pracy $odKiedy – $doKiedy · ${skrot.godziny} h",
+                        style = GrafikType.caption, color = Tokeny.inkFaint
+                    )
+                }
             }
         }
         return
@@ -361,6 +386,9 @@ private fun SekcjaOdpracowania(s: UiState, dzien: LocalDate, vm: Vm) {
 }
 
 private val DATA_ODPRAC = DateTimeFormatter.ofPattern("d.MM.yyyy", PLL)
+
+private fun dzienTygodniaKrotko(d: LocalDate): String =
+    d.dayOfWeek.getDisplayName(JavaTextStyle.SHORT, PLL).lowercase(PLL).trimEnd('.')
 
 /** Data z trzech pól; `null`, gdy niekompletna, nierealna albo wskazuje ten sam dzień. */
 internal fun dataOdpracowania(d: String, m: String, r: String, dzien: LocalDate): LocalDate? {
