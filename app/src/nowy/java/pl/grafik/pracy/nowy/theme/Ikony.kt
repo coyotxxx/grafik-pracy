@@ -254,6 +254,14 @@ val IkonaDane: ImageVector = ikona(1.8f) {
 }
 
 /** Kółko z „i" — „O aplikacji". */
+/** Dwie strzałki w przeciwne strony — zamiana dni, odpracowanie. */
+val IkonaZamiana: ImageVector = ikona(1.8f) {
+    moveTo(4f, 9f); horizontalLineToRelative(16f)
+    moveTo(16.5f, 5.5f); lineTo(20f, 9f); lineTo(16.5f, 12.5f)
+    moveTo(20f, 15f); horizontalLineToRelative(-16f)
+    moveTo(7.5f, 11.5f); lineTo(4f, 15f); lineTo(7.5f, 18.5f)
+}
+
 /** Kartka z zagiętym rogiem — notatki. */
 val IkonaNotatka: ImageVector = ikona(1.8f) {
     moveTo(5f, 4f); horizontalLineTo(15.5f); lineTo(19f, 7.5f); verticalLineTo(20f)

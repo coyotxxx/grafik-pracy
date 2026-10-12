@@ -35,10 +35,31 @@ data class DayEntry(
     val notePhoto: String? = null,
     /** Do kiedy notatka obowiązuje; null = notatka bez terminu. */
     val noteUntil: LocalDate? = null,
-    /** Dla DWN: za którą pracującą niedzielę odbierany jest ten dzień. */
+    /**
+     * Dzień powiązany zamianą — w obie strony:
+     *
+     * - dzień PRACUJĄCY wskazuje dzień wolny, który nim odrabia („pracuję 10.10 za 21.12");
+     * - dzień WOLNY wskazuje dzień pracy, którym został odrobiony, albo — dla [Shift.DWN] —
+     *   pracującą niedzielę, za którą się należy.
+     *
+     * Kolumna w bazie nazywa się `dwnFor`, bo powstała dla samych niedziel. Nazwa została,
+     * żeby nie przepisywać tabeli; znaczenie jest szersze.
+     */
     val dwnFor: LocalDate? = null
 ) {
     val workedHours: Int get() = (if (shift?.isWork == true) 8 else 0) + otHours
+
+    /**
+     * Dzień przepracowany po to, żeby odebrać wolne kiedy indziej.
+     *
+     * To nie są nadgodziny: pensja się nie zmienia, zmienia się rozkład dni. Rozpoznajemy
+     * po tym, że dzień pracy wskazuje inny dzień — samo wskazanie przy dniu wolnym znaczy
+     * coś odwrotnego.
+     */
+    val czyOdpracowanie: Boolean get() = shift?.isWork == true && dwnFor != null
+
+    /** Dzień wolny, który ktoś już odrobił pracą w innym terminie. */
+    val czyOdrobiony: Boolean get() = shift?.isWork == false && dwnFor != null
 }
 
 /**

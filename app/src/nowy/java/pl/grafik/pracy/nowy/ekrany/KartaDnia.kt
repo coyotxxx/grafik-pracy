@@ -105,6 +105,7 @@ fun KartaDnia(vm: Vm, dzien: LocalDate, naZamkniecie: () -> Unit) {
         ) {
             NaglowekDnia(dzien, naZamkniecie)
             KartaTypuDnia(s, dzien, vm)
+            SekcjaOdpracowania(s, dzien, vm)
             WierszNadgodzin(s, dzien, vm)
             SekcjaObecnosci(s, dzien, vm)
             SekcjaWydarzen(s, dzien, vm)
@@ -209,6 +210,164 @@ private fun KartaTypuDnia(s: UiState, dzien: LocalDate, vm: Vm) {
             }
         }
     }
+}
+
+/**
+ * Odpracowanie: pracuję dziś, żeby mieć wolne kiedy indziej.
+ *
+ * Pojawia się tylko przy dniu ze zmianą — w dniu wolnym nie ma czego odrabiać.
+ * Wskazanie dnia ustawia od razu oba: ten staje się zwykłą dniówką bez nadgodzin,
+ * tamten wolnym. Dzień odrobiony pokazuje to samo powiązanie od drugiej strony.
+ */
+@Composable
+private fun SekcjaOdpracowania(s: UiState, dzien: LocalDate, vm: Vm) {
+    val wpis = s.entries[dzien]
+    val pracujacy = wpis?.shift?.isWork == true
+    val odrobiony = wpis?.czyOdrobiony == true
+
+    // Dzień wolny, który ktoś odrobił — tu tylko informujemy, zmienia się po drugiej stronie.
+    if (odrobiony) {
+        Row(
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(Dim.rCardSmall))
+                .background(Tokeny.ok.copy(alpha = 0.08f))
+                .border(1.dp, Tokeny.ok.copy(alpha = 0.30f), RoundedCornerShape(Dim.rCardSmall))
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(11.dp)
+        ) {
+            Icon(IkonaZamiana, null, Modifier.size(19.dp), tint = Tokeny.ok)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text("Dzień odrobiony", style = GrafikType.cardTitle, color = Tokeny.ink)
+                Text(
+                    "odpracowany ${wpis!!.dwnFor!!.format(DATA_ODPRAC)}",
+                    style = GrafikType.caption, color = Tokeny.inkMuted
+                )
+            }
+        }
+        return
+    }
+
+    if (!pracujacy) return
+
+    val zaDzien = wpis?.dwnFor
+    val wlaczone = zaDzien != null
+    var dzienPola by remember(dzien, zaDzien) { mutableStateOf(zaDzien?.dayOfMonth?.toString() ?: "") }
+    var miesiacPola by remember(dzien, zaDzien) { mutableStateOf(zaDzien?.monthValue?.toString() ?: "") }
+    var rokPola by remember(dzien, zaDzien) {
+        mutableStateOf((zaDzien ?: dzien).year.toString())
+    }
+    var rozwiniete by remember(dzien) { mutableStateOf(false) }
+
+    Column(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(Dim.rCardSmall))
+            .background(if (wlaczone) Tokeny.ok.copy(alpha = 0.08f) else Tokeny.surface)
+            .border(
+                1.dp,
+                if (wlaczone) Tokeny.ok.copy(alpha = 0.30f) else Tokeny.line,
+                RoundedCornerShape(Dim.rCardSmall)
+            )
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(11.dp)
+        ) {
+            Box(
+                Modifier.size(34.dp).clip(RoundedCornerShape(11.dp))
+                    .background(Tokeny.ok.copy(alpha = 0.14f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(IkonaZamiana, null, Modifier.size(18.dp), tint = Tokeny.ok)
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text("To odpracowanie", style = GrafikType.cardTitle, color = Tokeny.ink)
+                Text(
+                    if (wlaczone) "nie nadgodziny — odbierasz wolne kiedy indziej"
+                    else "pracuję dziś za inny dzień",
+                    style = GrafikType.caption, color = Tokeny.inkMuted
+                )
+            }
+            Switch(
+                checked = wlaczone,
+                onCheckedChange = { wl ->
+                    if (wl) rozwiniete = true else vm.clearOdpracowanie(dzien)
+                },
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = Tokeny.ok,
+                    checkedTrackColor = Tokeny.ok.copy(alpha = 0.32f),
+                    checkedBorderColor = Tokeny.ok.copy(alpha = 0.45f),
+                    uncheckedThumbColor = Tokeny.inkFaint,
+                    uncheckedTrackColor = Tokeny.surfaceInput,
+                    uncheckedBorderColor = Tokeny.lineInput
+                )
+            )
+        }
+
+        if (wlaczone || rozwiniete) {
+            Text("który dzień odrabiasz", fontSize = 10.sp, fontFamily = Jakarta,
+                color = Tokeny.inkMuted)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(Modifier.weight(1f)) {
+                    PoleTekstowe(dzienPola, "dzień", cyfry = true) {
+                        dzienPola = it.filter(Char::isDigit).take(2)
+                    }
+                }
+                Box(Modifier.weight(1f)) {
+                    PoleTekstowe(miesiacPola, "miesiąc", cyfry = true) {
+                        miesiacPola = it.filter(Char::isDigit).take(2)
+                    }
+                }
+                Box(Modifier.weight(1.2f)) {
+                    PoleTekstowe(rokPola, "rok", cyfry = true) {
+                        rokPola = it.filter(Char::isDigit).take(4)
+                    }
+                }
+            }
+
+            // Zapis dopiero po zatwierdzeniu. Zapisywanie po każdej cyfrze tworzyło
+            // w grafiku dni z niedokończonej daty: „1" w polu miesiąca robiło ze stycznia
+            // dzień odrobiony, zanim doszła druga cyfra.
+            val wybrana = dataOdpracowania(dzienPola, miesiacPola, rokPola, dzien)
+            val mozna = wybrana != null && wybrana != zaDzien
+            Box(
+                Modifier.fillMaxWidth().height(42.dp).clip(RoundedCornerShape(12.dp))
+                    .background(if (mozna) Tokeny.ok else Tokeny.surfaceInput)
+                    .clickable(enabled = mozna) { vm.setOdpracowanie(dzien, wybrana!!) },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    if (zaDzien == null) "Ustaw odpracowanie" else "Zmień odrabiany dzień",
+                    fontSize = 12.5.sp, fontWeight = FontWeight.Bold, fontFamily = Jakarta,
+                    color = if (mozna) Tokeny.bg else Tokeny.inkDisabled
+                )
+            }
+
+            if (zaDzien != null) {
+                Text(
+                    "${zaDzien.format(DATA_ODPRAC)} jest teraz wolny — odrobiony tym dniem. " +
+                        "Godziny liczą się jak zwykła dniówka, bez dodatku za nadgodziny.",
+                    style = GrafikType.caption, color = Tokeny.ok
+                )
+            } else if (dzienPola.isNotBlank() && miesiacPola.isNotBlank() && wybrana == null) {
+                Text(
+                    "Nie ma takiego dnia w kalendarzu.",
+                    style = GrafikType.caption, color = Tokeny.warnInk
+                )
+            }
+        }
+    }
+}
+
+private val DATA_ODPRAC = DateTimeFormatter.ofPattern("d.MM.yyyy", PLL)
+
+/** Data z trzech pól; `null`, gdy niekompletna, nierealna albo wskazuje ten sam dzień. */
+internal fun dataOdpracowania(d: String, m: String, r: String, dzien: LocalDate): LocalDate? {
+    val dd = d.toIntOrNull() ?: return null
+    val mm = m.toIntOrNull() ?: return null
+    val rr = r.toIntOrNull()?.takeIf { it in 2000..2100 } ?: return null
+    return runCatching { LocalDate.of(rr, mm, dd) }.getOrNull()?.takeIf { it != dzien }
 }
 
 @Composable

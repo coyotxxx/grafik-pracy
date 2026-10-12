@@ -721,6 +721,56 @@ class Vm(app: Application) : AndroidViewModel(app) {
         Reminders.schedule(getApplication())
     }
 
+    /**
+     * Odpracowanie: pracujesz w [dzien], żeby mieć wolne w [zaDzien].
+     *
+     * Jedna czynność opisuje oba dni. Dzień pracy przestaje być nadgodzinami — godziny
+     * wchodzą jako zwykła dniówka, bo pensja się nie zmienia, zmienia się rozkład.
+     * Odrabiany dzień staje się wolny i pamięta, czym został odrobiony.
+     *
+     * Bez wskazanej zmiany nie ma czego odrabiać, więc wtedy nic nie robimy.
+     */
+    fun setOdpracowanie(dzien: LocalDate, zaDzien: LocalDate) = viewModelScope.launch {
+        if (dzien == zaDzien) return@launch
+        val pracy = state.value.entries[dzien] ?: DayEntry(date = dzien)
+        if (pracy.shift?.isWork != true) return@launch
+
+        // Zmiana wskazania musi zdjąć poprzednie, inaczej w grafiku zostałby wolny dzień,
+        // którego już nic nie odrabia.
+        pracy.dwnFor?.takeIf { it != zaDzien }?.let { stary ->
+            state.value.entries[stary]?.takeIf { it.dwnFor == dzien }?.let {
+                zapamietajDoCofniecia(stary)
+                dao.upsert(DayRow.from(it.copy(dwnFor = null)))
+            }
+        }
+
+        zapamietajDoCofniecia(dzien)
+        dao.upsert(DayRow.from(pracy.copy(dwnFor = zaDzien, otHours = 0)))
+
+        val wolny = state.value.entries[zaDzien] ?: DayEntry(date = zaDzien)
+        zapamietajDoCofniecia(zaDzien)
+        dao.upsert(DayRow.from(wolny.copy(shift = Shift.W5, otHours = 0, dwnFor = dzien)))
+    }
+
+    /**
+     * Cofnięcie odpracowania. Zdejmuje powiązanie z obu dni; odrabianemu dniowi
+     * zostawiamy oznaczenie wolnego — nie wiemy, co tam było wcześniej, a zgadywanie
+     * kasowałoby cudzy wpis.
+     */
+    fun clearOdpracowanie(dzien: LocalDate) = viewModelScope.launch {
+        val pracy = state.value.entries[dzien] ?: return@launch
+        val zaDzien = pracy.dwnFor
+        zapamietajDoCofniecia(dzien)
+        dao.upsert(DayRow.from(pracy.copy(dwnFor = null)))
+
+        if (zaDzien != null) {
+            state.value.entries[zaDzien]?.takeIf { it.dwnFor == dzien }?.let { wolny ->
+                zapamietajDoCofniecia(zaDzien)
+                dao.upsert(DayRow.from(wolny.copy(dwnFor = null)))
+            }
+        }
+    }
+
     /** Termin ważności notatki. `null` kasuje sam termin — notatka zostaje. */
     fun setNoteUntil(d: LocalDate, doKiedy: LocalDate?) = viewModelScope.launch {
         val cur = state.value.entries[d] ?: DayEntry(date = d)
